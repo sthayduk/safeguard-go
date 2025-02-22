@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github/sthayduk/safeguard-go/client"
-	"github/sthayduk/safeguard-go/models"
+	"github.com/sthayduk/safeguard-go/models"
+
+	"github.com/sthayduk/safeguard-go/client"
 )
 
 // Swagger URL:  https://<applianceHost>/service/core/swagger/index.html
@@ -49,13 +50,31 @@ func main() {
 
 	filter.AddFilter("Disabled", "eq", "true")
 
-	me, err := models.GetUsers(sgc, filter)
+	me, err := models.GetAssetPartitions(sgc, client.Filter{})
 	if err != nil {
 		panic(err)
 	}
 
 	for _, user := range me {
 		jsonStr, err := user.ToJson()
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf("%s", jsonStr)
+	}
+
+	user, err := models.GetAssetPartition(sgc, "1", client.Fields{})
+	if err != nil {
+		panic(err)
+	}
+
+	linkedAccounts, err := user.GetPasswordRules(sgc)
+	if err != nil {
+		panic(err)
+	}
+
+	for _, account := range linkedAccounts {
+		jsonStr, err := account.ToJson()
 		if err != nil {
 			panic(err)
 		}

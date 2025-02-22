@@ -27,6 +27,42 @@ func (c *SafeguardClient) GetRequest(path string) ([]byte, error) {
 	return c.sendHttpRequest(req)
 }
 
+func (c *SafeguardClient) PostRequest(path string) ([]byte, error) {
+	url := fmt.Sprintf("%s/%s", c.GetRootUrl(), path)
+	log.Debugf("Making request to: %s", url)
+
+	req, err := http.NewRequest(http.MethodPost, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.sendHttpRequest(req)
+}
+
+func (c *SafeguardClient) PutRequest(path string) ([]byte, error) {
+	url := fmt.Sprintf("%s/%s", c.GetRootUrl(), path)
+	log.Debugf("Making request to: %s", url)
+
+	req, err := http.NewRequest(http.MethodPut, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.sendHttpRequest(req)
+}
+
+func (c *SafeguardClient) DeleteRequest(path string) ([]byte, error) {
+	url := fmt.Sprintf("%s/%s", c.GetRootUrl(), path)
+	log.Debugf("Making request to: %s", url)
+
+	req, err := http.NewRequest(http.MethodDelete, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.sendHttpRequest(req)
+}
+
 func (c *SafeguardClient) sendHttpRequest(req *http.Request) ([]byte, error) {
 	req = c.getAuthorizationHeader(req)
 	log.Debugf("Request headers: %+v", req.Header)

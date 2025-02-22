@@ -3,8 +3,6 @@ package models
 import (
 	"encoding/json"
 	"time"
-
-	"github/sthayduk/safeguard-go/client"
 )
 
 type User struct {
@@ -53,24 +51,10 @@ type User struct {
 	LinkedAccountsCount                       int                    `json:"LinkedAccountsCount,omitempty"`
 }
 
-func GetUsers(c *client.SafeguardClient, fields client.Filter) ([]User, error) {
-	var users []User
-
-	query := "users" + fields.ToQueryString()
-
-	response, err := c.GetRequest(query)
-	if err != nil {
-		return nil, err
-	}
-
-	json.Unmarshal(response, &users)
-	return users, nil
-}
-
-func (u *User) ToJson() (string, error) {
-	meJSON, err := json.Marshal(u)
+func (u User) ToJson() (string, error) {
+	userJSON, err := json.Marshal(u)
 	if err != nil {
 		return "", err
 	}
-	return string(meJSON), nil
+	return string(userJSON), nil
 }

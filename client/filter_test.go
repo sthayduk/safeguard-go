@@ -8,21 +8,21 @@ import (
 func TestAddField(t *testing.T) {
 	tests := []struct {
 		name     string
-		initial  []string
+		initial  Fields
 		field    string
-		expected []string
+		expected Fields
 	}{
 		{
 			name:     "Add field to empty list",
-			initial:  []string{},
+			initial:  Fields{},
 			field:    "newField",
-			expected: []string{"newField"},
+			expected: Fields{"newField"},
 		},
 		{
 			name:     "Add field to non-empty list",
-			initial:  []string{"field1", "field2"},
+			initial:  Fields{"field1", "field2"},
 			field:    "newField",
-			expected: []string{"field1", "field2", "newField"},
+			expected: Fields{"field1", "field2", "newField"},
 		},
 	}
 
@@ -40,33 +40,33 @@ func TestAddField(t *testing.T) {
 func TestRemoveField(t *testing.T) {
 	tests := []struct {
 		name     string
-		initial  []string
+		initial  Fields
 		field    string
-		expected []string
+		expected Fields
 	}{
 		{
 			name:     "Remove field from list with one element",
-			initial:  []string{"field1"},
+			initial:  Fields{"field1"},
 			field:    "field1",
-			expected: []string{},
+			expected: Fields{},
 		},
 		{
 			name:     "Remove field from list with multiple elements",
-			initial:  []string{"field1", "field2", "field3"},
+			initial:  Fields{"field1", "field2", "field3"},
 			field:    "field2",
-			expected: []string{"field1", "field3"},
+			expected: Fields{"field1", "field3"},
 		},
 		{
 			name:     "Remove field that does not exist",
-			initial:  []string{"field1", "field2"},
+			initial:  Fields{"field1", "field2"},
 			field:    "field3",
-			expected: []string{"field1", "field2"},
+			expected: Fields{"field1", "field2"},
 		},
 		{
 			name:     "Remove field from empty list",
-			initial:  []string{},
+			initial:  Fields{},
 			field:    "field1",
-			expected: []string{},
+			expected: Fields{},
 		},
 	}
 
@@ -84,18 +84,18 @@ func TestRemoveField(t *testing.T) {
 func TestGetFields(t *testing.T) {
 	tests := []struct {
 		name     string
-		initial  []string
-		expected []string
+		initial  Fields
+		expected Fields
 	}{
 		{
 			name:     "Get fields from empty list",
-			initial:  []string{},
-			expected: []string{},
+			initial:  Fields{},
+			expected: Fields{},
 		},
 		{
 			name:     "Get fields from non-empty list",
-			initial:  []string{"field1", "field2"},
-			expected: []string{"field1", "field2"},
+			initial:  Fields{"field1", "field2"},
+			expected: Fields{"field1", "field2"},
 		},
 	}
 
@@ -113,11 +113,11 @@ func TestGetFields(t *testing.T) {
 func TestAddFilter(t *testing.T) {
 	tests := []struct {
 		name     string
-		initial  string
+		initial  FilterQuery
 		field    string
 		operator string
 		value    string
-		expected string
+		expected FilterQuery
 	}{
 		{
 			name:     "Add filter to empty filter",
@@ -159,21 +159,21 @@ func TestAddFilter(t *testing.T) {
 func TestAddOrderBy(t *testing.T) {
 	tests := []struct {
 		name     string
-		initial  []string
+		initial  OrderBy
 		field    string
-		expected []string
+		expected OrderBy
 	}{
 		{
 			name:     "Add orderby to empty list",
-			initial:  []string{},
+			initial:  OrderBy{},
 			field:    "newOrderBy",
-			expected: []string{"newOrderBy"},
+			expected: OrderBy{"newOrderBy"},
 		},
 		{
 			name:     "Add orderby to non-empty list",
-			initial:  []string{"orderby1", "orderby2"},
+			initial:  OrderBy{"orderby1", "orderby2"},
 			field:    "newOrderBy",
-			expected: []string{"orderby1", "orderby2", "newOrderBy"},
+			expected: OrderBy{"orderby1", "orderby2", "newOrderBy"},
 		},
 	}
 
@@ -191,18 +191,18 @@ func TestAddOrderBy(t *testing.T) {
 func TestGetOrderBy(t *testing.T) {
 	tests := []struct {
 		name     string
-		initial  []string
-		expected []string
+		initial  OrderBy
+		expected OrderBy
 	}{
 		{
 			name:     "Get orderby from empty list",
-			initial:  []string{},
-			expected: []string{},
+			initial:  OrderBy{},
+			expected: OrderBy{},
 		},
 		{
 			name:     "Get orderby from non-empty list",
-			initial:  []string{"orderby1", "orderby2"},
-			expected: []string{"orderby1", "orderby2"},
+			initial:  OrderBy{"orderby1", "orderby2"},
+			expected: OrderBy{"orderby1", "orderby2"},
 		},
 	}
 
@@ -220,33 +220,33 @@ func TestGetOrderBy(t *testing.T) {
 func TestRemoveOrderBy(t *testing.T) {
 	tests := []struct {
 		name     string
-		initial  []string
+		initial  OrderBy
 		field    string
-		expected []string
+		expected OrderBy
 	}{
 		{
 			name:     "Remove orderby from list with one element",
-			initial:  []string{"orderby1"},
+			initial:  OrderBy{"orderby1"},
 			field:    "orderby1",
-			expected: []string{},
+			expected: OrderBy{},
 		},
 		{
 			name:     "Remove orderby from list with multiple elements",
-			initial:  []string{"orderby1", "orderby2", "orderby3"},
+			initial:  OrderBy{"orderby1", "orderby2", "orderby3"},
 			field:    "orderby2",
-			expected: []string{"orderby1", "orderby3"},
+			expected: OrderBy{"orderby1", "orderby3"},
 		},
 		{
 			name:     "Remove orderby that does not exist",
-			initial:  []string{"orderby1", "orderby2"},
+			initial:  OrderBy{"orderby1", "orderby2"},
 			field:    "orderby3",
-			expected: []string{"orderby1", "orderby2"},
+			expected: OrderBy{"orderby1", "orderby2"},
 		},
 		{
 			name:     "Remove orderby from empty list",
-			initial:  []string{},
+			initial:  OrderBy{},
 			field:    "orderby1",
-			expected: []string{},
+			expected: OrderBy{},
 		},
 	}
 
@@ -274,14 +274,14 @@ func TestToQueryString(t *testing.T) {
 		{
 			name: "Filter with fields",
 			filter: &Filter{
-				Fields: []string{"field1", "field2"},
+				Fields: Fields{"field1", "field2"},
 			},
 			expected: "?fields=field1%2Cfield2&count=false",
 		},
 		{
 			name: "Filter with orderby",
 			filter: &Filter{
-				Orderby: []string{"field1", "field2"},
+				Orderby: OrderBy{"field1", "field2"},
 			},
 			expected: "?count=false&orderby=field1%2Cfield2",
 		},
@@ -302,17 +302,17 @@ func TestToQueryString(t *testing.T) {
 		{
 			name: "Filter with filter query",
 			filter: &Filter{
-				Filter: "field1 eq value1",
+				Filter: FilterQuery("field1 eq value1"),
 			},
 			expected: "?filter=field1%20eq%20value1&count=false",
 		},
 		{
 			name: "Filter with all parameters",
 			filter: &Filter{
-				Fields:  []string{"field1", "field2"},
-				Orderby: []string{"field1", "field2"},
+				Fields:  Fields{"field1", "field2"},
+				Orderby: OrderBy{"field1", "field2"},
 				Count:   true,
-				Filter:  "field1 eq value1",
+				Filter:  FilterQuery("field1 eq value1"),
 			},
 			expected: "?filter=field1%20eq%20value1&fields=field1%2Cfield2&count=true&orderby=field1%2Cfield2",
 		},
@@ -323,6 +323,63 @@ func TestToQueryString(t *testing.T) {
 			got := tt.filter.ToQueryString()
 			if got != tt.expected {
 				t.Errorf("expected %v, got %v", tt.expected, got)
+			}
+		})
+	}
+}
+
+// Add new tests for String() methods
+func TestTypeStrings(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    interface{}
+		expected string
+	}{
+		{
+			name:     "Fields with multiple values",
+			input:    Fields{"field1", "field2", "field3"},
+			expected: "field1,field2,field3",
+		},
+		{
+			name:     "Empty Fields",
+			input:    Fields{},
+			expected: "",
+		},
+		{
+			name:     "FilterQuery with value",
+			input:    FilterQuery("name eq 'John'"),
+			expected: "name eq 'John'",
+		},
+		{
+			name:     "Empty FilterQuery",
+			input:    FilterQuery(""),
+			expected: "",
+		},
+		{
+			name:     "OrderBy with multiple values",
+			input:    OrderBy{"name", "age", "date"},
+			expected: "name,age,date",
+		},
+		{
+			name:     "Empty OrderBy",
+			input:    OrderBy{},
+			expected: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var got string
+			switch v := tt.input.(type) {
+			case Fields:
+				got = v.String()
+			case FilterQuery:
+				got = v.String()
+			case OrderBy:
+				got = v.String()
+			}
+			if got != tt.expected {
+				t.Errorf("expected %q, got %q", tt.expected, got)
 			}
 		})
 	}

@@ -5,11 +5,43 @@ import (
 	"strings"
 )
 
+// Fields represents a list of fields to be included in the query
+type Fields []string
+
+func (f Fields) String() string {
+	return strings.Join(f, ",")
+}
+
+func (f Fields) ToQueryString() string {
+	return "?" + f.generateFieldQuery()
+}
+
+func (f Fields) generateFieldQuery() string {
+	if len(f) == 0 {
+		return ""
+	}
+	return "fields=" + url.PathEscape(f.String())
+}
+
+// FilterQuery represents the filter condition
+type FilterQuery string
+
+func (f FilterQuery) String() string {
+	return string(f)
+}
+
+// OrderBy represents a list of fields to order the results by
+type OrderBy []string
+
+func (o OrderBy) String() string {
+	return strings.Join(o, ",")
+}
+
 type Filter struct {
-	Fields  []string `json:"fields,omitempty"`
-	Filter  string   `json:"filter,omitempty"`
-	Orderby []string `json:"orderby,omitempty"`
-	Count   bool     `json:"count,omitempty"`
+	Fields  Fields      `json:"fields,omitempty"`
+	Filter  FilterQuery `json:"filter,omitempty"`
+	Orderby OrderBy     `json:"orderby,omitempty"`
+	Count   bool        `json:"count,omitempty"`
 }
 
 // AddField adds a field to the list of fields to be included in the query.
@@ -32,7 +64,7 @@ func (f *Filter) RemoveField(field string) {
 }
 
 // GetFields returns the list of fields to be included in the query.
-func (f *Filter) GetFields() []string {
+func (f *Filter) GetFields() Fields {
 	return f.Fields
 }
 
@@ -56,7 +88,7 @@ func (f *Filter) RemoveOrderBy(field string) {
 }
 
 // GetOrderBy returns the list of fields to order the results by.
-func (f *Filter) GetOrderBy() []string {
+func (f *Filter) GetOrderBy() OrderBy {
 	return f.Orderby
 }
 
@@ -88,18 +120,7 @@ func (f *Filter) generateFieldQuery() string {
 	if len(f.Fields) == 0 {
 		return ""
 	}
-
-	var builder strings.Builder
-	builder.Grow(len(f.Fields) * 10) // Preallocate capacity based on the number of order by fields
-	for i, field := range f.Fields {
-		builder.WriteString(field)
-		if i < len(f.Fields)-1 {
-			builder.WriteString(",")
-		}
-	}
-
-	query := "fields=" + url.PathEscape(builder.String())
-	return query
+	return "fields=" + url.PathEscape(f.Fields.String())
 }
 
 // generateOrderByQuery generates the query string for the order by fields.
@@ -109,18 +130,7 @@ func (f *Filter) generateOrderByQuery() string {
 	if len(f.Orderby) == 0 {
 		return ""
 	}
-
-	var builder strings.Builder
-	builder.Grow(len(f.Orderby) * 10) // Preallocate capacity based on the number of order by fields
-	for i, orderby := range f.Orderby {
-		builder.WriteString(orderby)
-		if i < len(f.Orderby)-1 {
-			builder.WriteString(",")
-		}
-	}
-
-	query := "orderby=" + url.PathEscape(builder.String())
-	return query
+	return "orderby=" + url.PathEscape(f.Orderby.String())
 }
 
 // generateFilterQuery generates the query string for the filter conditions.
@@ -130,9 +140,7 @@ func (f *Filter) generateFilterQuery() string {
 	if f.Filter == "" {
 		return ""
 	}
-
-	query := "filter=" + url.PathEscape(f.Filter)
-	return query
+	return "filter=" + url.PathEscape(f.Filter.String())
 }
 
 // generateCountQuery generates the query string for the count flag.
@@ -142,7 +150,6 @@ func (f *Filter) generateCountQuery() string {
 	if !f.Count {
 		return "count=false"
 	}
-
 	return "count=true"
 }
 
@@ -155,7 +162,7 @@ func (f *Filter) generateCountQuery() string {
 //   - value: The value to compare the field against.
 func (f *Filter) AddFilter(field, operator, value string) {
 	escapedValue := escapeSpecialChars(value)
-	f.Filter += field + " " + operator + " " + escapedValue
+	f.Filter = FilterQuery(string(f.Filter) + field + " " + operator + " " + escapedValue)
 }
 
 // escapeSpecialChars escapes special characters in the filter value.

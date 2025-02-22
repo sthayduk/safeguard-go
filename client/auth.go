@@ -66,7 +66,7 @@ func (c *SafeguardClient) LoginWithPassword(username, password string) error {
 		return fmt.Errorf("error marshaling token request: %v", err)
 	}
 
-	req, err = http.NewRequest("POST", fmt.Sprintf("%s/service/core/v4/Token/LoginResponse", c.ApplicanceURL), bytes.NewBuffer(tokenData))
+	req, err = http.NewRequest("POST", fmt.Sprintf("%s/Token/LoginResponse", c.GetRootUrl()), bytes.NewBuffer(tokenData))
 	if err != nil {
 		return fmt.Errorf("error creating token request: %v", err)
 	}

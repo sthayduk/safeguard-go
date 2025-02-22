@@ -1,6 +1,5 @@
 # Safeguard Go
-
-Safeguard Go is a Go library designed to provide filtering, ordering, and querying capabilities for your Go applications.
+Safeguard Go is a Go library for interacting with the OneIdentity Safeguard for Privileged Passwords REST API.
 
 ## Installation
 
