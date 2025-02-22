@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"itdesign.at/safeguard-go/client"
+	"github/sthayduk/safeguard-go/client"
 )
 
 type User struct {

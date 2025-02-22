@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"itdesign.at/safeguard-go/client"
-	"itdesign.at/safeguard-go/models"
+	"github/sthayduk/safeguard-go/client"
+	"github/sthayduk/safeguard-go/models"
 )
 
 // Swagger URL:  https://<applianceHost>/service/core/swagger/index.html

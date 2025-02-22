@@ -1,4 +1,4 @@
-module itdesign.at/safeguard-go
+module github/sthayduk/safeguard-go
 
 go 1.24.0
 

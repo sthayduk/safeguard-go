@@ -3,7 +3,7 @@ package models
 import (
 	"encoding/json"
 
-	"itdesign.at/safeguard-go/client"
+	"github/sthayduk/safeguard-go/client"
 )
 
 func GetMe(c *client.SafeguardClient, fields client.Filter) (User, error) {
