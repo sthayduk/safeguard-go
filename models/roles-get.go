@@ -7,6 +7,14 @@ import (
 	"github.com/sthayduk/safeguard-go/client"
 )
 
+// GetRoles retrieves a list of roles from Safeguard.
+// Parameters:
+//   - c: The SafeguardClient instance for making API requests
+//   - fields: Filter criteria for the request
+//
+// Returns:
+//   - []Role: A slice of roles matching the filter criteria
+//   - error: An error if the request fails, nil otherwise
 func GetRoles(c *client.SafeguardClient, fields client.Filter) ([]Role, error) {
 	var userRoles []Role
 
@@ -21,6 +29,15 @@ func GetRoles(c *client.SafeguardClient, fields client.Filter) ([]Role, error) {
 	return userRoles, nil
 }
 
+// GetRole retrieves a specific role by ID from Safeguard.
+// Parameters:
+//   - c: The SafeguardClient instance for making API requests
+//   - id: The ID of the role to retrieve
+//   - fields: Specific fields to include in the response
+//
+// Returns:
+//   - Role: The requested role
+//   - error: An error if the request fails, nil otherwise
 func GetRole(c *client.SafeguardClient, id string, fields client.Fields) (Role, error) {
 	var userRole Role
 

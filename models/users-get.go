@@ -7,6 +7,14 @@ import (
 	"github.com/sthayduk/safeguard-go/client"
 )
 
+// GetUsers retrieves a list of users from Safeguard.
+// Parameters:
+//   - c: The SafeguardClient instance for making API requests
+//   - fields: Filter criteria for the request
+//
+// Returns:
+//   - []User: A slice of users matching the filter criteria
+//   - error: An error if the request fails, nil otherwise
 func GetUsers(c *client.SafeguardClient, fields client.Filter) ([]User, error) {
 	var users []User
 
@@ -21,6 +29,15 @@ func GetUsers(c *client.SafeguardClient, fields client.Filter) ([]User, error) {
 	return users, nil
 }
 
+// GetUser retrieves a specific user by ID from Safeguard.
+// Parameters:
+//   - c: The SafeguardClient instance for making API requests
+//   - id: The ID of the user to retrieve
+//   - fields: Specific fields to include in the response
+//
+// Returns:
+//   - User: The requested user
+//   - error: An error if the request fails, nil otherwise
 func GetUser(c *client.SafeguardClient, id string, fields client.Fields) (User, error) {
 	var user User
 
@@ -37,6 +54,14 @@ func GetUser(c *client.SafeguardClient, id string, fields client.Fields) (User, 
 	return user, nil
 }
 
+// GetLinkedAccounts retrieves the policy accounts linked to a specific user.
+// Parameters:
+//   - c: The SafeguardClient instance for making API requests
+//   - id: The ID of the user
+//
+// Returns:
+//   - []PolicyAccount: A slice of linked policy accounts
+//   - error: An error if the request fails, nil otherwise
 func GetLinkedAccounts(c *client.SafeguardClient, id string) ([]PolicyAccount, error) {
 	var linkedAccounts []PolicyAccount
 
@@ -51,10 +76,25 @@ func GetLinkedAccounts(c *client.SafeguardClient, id string) ([]PolicyAccount, e
 	return linkedAccounts, nil
 }
 
+// GetLinkedAccounts retrieves the policy accounts linked to this user.
+// Parameters:
+//   - c: The SafeguardClient instance for making API requests
+//
+// Returns:
+//   - []PolicyAccount: A slice of linked policy accounts
+//   - error: An error if the request fails, nil otherwise
 func (u User) GetLinkedAccounts(c *client.SafeguardClient) ([]PolicyAccount, error) {
 	return GetLinkedAccounts(c, fmt.Sprintf("%d", u.Id))
 }
 
+// GetUserRoles retrieves the roles assigned to a specific user.
+// Parameters:
+//   - c: The SafeguardClient instance for making API requests
+//   - id: The ID of the user
+//
+// Returns:
+//   - []Role: A slice of assigned roles
+//   - error: An error if the request fails, nil otherwise
 func GetUserRoles(c *client.SafeguardClient, id string) ([]Role, error) {
 	var roles []Role
 
@@ -69,10 +109,25 @@ func GetUserRoles(c *client.SafeguardClient, id string) ([]Role, error) {
 	return roles, nil
 }
 
+// GetRoles retrieves the roles assigned to this user.
+// Parameters:
+//   - c: The SafeguardClient instance for making API requests
+//
+// Returns:
+//   - []Role: A slice of assigned roles
+//   - error: An error if the request fails, nil otherwise
 func (u User) GetRoles(c *client.SafeguardClient) ([]Role, error) {
 	return GetUserRoles(c, fmt.Sprintf("%d", u.Id))
 }
 
+// GetGroups retrieves the groups that a specific user belongs to.
+// Parameters:
+//   - c: The SafeguardClient instance for making API requests
+//   - id: The ID of the user
+//
+// Returns:
+//   - []UserGroup: A slice of user groups
+//   - error: An error if the request fails, nil otherwise
 func GetGroups(c *client.SafeguardClient, id string) ([]UserGroup, error) {
 	var userGroups []UserGroup
 
@@ -87,6 +142,13 @@ func GetGroups(c *client.SafeguardClient, id string) ([]UserGroup, error) {
 	return userGroups, nil
 }
 
+// GetGroups retrieves the groups that this user belongs to.
+// Parameters:
+//   - c: The SafeguardClient instance for making API requests
+//
+// Returns:
+//   - []UserGroup: A slice of user groups
+//   - error: An error if the request fails, nil otherwise
 func (u User) GetGroups(c *client.SafeguardClient) ([]UserGroup, error) {
 	return GetGroups(c, fmt.Sprintf("%d", u.Id))
 }

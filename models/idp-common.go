@@ -142,39 +142,3 @@ type GroupProperties struct {
 	NameAttribute        string   `json:"NameAttribute,omitempty"`
 	DescriptionAttribute string   `json:"DescriptionAttribute,omitempty"`
 }
-
-type ConnectionProperties struct {
-	UseSslEncryption                         bool   `json:"UseSslEncryption,omitempty"`
-	VerifySslCertificate                     bool   `json:"VerifySslCertificate,omitempty"`
-	ServiceAccountUniqueObjectId             string `json:"ServiceAccountUniqueObjectId,omitempty"`
-	ServiceAccountSecurityId                 string `json:"ServiceAccountSecurityId,omitempty"`
-	ServiceAccountId                         int    `json:"ServiceAccountId,omitempty"`
-	ServiceAccountName                       string `json:"ServiceAccountName,omitempty"`
-	EffectiveServiceAccountName              string `json:"EffectiveServiceAccountName,omitempty"`
-	ServiceAccountDomainName                 string `json:"ServiceAccountDomainName,omitempty"`
-	ServiceAccountDistinguishedName          string `json:"ServiceAccountDistinguishedName,omitempty"`
-	EffectiveServiceAccountDistinguishedName string `json:"EffectiveServiceAccountDistinguishedName,omitempty"`
-	ServiceAccountCredentialType             string `json:"ServiceAccountCredentialType,omitempty"`
-	ServiceAccountPassword                   string `json:"ServiceAccountPassword,omitempty"`
-	ServiceAccountHasPassword                bool   `json:"ServiceAccountHasPassword,omitempty"`
-	ServiceAccountSshKey                     SshKey `json:"ServiceAccountSshKey,omitempty"`
-	ServiceAccountHasSshKey                  bool   `json:"ServiceAccountHasSshKey,omitempty"`
-	Port                                     int    `json:"Port,omitempty"`
-	ServiceAccountAssetId                    int    `json:"ServiceAccountAssetId,omitempty"`
-	ServiceAccountAssetName                  string `json:"ServiceAccountAssetName,omitempty"`
-	ServiceAccountAssetPlatformId            int    `json:"ServiceAccountAssetPlatformId,omitempty"`
-	ServiceAccountAssetPlatformType          string `json:"ServiceAccountAssetPlatformType,omitempty"`
-	ServiceAccountAssetPlatformDisplayName   string `json:"ServiceAccountAssetPlatformDisplayName,omitempty"`
-	ServiceAccountNetbiosName                string `json:"ServiceAccountNetbiosName,omitempty"`
-}
-
-type SshKey struct {
-	PrivateKey        string `json:"PrivateKey,omitempty"`
-	Passphrase        string `json:"Passphrase,omitempty"`
-	PublicKey         string `json:"PublicKey,omitempty"`
-	Comment           string `json:"Comment,omitempty"`
-	Fingerprint       string `json:"Fingerprint,omitempty"`
-	FingerprintSha256 string `json:"FingerprintSha256,omitempty"`
-	KeyType           string `json:"KeyType,omitempty"`
-	KeyLength         int    `json:"KeyLength,omitempty"`
-}

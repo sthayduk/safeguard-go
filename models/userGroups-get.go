@@ -7,6 +7,14 @@ import (
 	"github.com/sthayduk/safeguard-go/client"
 )
 
+// GetUserGroups retrieves a list of user groups from Safeguard.
+// Parameters:
+//   - c: The SafeguardClient instance for making API requests
+//   - fields: Filter criteria for the request
+//
+// Returns:
+//   - []UserGroup: A slice of user groups matching the filter criteria
+//   - error: An error if the request fails, nil otherwise
 func GetUserGroups(c *client.SafeguardClient, fields client.Filter) ([]UserGroup, error) {
 	var userGroups []UserGroup
 
@@ -21,6 +29,15 @@ func GetUserGroups(c *client.SafeguardClient, fields client.Filter) ([]UserGroup
 	return userGroups, nil
 }
 
+// GetUserGroup retrieves a specific user group by ID from Safeguard.
+// Parameters:
+//   - c: The SafeguardClient instance for making API requests
+//   - id: The ID of the user group to retrieve
+//   - fields: Specific fields to include in the response
+//
+// Returns:
+//   - UserGroup: The requested user group
+//   - error: An error if the request fails, nil otherwise
 func GetUserGroup(c *client.SafeguardClient, id string, fields client.Fields) (UserGroup, error) {
 	var userGroup UserGroup
 
