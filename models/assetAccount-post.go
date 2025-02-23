@@ -19,7 +19,7 @@ func (a AssetAccount) ChangePassword(c *client.SafeguardClient) (PasswordActivit
 
 	query := fmt.Sprintf("AssetAccounts/%d/ChangePassword", a.Id)
 
-	response, err := c.PostRequest(query)
+	response, err := c.PostRequest(query, nil)
 	if err != nil {
 		return log, err
 	}
@@ -40,7 +40,7 @@ func (a AssetAccount) CheckPassword(c *client.SafeguardClient) (PasswordActivity
 
 	query := fmt.Sprintf("AssetAccounts/%d/CheckPassword", a.Id)
 
-	response, err := c.PostRequest(query)
+	response, err := c.PostRequest(query, nil)
 	if err != nil {
 		return log, err
 	}

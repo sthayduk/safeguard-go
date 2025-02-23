@@ -14,7 +14,7 @@ func main() {
 		panic(err)
 	}
 
-	assetAccount, err := models.GetAssetAccount(sgc, "18", client.Fields{})
+	assetAccount, err := models.GetAssetAccount(sgc, 18, client.Fields{})
 	if err != nil {
 		panic(err)
 	}
