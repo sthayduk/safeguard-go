@@ -1,9 +1,7 @@
 # Safeguard Go
-Safeguard Go is a Go library for interacting with the OneIdentity Safeguard for Privileged Passwords REST API.
+A Go library for interacting with the OneIdentity Safeguard for Privileged Passwords REST API.
 
 ## Installation
-
-To install the library, use the following command:
 
 ```sh
 go get github.com/sthayduk/safeguard-go
@@ -15,96 +13,126 @@ The library requires SSL certificates for OAuth authentication:
 - `server.crt` and `server.key` - for the local HTTPS callback server
 - `pam.cer` - the Safeguard appliance certificate
 
+## Features
+
+Currently supports the following Safeguard resources:
+
+- Users
+  - Get users and user details
+  - Get linked accounts
+  - Get user roles
+  - Get user groups
+- Asset Groups
+  - Get asset groups and details
+- Asset Partitions
+  - Get partitions and details
+  - Get password rules
+- Policy Assets
+  - Get policy assets and details
+  - Get asset groups
+  - Get directory service entries
+  - Get policies
+- Policy Accounts
+  - Get policy accounts and details
+- Asset Accounts
+  - Get accounts and details
+- Reports
+  - Get account task schedules
+- Roles
+  - Get roles and details
+
 ## Usage
 
-### Initializing the Client
+### Authentication
+
+The client supports two authentication methods:
+
+#### Username/Password Authentication
 
 ```go
 import (
     "github.com/sthayduk/safeguard-go/client"
 )
 
-// Create a new client with debug logging enabled
+// Create a new client
 sgc := client.New("https://your-appliance.domain.com", "v4", true)
 
-// Connect using OAuth2.0
+// Login with username/password
+err := sgc.LoginWithPassword("username", "password")
+if err != nil {
+    panic(err)
+}
+```
+
+#### OAuth Authentication
+
+```go
+import (
+    "github.com/sthayduk/safeguard-go/client"
+)
+
+// Create a new client
+sgc := client.New("https://your-appliance.domain.com", "v4", true)
+
+// Login with OAuth (requires SSL certificates in prerequisites)
 err := sgc.OauthConnect()
 if err != nil {
     panic(err)
 }
 ```
 
-### Using Access Tokens
-
-You can also initialize the client with an existing access token:
+### Working with Users
 
 ```go
-sgc := client.New(applianceUrl, apiVersion, true)
-sgc.AccessToken = &client.TokenResponse{
-    AccessToken: "your-access-token",
-}
+import "github.com/sthayduk/safeguard-go/models"
 
-// Validate the token
-err := sgc.ValidateAccessToken()
-if err != nil {
-    panic(err)
-}
+// Get all users
+users, err := models.GetUsers(sgc, client.Filter{})
+
+// Get a specific user
+user, err := models.GetUser(sgc, userId, client.Fields{"Name", "Description"})
+
+// Get user's linked accounts
+accounts, err := user.GetLinkedAccounts(sgc)
+
+// Get user's roles
+roles, err := user.GetRoles(sgc)
 ```
 
-### Working with Asset Partitions
+### Working with Asset Groups
 
 ```go
-// Get all asset partitions
-partitions, err := models.GetAssetPartitions(sgc, client.Filter{})
-if err != nil {
-    panic(err)
-}
+// Get all asset groups
+groups, err := models.GetAssetGroups(sgc, client.Filter{})
 
-// Get a specific asset partition
-partition, err := models.GetAssetPartition(sgc, "1", client.Fields{})
-if err != nil {
-    panic(err)
-}
-
-// Get password rules for an asset partition
-rules, err := partition.GetPasswordRules(sgc)
-if err != nil {
-    panic(err)
-}
+// Get specific asset group details
+group, err := models.GetAssetGroup(sgc, groupId, client.Fields{"Name", "Description"})
 ```
 
-### Using Filters
+## Filters and Fields
+
+The API supports filtering and field selection:
 
 ```go
-// Create a filter for disabled items
-filter := client.Filter{
-    Fields: []string{"Disabled", "DisplayName"},
-}
+// Create a filter
+filter := client.Filter{}
 filter.AddFilter("Disabled", "eq", "true")
 
-// Use the filter in API calls
-results, err := models.GetAssetPartitions(sgc, filter)
+// Specify fields to return
+fields := client.Fields{"Name", "Description", "CreatedDate"}
+
+// Use in API calls
+assets, err := models.GetPolicyAssets(sgc, filter)
+asset, err := models.GetPolicyAsset(sgc, assetId, fields)
 ```
 
-## Environment Variables
+## Example Code
 
-The library supports the following environment variables:
-- `SAFEGUARD_ACCESS_TOKEN` - Pre-configured access token
-- `SAFEGUARD_HOST_URL` - Safeguard appliance URL
-- `SAFEGUARD_API_VERSION` - API version to use
-
-## Authentication Flow
-
-The library implements OAuth2.0 authentication with PKCE (Proof Key for Code Exchange):
-1. Generates a code verifier and challenge
-2. Starts a local HTTPS server to receive the callback
-3. Opens the browser for user authentication
-4. Exchanges the authorization code for an access token
-5. Converts the rSTS token to a Safeguard access token
+See the `examples/` directory for complete usage examples.
 
 ## Contributing
 
-Contributions are welcome! Please open an issue or submit a pull request.
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
