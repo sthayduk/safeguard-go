@@ -9,89 +9,98 @@ To install the library, use the following command:
 go get github.com/sthayduk/safeguard-go
 ```
 
+## Prerequisites
+
+The library requires SSL certificates for OAuth authentication:
+- `server.crt` and `server.key` - for the local HTTPS callback server
+- `pam.cer` - the Safeguard appliance certificate
+
 ## Usage
 
-### Creating a Filter
-
-To create a filter, initialize a new `Filter` struct:
+### Initializing the Client
 
 ```go
-import "github.com/sthayduk/safeguard-go/client"
+import (
+    "github.com/sthayduk/safeguard-go/client"
+)
 
-filter := &client.Filter{}
+// Create a new client with debug logging enabled
+sgc := client.New("https://your-appliance.domain.com", "v4", true)
+
+// Connect using OAuth2.0
+err := sgc.OauthConnect()
+if err != nil {
+    panic(err)
+}
 ```
 
-### Adding Fields
+### Using Access Tokens
 
-To add fields to the filter:
+You can also initialize the client with an existing access token:
 
 ```go
-filter.AddField("fieldName")
+sgc := client.New(applianceUrl, apiVersion, true)
+sgc.AccessToken = &client.TokenResponse{
+    AccessToken: "your-access-token",
+}
+
+// Validate the token
+err := sgc.ValidateAccessToken()
+if err != nil {
+    panic(err)
+}
 ```
 
-### Removing Fields
-
-To remove fields from the filter:
+### Working with Asset Partitions
 
 ```go
-filter.RemoveField("fieldName")
+// Get all asset partitions
+partitions, err := models.GetAssetPartitions(sgc, client.Filter{})
+if err != nil {
+    panic(err)
+}
+
+// Get a specific asset partition
+partition, err := models.GetAssetPartition(sgc, "1", client.Fields{})
+if err != nil {
+    panic(err)
+}
+
+// Get password rules for an asset partition
+rules, err := partition.GetPasswordRules(sgc)
+if err != nil {
+    panic(err)
+}
 ```
 
-### Getting Fields
-
-To get the list of fields:
+### Using Filters
 
 ```go
-fields := filter.GetFields()
+// Create a filter for disabled items
+filter := client.Filter{
+    Fields: []string{"Disabled", "DisplayName"},
+}
+filter.AddFilter("Disabled", "eq", "true")
+
+// Use the filter in API calls
+results, err := models.GetAssetPartitions(sgc, filter)
 ```
 
-### Adding Filters
+## Environment Variables
 
-To add a filter condition:
+The library supports the following environment variables:
+- `SAFEGUARD_ACCESS_TOKEN` - Pre-configured access token
+- `SAFEGUARD_HOST_URL` - Safeguard appliance URL
+- `SAFEGUARD_API_VERSION` - API version to use
 
-```go
-filter.AddFilter("fieldName", "operator", "value")
-```
+## Authentication Flow
 
-### Adding Order By
-
-To add an order by condition:
-
-```go
-filter.AddOrderBy("fieldName")
-```
-
-### Getting Order By
-
-To get the list of order by conditions:
-
-```go
-orderBy := filter.GetOrderBy()
-```
-
-### Removing Order By
-
-To remove an order by condition:
-
-```go
-filter.RemoveOrderBy("fieldName")
-```
-
-### Converting to Query String
-
-To convert the filter to a query string:
-
-```go
-queryString := filter.ToQueryString()
-```
-
-## Running Tests
-
-To run the tests, use the following command:
-
-```sh
-go test ./...
-```
+The library implements OAuth2.0 authentication with PKCE (Proof Key for Code Exchange):
+1. Generates a code verifier and challenge
+2. Starts a local HTTPS server to receive the callback
+3. Opens the browser for user authentication
+4. Exchanges the authorization code for an access token
+5. Converts the rSTS token to a Safeguard access token
 
 ## Contributing
 

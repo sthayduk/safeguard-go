@@ -78,7 +78,7 @@ func (c *SafeguardClient) sendHttpRequest(req *http.Request) ([]byte, error) {
 		return nil, err
 	}
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusAccepted {
 		log.Debugf("Response Status: %s", resp.Status)
 		log.Debugf("Response headers: %+v", resp.Header)
 		log.Debugf("Response body: %s", string(body))

@@ -1,6 +1,12 @@
 package models
 
-import "time"
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/sthayduk/safeguard-go/client"
+)
 
 // UserLogProperties represents the user properties in a log entry
 type UserLogProperties struct {
@@ -72,6 +78,143 @@ type PasswordActivityLog struct {
 	Log               []LogEntry              `json:"Log"`
 	ConnectionProps   ConnectionProperties    `json:"ConnectionProperties"`
 	CustomParams      []CustomScriptParameter `json:"CustomScriptParameters"`
+}
+
+func (p *PasswordActivityLog) CheckTaskState(c *client.SafeguardClient) (bool, error) {
+	task, err := p.getMatchingAccountTask(c)
+	if err != nil {
+		return false, err
+	}
+
+	if isTaskCompleteForType(task, p.LogTime, AccountTaskNames(p.Name)) {
+		return true, nil
+	}
+	if isTaskFailedForType(task, p.LogTime, AccountTaskNames(p.Name)) {
+		return false, nil
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return false, fmt.Errorf("timeout waiting for task state change")
+		case <-ticker.C:
+			newTask, err := p.getMatchingAccountTask(c)
+			if err != nil {
+				return false, err
+			}
+
+			if isTaskCompleteForType(newTask, p.LogTime, AccountTaskNames(p.Name)) {
+				return true, nil
+			}
+			if isTaskFailedForType(newTask, p.LogTime, AccountTaskNames(p.Name)) {
+				return false, nil
+			}
+		}
+	}
+}
+
+func isTaskCompleteForType(task AccountTaskData, logTime time.Time, taskType AccountTaskNames) bool {
+	var successTime time.Time
+	var successCounter int
+
+	switch taskType {
+	case CheckPassword:
+		successTime = task.TaskProperties.LastSuccessPasswordCheckDate
+	case ChangePassword:
+		successTime = task.TaskProperties.LastSuccessPasswordChangeDate
+	case CheckSshKey:
+		successTime = task.TaskProperties.LastSuccessSshKeyCheckDate
+	case ChangeSshKey:
+		successTime = task.TaskProperties.LastSuccessSshKeyChangeDate
+	case DiscoverAccounts:
+		successTime = task.TaskProperties.LastSuccessSshKeyDiscoveryDate
+	case CheckApiKey:
+		successCounter = task.TaskProperties.FailedApiKeyCheckAttempts
+		return successCounter == 0
+	case ChangeApiKey:
+		successCounter = task.TaskProperties.FailedApiKeyChangeAttempts
+		return successCounter == 0
+	default:
+		return false
+	}
+
+	return !successTime.IsZero() && (successTime.After(logTime) || successTime.Equal(logTime))
+}
+
+func isTaskFailedForType(task AccountTaskData, logTime time.Time, taskType AccountTaskNames) bool {
+	var failureTime time.Time
+	var failureCounter int
+
+	switch taskType {
+	case CheckPassword:
+		failureTime = task.TaskProperties.LastFailurePasswordCheckDate
+	case ChangePassword:
+		failureTime = task.TaskProperties.LastFailurePasswordChangeDate
+	case CheckSshKey:
+		failureTime = task.TaskProperties.LastFailureSshKeyCheckDate
+	case ChangeSshKey:
+		failureTime = task.TaskProperties.LastFailureSshKeyChangeDate
+	case DiscoverAccounts:
+		failureTime = task.TaskProperties.LastFailureSshKeyDiscoveryDate
+	case CheckApiKey:
+		failureCounter = task.TaskProperties.FailedApiKeyCheckAttempts
+		return failureCounter > 0
+	case ChangeApiKey:
+		failureCounter = task.TaskProperties.FailedApiKeyChangeAttempts
+		return failureCounter > 0
+	default:
+		return false
+	}
+
+	return !failureTime.IsZero() && (failureTime.After(logTime) || failureTime.Equal(logTime))
+}
+
+func getTaskIdForType(task AccountTaskData, taskType AccountTaskNames) string {
+	switch taskType {
+	case CheckPassword:
+		return task.TaskProperties.LastPasswordCheckTaskId
+	case ChangePassword:
+		return task.TaskProperties.LastPasswordChangeTaskId
+	case CheckSshKey:
+		return task.TaskProperties.LastSshKeyCheckTaskId
+	case ChangeSshKey:
+		return task.TaskProperties.LastSshKeyChangeTaskId
+	default:
+		return ""
+	}
+}
+
+func (p PasswordActivityLog) getMatchingAccountTask(c *client.SafeguardClient) (AccountTaskData, error) {
+	if p.Id == "" {
+		return AccountTaskData{}, fmt.Errorf("invalid task ID")
+	}
+
+	filter := client.Filter{}
+	filter.AddFilter("Id", "eq", fmt.Sprintf("%d", p.AccountId))
+
+	taskData, err := GetAccountTaskSchedules(c, AccountTaskNames(p.Name), filter)
+	if err != nil {
+		return AccountTaskData{}, err
+	}
+
+	if len(taskData) == 0 {
+		return AccountTaskData{}, fmt.Errorf("no tasks found for account %d", p.AccountId)
+	}
+
+	taskType := AccountTaskNames(p.Name)
+	for _, task := range taskData {
+		if getTaskIdForType(task, taskType) == p.Id {
+			return task, nil
+		}
+	}
+
+	return AccountTaskData{}, fmt.Errorf("no matching task found with ID %d for task type %s", p.AccountId, p.Name)
 }
 
 // PasswordChangeSchedule represents a schedule used by a partition profile to change passwords
