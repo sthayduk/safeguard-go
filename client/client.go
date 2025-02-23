@@ -22,13 +22,14 @@ const (
 )
 
 type SafeguardClient struct {
-	AccessToken   *TokenResponse
-	ApplicanceURL string
-	ApiVersion    string
-	HttpClient    *http.Client
-	tokenEndpoint string
-	redirectPort  int
-	redirectURI   string
+	AccessToken    *TokenResponse
+	ApplicanceURL  string
+	ApiVersion     string
+	HttpClient     *http.Client
+	tokenEndpoint  string
+	redirectPort   int
+	redirectURI    string
+	DefaultHeaders http.Header
 }
 
 type TokenResponse struct {
