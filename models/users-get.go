@@ -38,10 +38,10 @@ func GetUsers(c *client.SafeguardClient, fields client.Filter) ([]User, error) {
 // Returns:
 //   - User: The requested user object
 //   - error: An error if the request fails, nil otherwise
-func GetUser(c *client.SafeguardClient, id string, fields client.Fields) (User, error) {
+func GetUser(c *client.SafeguardClient, id int, fields client.Fields) (User, error) {
 	var user User
 
-	query := fmt.Sprintf("users/%s", id)
+	query := fmt.Sprintf("users/%d", id)
 	if len(fields) > 0 {
 		query += fields.ToQueryString()
 	}
