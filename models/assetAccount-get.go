@@ -38,10 +38,10 @@ func GetAssetAccounts(c *client.SafeguardClient, fields client.Filter) ([]AssetA
 // Returns:
 //   - AssetAccount: The requested asset account
 //   - error: An error if the request fails, nil otherwise
-func GetAssetAccount(c *client.SafeguardClient, id string, fields client.Fields) (AssetAccount, error) {
+func GetAssetAccount(c *client.SafeguardClient, id int, fields client.Fields) (AssetAccount, error) {
 	var user AssetAccount
 
-	query := fmt.Sprintf("AssetAccounts/%s", id)
+	query := fmt.Sprintf("AssetAccounts/%d", id)
 	if len(fields) > 0 {
 		query += fields.ToQueryString()
 	}

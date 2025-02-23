@@ -38,10 +38,10 @@ func GetRoles(c *client.SafeguardClient, fields client.Filter) ([]Role, error) {
 // Returns:
 //   - Role: The requested role object
 //   - error: An error if the request fails, nil otherwise
-func GetRole(c *client.SafeguardClient, id string, fields client.Fields) (Role, error) {
+func GetRole(c *client.SafeguardClient, id int, fields client.Fields) (Role, error) {
 	var userRole Role
 
-	query := fmt.Sprintf("Roles/%s", id)
+	query := fmt.Sprintf("Roles/%d", id)
 	if len(fields) > 0 {
 		query += fields.ToQueryString()
 	}

@@ -38,10 +38,10 @@ func GetAssetPartitions(c *client.SafeguardClient, fields client.Filter) ([]Asse
 // Returns:
 //   - AssetPartition: The requested asset partition object
 //   - error: An error if the request fails, nil otherwise
-func GetAssetPartition(c *client.SafeguardClient, id string, fields client.Fields) (AssetPartition, error) {
+func GetAssetPartition(c *client.SafeguardClient, id int, fields client.Fields) (AssetPartition, error) {
 	var AssetPartition AssetPartition
 
-	query := fmt.Sprintf("AssetPartitions/%s", id)
+	query := fmt.Sprintf("AssetPartitions/%d", id)
 	if len(fields) > 0 {
 		query += fields.ToQueryString()
 	}

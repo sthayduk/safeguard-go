@@ -38,10 +38,10 @@ func GetUserGroups(c *client.SafeguardClient, fields client.Filter) ([]UserGroup
 // Returns:
 //   - UserGroup: The requested user group object
 //   - error: An error if the request fails, nil otherwise
-func GetUserGroup(c *client.SafeguardClient, id string, fields client.Fields) (UserGroup, error) {
+func GetUserGroup(c *client.SafeguardClient, id int, fields client.Fields) (UserGroup, error) {
 	var userGroup UserGroup
 
-	query := fmt.Sprintf("UserGroups/%s", id)
+	query := fmt.Sprintf("UserGroups/%d", id)
 	if len(fields) > 0 {
 		query += fields.ToQueryString()
 	}
