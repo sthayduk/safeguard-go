@@ -29,14 +29,14 @@ func GetUserGroups(c *client.SafeguardClient, fields client.Filter) ([]UserGroup
 	return userGroups, nil
 }
 
-// GetUserGroup retrieves a specific user group by ID from Safeguard.
+// GetUserGroup retrieves details for a specific user group by ID.
 // Parameters:
 //   - c: The SafeguardClient instance for making API requests
-//   - id: The ID of the user group to retrieve
+//   - id: The numeric ID of the user group to retrieve
 //   - fields: Specific fields to include in the response
 //
 // Returns:
-//   - UserGroup: The requested user group
+//   - UserGroup: The requested user group object
 //   - error: An error if the request fails, nil otherwise
 func GetUserGroup(c *client.SafeguardClient, id string, fields client.Fields) (UserGroup, error) {
 	var userGroup UserGroup

@@ -29,14 +29,14 @@ func GetRoles(c *client.SafeguardClient, fields client.Filter) ([]Role, error) {
 	return userRoles, nil
 }
 
-// GetRole retrieves a specific role by ID from Safeguard.
+// GetRole retrieves details for a specific role by ID.
 // Parameters:
 //   - c: The SafeguardClient instance for making API requests
-//   - id: The ID of the role to retrieve
+//   - id: The numeric ID of the role to retrieve
 //   - fields: Specific fields to include in the response
 //
 // Returns:
-//   - Role: The requested role
+//   - Role: The requested role object
 //   - error: An error if the request fails, nil otherwise
 func GetRole(c *client.SafeguardClient, id string, fields client.Fields) (Role, error) {
 	var userRole Role

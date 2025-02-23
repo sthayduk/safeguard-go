@@ -7,10 +7,13 @@ import (
 	"github.com/sthayduk/safeguard-go/client"
 )
 
-// ChangePassword initiates a password change for the asset account.
+// ChangePassword initiates a password change operation for the asset account.
+// Parameters:
+//   - c: The SafeguardClient instance for making API requests
+//
 // Returns:
-//   - PasswordActivityLog: Details of the password change activity
-//   - error: An error if the request fails, nil otherwise
+//   - PasswordActivityLog: Log details of the password change activity
+//   - error: An error if the password change fails or cannot be initiated
 func (a AssetAccount) ChangePassword(c *client.SafeguardClient) (PasswordActivityLog, error) {
 	var log PasswordActivityLog
 
@@ -25,10 +28,13 @@ func (a AssetAccount) ChangePassword(c *client.SafeguardClient) (PasswordActivit
 	return log, nil
 }
 
-// CheckPassword verifies the current password of the asset account.
+// CheckPassword verifies if the current password for the asset account is valid.
+// Parameters:
+//   - c: The SafeguardClient instance for making API requests
+//
 // Returns:
-//   - PasswordActivityLog: Details of the password check activity
-//   - error: An error if the request fails, nil otherwise
+//   - PasswordActivityLog: Log details of the password check activity
+//   - error: An error if the password check fails or cannot be initiated
 func (a AssetAccount) CheckPassword(c *client.SafeguardClient) (PasswordActivityLog, error) {
 	var log PasswordActivityLog
 

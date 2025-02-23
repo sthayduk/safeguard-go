@@ -29,14 +29,14 @@ func GetUsers(c *client.SafeguardClient, fields client.Filter) ([]User, error) {
 	return users, nil
 }
 
-// GetUser retrieves a specific user by ID from Safeguard.
+// GetUser retrieves details for a specific user by their ID.
 // Parameters:
 //   - c: The SafeguardClient instance for making API requests
-//   - id: The ID of the user to retrieve
+//   - id: The numeric ID of the user to retrieve
 //   - fields: Specific fields to include in the response
 //
 // Returns:
-//   - User: The requested user
+//   - User: The requested user object
 //   - error: An error if the request fails, nil otherwise
 func GetUser(c *client.SafeguardClient, id string, fields client.Fields) (User, error) {
 	var user User
@@ -54,10 +54,10 @@ func GetUser(c *client.SafeguardClient, id string, fields client.Fields) (User, 
 	return user, nil
 }
 
-// GetLinkedAccounts retrieves the policy accounts linked to a specific user.
+// GetLinkedAccounts retrieves the policy accounts linked to a specific user ID.
 // Parameters:
 //   - c: The SafeguardClient instance for making API requests
-//   - id: The ID of the user
+//   - id: The numeric ID of the user to get linked accounts for
 //
 // Returns:
 //   - []PolicyAccount: A slice of linked policy accounts
