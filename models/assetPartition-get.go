@@ -29,14 +29,14 @@ func GetAssetPartitions(c *client.SafeguardClient, fields client.Filter) ([]Asse
 	return AssetPartitions, nil
 }
 
-// GetAssetPartition retrieves a specific asset partition by ID from Safeguard.
+// GetAssetPartition retrieves details for a specific asset partition by ID.
 // Parameters:
 //   - c: The SafeguardClient instance for making API requests
-//   - id: The ID of the asset partition to retrieve
+//   - id: The numeric ID of the asset partition to retrieve
 //   - fields: Specific fields to include in the response
 //
 // Returns:
-//   - AssetPartition: The requested asset partition
+//   - AssetPartition: The requested asset partition object
 //   - error: An error if the request fails, nil otherwise
 func GetAssetPartition(c *client.SafeguardClient, id string, fields client.Fields) (AssetPartition, error) {
 	var AssetPartition AssetPartition
@@ -52,29 +52,6 @@ func GetAssetPartition(c *client.SafeguardClient, id string, fields client.Field
 	}
 	json.Unmarshal(response, &AssetPartition)
 	return AssetPartition, nil
-}
-
-// GetPasswordRules retrieves the password rules for a specific asset partition.
-// Parameters:
-//   - c: The SafeguardClient instance for making API requests
-//   - AssetPartitionId: The ID of the asset partition
-//   - filter: Filter criteria for the request
-//
-// Returns:
-//   - []AccountPasswordRule: A slice of password rules
-//   - error: An error if the request fails, nil otherwise
-func GetPasswordRules(c *client.SafeguardClient, AssetPartitionId int, filter client.Filter) ([]AccountPasswordRule, error) {
-	var PasswordRules []AccountPasswordRule
-
-	query := fmt.Sprintf("AssetPartitions/%d/PasswordRules", AssetPartitionId) + filter.ToQueryString()
-
-	response, err := c.GetRequest(query)
-	if err != nil {
-		return nil, err
-	}
-
-	json.Unmarshal(response, &PasswordRules)
-	return PasswordRules, nil
 }
 
 // GetPasswordRules retrieves the password rules for this asset partition.

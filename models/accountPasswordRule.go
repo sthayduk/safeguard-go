@@ -2,7 +2,10 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
+
+	"github.com/sthayduk/safeguard-go/client"
 )
 
 // AccountPasswordRule represents a password rule used to generate account passwords
@@ -41,6 +44,29 @@ type AccountPasswordRule struct {
 	MaxConsecutiveAlphabeticCharacters      int       `json:"MaxConsecutiveAlphabeticCharacters"`
 	MaxConsecutiveAlphaNumericCharacters    int       `json:"MaxConsecutiveAlphaNumericCharacters"`
 	RepeatedCharacterRestriction            string    `json:"RepeatedCharacterRestriction"`
+}
+
+// GetPasswordRules retrieves the password rules for a specific asset partition.
+// Parameters:
+//   - c: The SafeguardClient instance for making API requests
+//   - AssetPartitionId: The ID of the asset partition
+//   - filter: Filter criteria for the request
+//
+// Returns:
+//   - []AccountPasswordRule: A slice of password rules
+//   - error: An error if the request fails, nil otherwise
+func GetPasswordRules(c *client.SafeguardClient, AssetPartitionId int, filter client.Filter) ([]AccountPasswordRule, error) {
+	var PasswordRules []AccountPasswordRule
+
+	query := fmt.Sprintf("AssetPartitions/%d/PasswordRules", AssetPartitionId) + filter.ToQueryString()
+
+	response, err := c.GetRequest(query)
+	if err != nil {
+		return nil, err
+	}
+
+	json.Unmarshal(response, &PasswordRules)
+	return PasswordRules, nil
 }
 
 func (r AccountPasswordRule) ToJson() (string, error) {
