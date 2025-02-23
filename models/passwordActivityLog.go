@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/sthayduk/safeguard-go/client"
 )
 
@@ -80,6 +81,14 @@ type PasswordActivityLog struct {
 	CustomParams      []CustomScriptParameter `json:"CustomScriptParameters"`
 }
 
+// CheckTaskState monitors the state of a password activity task.
+// It polls the task status periodically for up to 30 seconds.
+// Parameters:
+//   - c: The SafeguardClient instance for making API requests
+//
+// Returns:
+//   - bool: true if task completed successfully, false if failed
+//   - error: An error if monitoring fails or times out
 func (p *PasswordActivityLog) CheckTaskState(c *client.SafeguardClient) (bool, error) {
 	task, err := p.getMatchingAccountTask(c)
 	if err != nil {
@@ -195,26 +204,42 @@ func (p PasswordActivityLog) getMatchingAccountTask(c *client.SafeguardClient) (
 		return AccountTaskData{}, fmt.Errorf("invalid task ID")
 	}
 
+	_, err := uuid.Parse(p.Id)
+	if err != nil {
+		return AccountTaskData{}, fmt.Errorf("invalid task ID format: %v", err)
+	}
+
 	filter := client.Filter{}
 	filter.AddFilter("Id", "eq", fmt.Sprintf("%d", p.AccountId))
 
-	taskData, err := GetAccountTaskSchedules(c, AccountTaskNames(p.Name), filter)
-	if err != nil {
-		return AccountTaskData{}, err
-	}
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
-	if len(taskData) == 0 {
-		return AccountTaskData{}, fmt.Errorf("no tasks found for account %d", p.AccountId)
-	}
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
 
-	taskType := AccountTaskNames(p.Name)
-	for _, task := range taskData {
-		if getTaskIdForType(task, taskType) == p.Id {
-			return task, nil
+	for {
+		select {
+		case <-ctx.Done():
+			return AccountTaskData{}, fmt.Errorf("timeout waiting for task to become available")
+		case <-ticker.C:
+			taskData, err := GetAccountTaskSchedules(c, AccountTaskNames(p.Name), filter)
+			if err != nil {
+				continue
+			}
+
+			if len(taskData) == 0 {
+				continue
+			}
+
+			taskType := AccountTaskNames(p.Name)
+			for _, task := range taskData {
+				if getTaskIdForType(task, taskType) == p.Id {
+					return task, nil
+				}
+			}
 		}
 	}
-
-	return AccountTaskData{}, fmt.Errorf("no matching task found with ID %d for task type %s", p.AccountId, p.Name)
 }
 
 // PasswordChangeSchedule represents a schedule used by a partition profile to change passwords
