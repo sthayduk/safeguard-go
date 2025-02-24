@@ -3,10 +3,14 @@ package models
 import (
 	"encoding/json"
 	"time"
+
+	"github.com/sthayduk/safeguard-go/src/client"
 )
 
 // AssetPartition represents a collection of assets and accounts along with management configuration
 type AssetPartition struct {
+	client *client.SafeguardClient
+
 	Id                       int        `json:"Id"`
 	Name                     string     `json:"Name"`
 	Description              string     `json:"Description"`

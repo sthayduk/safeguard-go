@@ -1,6 +1,8 @@
 package models
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 // AccountTaskNames defines the supported task names for account tasks
 type AccountTaskNames string

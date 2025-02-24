@@ -26,6 +26,9 @@ func GetUsers(c *client.SafeguardClient, fields client.Filter) ([]User, error) {
 	}
 
 	json.Unmarshal(response, &users)
+	for i := range users {
+		users[i].client = c
+	}
 	return users, nil
 }
 
@@ -40,6 +43,7 @@ func GetUsers(c *client.SafeguardClient, fields client.Filter) ([]User, error) {
 //   - error: An error if the request fails, nil otherwise
 func GetUser(c *client.SafeguardClient, id int, fields client.Fields) (User, error) {
 	var user User
+	user.client = c
 
 	query := fmt.Sprintf("users/%d", id)
 	if len(fields) > 0 {
@@ -83,8 +87,8 @@ func GetLinkedAccounts(c *client.SafeguardClient, id string) ([]PolicyAccount, e
 // Returns:
 //   - []PolicyAccount: A slice of linked policy accounts
 //   - error: An error if the request fails, nil otherwise
-func (u User) GetLinkedAccounts(c *client.SafeguardClient) ([]PolicyAccount, error) {
-	return GetLinkedAccounts(c, fmt.Sprintf("%d", u.Id))
+func (u User) GetLinkedAccounts() ([]PolicyAccount, error) {
+	return GetLinkedAccounts(u.client, fmt.Sprintf("%d", u.Id))
 }
 
 // GetUserRoles retrieves the roles assigned to a specific user.
@@ -116,8 +120,8 @@ func GetUserRoles(c *client.SafeguardClient, id string) ([]Role, error) {
 // Returns:
 //   - []Role: A slice of assigned roles
 //   - error: An error if the request fails, nil otherwise
-func (u User) GetRoles(c *client.SafeguardClient) ([]Role, error) {
-	return GetUserRoles(c, fmt.Sprintf("%d", u.Id))
+func (u User) GetRoles() ([]Role, error) {
+	return GetUserRoles(u.client, fmt.Sprintf("%d", u.Id))
 }
 
 // GetGroups retrieves the groups that a specific user belongs to.
@@ -149,6 +153,6 @@ func GetGroups(c *client.SafeguardClient, id string) ([]UserGroup, error) {
 // Returns:
 //   - []UserGroup: A slice of user groups
 //   - error: An error if the request fails, nil otherwise
-func (u User) GetGroups(c *client.SafeguardClient) ([]UserGroup, error) {
-	return GetGroups(c, fmt.Sprintf("%d", u.Id))
+func (u User) GetGroups() ([]UserGroup, error) {
+	return GetGroups(u.client, fmt.Sprintf("%d", u.Id))
 }

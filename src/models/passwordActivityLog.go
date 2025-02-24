@@ -60,6 +60,8 @@ type CustomScriptParameter struct {
 
 // PasswordActivityLog represents a password activity log entry
 type PasswordActivityLog struct {
+	client *client.SafeguardClient
+
 	Id                string                  `json:"Id"`
 	LogTime           time.Time               `json:"LogTime"`
 	UserId            int                     `json:"UserId"`
@@ -89,8 +91,8 @@ type PasswordActivityLog struct {
 // Returns:
 //   - bool: true if task completed successfully, false if failed
 //   - error: An error if monitoring fails or times out
-func (p *PasswordActivityLog) CheckTaskState(c *client.SafeguardClient) (bool, error) {
-	task, err := p.getMatchingAccountTask(c)
+func (p *PasswordActivityLog) CheckTaskState() (bool, error) {
+	task, err := p.getMatchingAccountTask()
 	if err != nil {
 		return false, err
 	}
@@ -113,7 +115,7 @@ func (p *PasswordActivityLog) CheckTaskState(c *client.SafeguardClient) (bool, e
 		case <-ctx.Done():
 			return false, fmt.Errorf("timeout waiting for task state change")
 		case <-ticker.C:
-			newTask, err := p.getMatchingAccountTask(c)
+			newTask, err := p.getMatchingAccountTask()
 			if err != nil {
 				return false, err
 			}
@@ -199,7 +201,7 @@ func getTaskIdForType(task AccountTaskData, taskType AccountTaskNames) string {
 	}
 }
 
-func (p PasswordActivityLog) getMatchingAccountTask(c *client.SafeguardClient) (AccountTaskData, error) {
+func (p PasswordActivityLog) getMatchingAccountTask() (AccountTaskData, error) {
 	if p.Id == "" {
 		return AccountTaskData{}, fmt.Errorf("invalid task ID")
 	}
@@ -223,7 +225,7 @@ func (p PasswordActivityLog) getMatchingAccountTask(c *client.SafeguardClient) (
 		case <-ctx.Done():
 			return AccountTaskData{}, fmt.Errorf("timeout waiting for task to become available")
 		case <-ticker.C:
-			taskData, err := GetAccountTaskSchedules(c, AccountTaskNames(p.Name), filter)
+			taskData, err := GetAccountTaskSchedules(p.client, AccountTaskNames(p.Name), filter)
 			if err != nil {
 				continue
 			}

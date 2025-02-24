@@ -56,7 +56,7 @@ func main() {
 		assetGroupFilter := client.Filter{
 			Fields: []string{"Id", "Name", "Description"},
 		}
-		assetGroups, err := policyAsset.GetAssetGroups(sgc, assetGroupFilter)
+		assetGroups, err := policyAsset.GetAssetGroups(assetGroupFilter)
 		if err != nil {
 			log.Fatalf("Failed to get asset groups: %v", err)
 		}
@@ -70,7 +70,7 @@ func main() {
 		dseFilter := client.Filter{
 			Fields: []string{"Name", "DirectoryProperties"},
 		}
-		entries, err := policyAsset.GetDirectoryServiceEntries(sgc, dseFilter)
+		entries, err := policyAsset.GetDirectoryServiceEntries(dseFilter)
 		if err != nil {
 			log.Fatalf("Failed to get directory service entries: %v", err)
 		}
@@ -84,7 +84,7 @@ func main() {
 		policiesFilter := client.Filter{
 			Fields: []string{"PolicyId", "PolicyName"},
 		}
-		policies, err := policyAsset.GetPolicies(sgc, policiesFilter)
+		policies, err := policyAsset.GetPolicies(policiesFilter)
 		if err != nil {
 			log.Fatalf("Failed to get policies: %v", err)
 		}

@@ -3,9 +3,13 @@ package models
 import (
 	"encoding/json"
 	"time"
+
+	"github.com/sthayduk/safeguard-go/src/client"
 )
 
 type User struct {
+	client *client.SafeguardClient
+
 	Name                                      string                 `json:"Name,omitempty"`
 	PrimaryAuthenticationProvider             AuthenticationProvider `json:"PrimaryAuthenticationProvider,omitempty"`
 	Preferences                               []Preference           `json:"Preferences,omitempty"`

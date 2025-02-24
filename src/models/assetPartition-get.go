@@ -26,6 +26,9 @@ func GetAssetPartitions(c *client.SafeguardClient, fields client.Filter) ([]Asse
 	}
 
 	json.Unmarshal(response, &AssetPartitions)
+	for i := range AssetPartitions {
+		AssetPartitions[i].client = c
+	}
 	return AssetPartitions, nil
 }
 
@@ -40,6 +43,7 @@ func GetAssetPartitions(c *client.SafeguardClient, fields client.Filter) ([]Asse
 //   - error: An error if the request fails, nil otherwise
 func GetAssetPartition(c *client.SafeguardClient, id int, fields client.Fields) (AssetPartition, error) {
 	var AssetPartition AssetPartition
+	AssetPartition.client = c
 
 	query := fmt.Sprintf("AssetPartitions/%d", id)
 	if len(fields) > 0 {
@@ -61,6 +65,6 @@ func GetAssetPartition(c *client.SafeguardClient, id int, fields client.Fields) 
 // Returns:
 //   - []AccountPasswordRule: A slice of password rules
 //   - error: An error if the request fails, nil otherwise
-func (a AssetPartition) GetPasswordRules(c *client.SafeguardClient) ([]AccountPasswordRule, error) {
-	return GetPasswordRules(c, a.Id, client.Filter{})
+func (a AssetPartition) GetPasswordRules() ([]AccountPasswordRule, error) {
+	return GetPasswordRules(a.client, a.Id, client.Filter{})
 }

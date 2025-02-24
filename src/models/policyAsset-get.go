@@ -29,6 +29,9 @@ func GetPolicyAssets(c *client.SafeguardClient, fields client.Filter) ([]PolicyA
 	}
 
 	json.Unmarshal(response, &policyAssets)
+	for i := range policyAssets {
+		policyAssets[i].client = c
+	}
 	return policyAssets, nil
 }
 
@@ -46,6 +49,7 @@ func GetPolicyAssets(c *client.SafeguardClient, fields client.Filter) ([]PolicyA
 //   - error: An error if any occurred during the request.
 func GetPolicyAsset(c *client.SafeguardClient, id int, fields client.Fields) (PolicyAsset, error) {
 	var policyAsset PolicyAsset
+	policyAsset.client = c
 
 	query := fmt.Sprintf("PolicyAssets/%d", id)
 	if len(fields) > 0 {
@@ -70,12 +74,12 @@ func GetPolicyAsset(c *client.SafeguardClient, id int, fields client.Fields) (Po
 // Returns:
 //   - A slice of AssetGroup objects representing the asset groups associated with the policy asset.
 //   - An error if the request fails or the response cannot be unmarshaled.
-func (p PolicyAsset) GetAssetGroups(c *client.SafeguardClient, fields client.Filter) ([]AssetGroup, error) {
+func (p PolicyAsset) GetAssetGroups(fields client.Filter) ([]AssetGroup, error) {
 	var assetGroups []AssetGroup
 
 	query := fmt.Sprintf("PolicyAssets/%d/AssetGroups", p.Id) + fields.ToQueryString()
 
-	response, err := c.GetRequest(query)
+	response, err := p.client.GetRequest(query)
 	if err != nil {
 		return nil, err
 	}
@@ -94,12 +98,12 @@ func (p PolicyAsset) GetAssetGroups(c *client.SafeguardClient, fields client.Fil
 // Returns:
 //   - A slice of DirectoryServiceEntry objects.
 //   - An error if the request fails or the response cannot be unmarshaled.
-func (p PolicyAsset) GetDirectoryServiceEntries(c *client.SafeguardClient, fields client.Filter) ([]DirectoryServiceEntry, error) {
+func (p PolicyAsset) GetDirectoryServiceEntries(fields client.Filter) ([]DirectoryServiceEntry, error) {
 	var directoryServiceEntries []DirectoryServiceEntry
 
 	query := fmt.Sprintf("PolicyAssets/%d/DirectoryServiceEntries", p.Id) + fields.ToQueryString()
 
-	response, err := c.GetRequest(query)
+	response, err := p.client.GetRequest(query)
 	if err != nil {
 		return nil, err
 	}
@@ -118,12 +122,12 @@ func (p PolicyAsset) GetDirectoryServiceEntries(c *client.SafeguardClient, field
 // Returns:
 //   - A slice of AssetPolicy objects representing the policies associated with the PolicyAsset.
 //   - An error if the request fails or the response cannot be unmarshaled.
-func (p PolicyAsset) GetPolicies(c *client.SafeguardClient, fields client.Filter) ([]AssetPolicy, error) {
+func (p PolicyAsset) GetPolicies(fields client.Filter) ([]AssetPolicy, error) {
 	var policies []AssetPolicy
 
 	query := fmt.Sprintf("PolicyAssets/%d/Policies", p.Id) + fields.ToQueryString()
 
-	response, err := c.GetRequest(query)
+	response, err := p.client.GetRequest(query)
 	if err != nil {
 		return nil, err
 	}

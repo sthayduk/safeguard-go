@@ -19,12 +19,12 @@ func main() {
 		panic(err)
 	}
 
-	changePasswordTask, err := assetAccount.ChangePassword(sgc)
+	changePasswordTask, err := assetAccount.ChangePassword()
 	if err != nil {
 		panic(err)
 	}
 
-	state, err := changePasswordTask.CheckTaskState(sgc)
+	state, err := changePasswordTask.CheckTaskState()
 	if err != nil {
 		panic(err)
 	}

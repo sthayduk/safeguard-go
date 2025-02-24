@@ -1,12 +1,18 @@
 package models
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"github.com/sthayduk/safeguard-go/src/client"
+)
 
 // PolicyAsset represents an remote asset available for request.
 // A PolicyAsset is an alternate view of an asset that is used for AccessPolicies, AssetGroups,
 // and UserFavorites. The asset must have AllowSessionRequests set to true in order to be
 // used in UserFavorites or to be able to request a session on the asset.
 type PolicyAsset struct {
+	client *client.SafeguardClient
+
 	Id                 int                     `json:"Id"`
 	Name               string                  `json:"Name"`
 	AssetType          AssetType               `json:"AssetType"`

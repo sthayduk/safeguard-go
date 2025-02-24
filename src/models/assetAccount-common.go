@@ -3,6 +3,8 @@ package models
 import (
 	"encoding/json"
 	"time"
+
+	"github.com/sthayduk/safeguard-go/src/client"
 )
 
 type ManagedByUser struct {
@@ -136,6 +138,8 @@ type TaskProperties struct {
 }
 
 type AssetAccount struct {
+	client *client.SafeguardClient
+
 	Id                           int                  `json:"Id"`
 	Name                         string               `json:"Name"`
 	DistinguishedName            string               `json:"DistinguishedName"`

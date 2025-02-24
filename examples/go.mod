@@ -1,6 +1,6 @@
 module github.com/sthayduk/safeguard-go/examples
 
-go 1.24
+go 1.24.0
 
 require github.com/sthayduk/safeguard-go/src v0.0.0
 

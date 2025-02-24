@@ -26,6 +26,9 @@ func GetAssetAccounts(c *client.SafeguardClient, fields client.Filter) ([]AssetA
 	}
 
 	json.Unmarshal(response, &users)
+	for u := range users {
+		users[u].client = c
+	}
 	return users, nil
 }
 
@@ -40,6 +43,7 @@ func GetAssetAccounts(c *client.SafeguardClient, fields client.Filter) ([]AssetA
 //   - error: An error if the request fails, nil otherwise
 func GetAssetAccount(c *client.SafeguardClient, id int, fields client.Fields) (AssetAccount, error) {
 	var user AssetAccount
+	user.client = c
 
 	query := fmt.Sprintf("AssetAccounts/%d", id)
 	if len(fields) > 0 {
