@@ -90,3 +90,73 @@ func fetchAndPostPolicyAccount(c *client.SafeguardClient, policyAccount []Policy
 
 	return c.PostRequest(query, bytes.NewReader(policyAccountJson))
 }
+
+// CreateUser creates a new user in the Safeguard system.
+// It takes a SafeguardClient, a User object, an IdentityProvider, and an AuthenticationProvider as parameters.
+// It returns the created User object and an error if any occurred during the process.
+//
+// Parameters:
+//   - c: A pointer to the SafeguardClient used to make the request.
+//   - user: The User object containing the details of the user to be created.
+//   - identityProvider: The IdentityProvider associated with the user.
+//   - authProvider: The AuthenticationProvider associated with the user.
+//
+// Returns:
+//   - User: The created User object.
+//   - error: An error if any occurred during the user creation process.
+func CreateUser(c *client.SafeguardClient, user User) (User, error) {
+	var createdUser User
+
+	userJson, err := json.Marshal(user)
+	if err != nil {
+		return createdUser, err
+	}
+
+	response, err := c.PostRequest("users", bytes.NewReader(userJson))
+	if err != nil {
+		return createdUser, err
+	}
+
+	if err := json.Unmarshal(response, &createdUser); err != nil {
+		return createdUser, err
+	}
+
+	createdUser.client = c
+	return createdUser, nil
+}
+
+func (u User) SetAuthenticationProvider(c *client.SafeguardClient, authProvider AuthenticationProvider) (User, error) {
+	var updatedUser User
+
+	u.PrimaryAuthenticationProvider = authProvider
+
+	updatedUser, err := updateUser(c, u)
+	if err != nil {
+		return updatedUser, err
+	}
+
+	return updatedUser, nil
+}
+
+func updateUser(c *client.SafeguardClient, user User) (User, error) {
+	var updatedUser User
+
+	query := fmt.Sprintf("users/%d", user.Id)
+
+	userJson, err := json.Marshal(user)
+	if err != nil {
+		return updatedUser, err
+	}
+
+	response, err := c.PutRequest(query, bytes.NewReader(userJson))
+	if err != nil {
+		return updatedUser, err
+	}
+
+	if err := json.Unmarshal(response, &updatedUser); err != nil {
+		return updatedUser, err
+	}
+
+	updatedUser.client = c
+	return updatedUser, nil
+}

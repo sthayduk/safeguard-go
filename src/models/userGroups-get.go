@@ -25,7 +25,9 @@ func GetUserGroups(c *client.SafeguardClient, fields client.Filter) ([]UserGroup
 		return nil, err
 	}
 
-	json.Unmarshal(response, &userGroups)
+	if err := json.Unmarshal(response, &userGroups); err != nil {
+		return nil, err
+	}
 	return userGroups, nil
 }
 
@@ -50,6 +52,8 @@ func GetUserGroup(c *client.SafeguardClient, id int, fields client.Fields) (User
 	if err != nil {
 		return userGroup, err
 	}
-	json.Unmarshal(response, &userGroup)
+	if err := json.Unmarshal(response, &userGroup); err != nil {
+		return userGroup, err
+	}
 	return userGroup, nil
 }

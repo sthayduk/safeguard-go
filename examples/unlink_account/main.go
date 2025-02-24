@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/sthayduk/safeguard-go/examples/common"
 	"github.com/sthayduk/safeguard-go/src/models"
@@ -10,33 +11,30 @@ import (
 func main() {
 	sgc, err := common.InitClient()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
-	// Id 76 = "Stefan Hayduk"
+	// Get user with ID 76 ("Stefan Hayduk")
 	user, err := models.GetUser(sgc, 76, nil)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
-	// Id 133 = "da-andresen"
-	policyAccount, err := models.GetPolicyAccount(sgc, 133, nil)
+	// Get both policy accounts at once (133: "da-andresen", 134: "sa-andresen")
+	accounts := make([]models.PolicyAccount, 0, 2)
+	for _, id := range []int{133, 134} {
+		account, err := models.GetPolicyAccount(sgc, id, nil)
+		if err != nil {
+			log.Fatal(err)
+		}
+		accounts = append(accounts, account)
+	}
+
+	// Unlink all accounts at once
+	unlinkedAccounts, err := models.RemoveLinkedAccounts(sgc, user, accounts)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
-	linkedAccount, err := models.RemoveLinkedAccounts(sgc, user, []models.PolicyAccount{policyAccount})
-	if err != nil {
-		panic(err)
-	}
-
-	// Id 134 = "sa-andresen"
-	policyAccount, err = models.GetPolicyAccount(sgc, 134, nil)
-	if err != nil {
-		panic(err)
-	}
-	user.RemoveLinkedAccounts(sgc, []models.PolicyAccount{policyAccount})
-
-	fmt.Println(linkedAccount)
-
+	fmt.Printf("Successfully unlinked %d accounts\n", len(unlinkedAccounts))
 }

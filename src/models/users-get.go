@@ -25,7 +25,10 @@ func GetUsers(c *client.SafeguardClient, fields client.Filter) ([]User, error) {
 		return nil, err
 	}
 
-	json.Unmarshal(response, &users)
+	if err := json.Unmarshal(response, &users); err != nil {
+		return nil, err
+	}
+
 	for i := range users {
 		users[i].client = c
 	}
@@ -54,7 +57,11 @@ func GetUser(c *client.SafeguardClient, id int, fields client.Fields) (User, err
 	if err != nil {
 		return user, err
 	}
-	json.Unmarshal(response, &user)
+
+	if err := json.Unmarshal(response, &user); err != nil {
+		return user, err
+	}
+
 	return user, nil
 }
 
@@ -76,7 +83,10 @@ func GetLinkedAccounts(c *client.SafeguardClient, id string) ([]PolicyAccount, e
 		return nil, err
 	}
 
-	json.Unmarshal(response, &linkedAccounts)
+	if err := json.Unmarshal(response, &linkedAccounts); err != nil {
+		return nil, err
+	}
+
 	return linkedAccounts, nil
 }
 
@@ -109,7 +119,9 @@ func GetUserRoles(c *client.SafeguardClient, id string) ([]Role, error) {
 		return nil, err
 	}
 
-	json.Unmarshal(response, &roles)
+	if err := json.Unmarshal(response, &roles); err != nil {
+		return nil, err
+	}
 	return roles, nil
 }
 
@@ -142,7 +154,9 @@ func GetGroups(c *client.SafeguardClient, id string) ([]UserGroup, error) {
 		return nil, err
 	}
 
-	json.Unmarshal(response, &userGroups)
+	if err := json.Unmarshal(response, &userGroups); err != nil {
+		return nil, err
+	}
 	return userGroups, nil
 }
 
@@ -155,4 +169,24 @@ func GetGroups(c *client.SafeguardClient, id string) ([]UserGroup, error) {
 //   - error: An error if the request fails, nil otherwise
 func (u User) GetGroups() ([]UserGroup, error) {
 	return GetGroups(u.client, fmt.Sprintf("%d", u.Id))
+}
+
+func GetUserPreferences(c *client.SafeguardClient, id int) ([]Preference, error) {
+	var userPreferences []Preference
+
+	query := fmt.Sprintf("users/%d/preferences", id)
+
+	response, err := c.GetRequest(query)
+	if err != nil {
+		return userPreferences, err
+	}
+
+	if err := json.Unmarshal(response, &userPreferences); err != nil {
+		return userPreferences, err
+	}
+	return userPreferences, nil
+}
+
+func (u User) GetPreferences() ([]Preference, error) {
+	return GetUserPreferences(u.client, u.Id)
 }

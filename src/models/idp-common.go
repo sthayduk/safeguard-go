@@ -2,10 +2,14 @@ package models
 
 import (
 	"time"
+
+	"github.com/sthayduk/safeguard-go/src/client"
 )
 
 // IdentityProvider represents the structure for the given JSON array
 type IdentityProvider struct {
+	client *client.SafeguardClient
+
 	Id                       int                   `json:"Id,omitempty"`
 	TypeReferenceName        string                `json:"TypeReferenceName,omitempty"`
 	Name                     string                `json:"Name,omitempty"`
@@ -82,6 +86,7 @@ type UserTemplate struct {
 }
 
 type DirectoryProperties struct {
+	DomainName                     string               `json:"DomainName,omitempty"`
 	ForestRootDomain               string               `json:"ForestRootDomain,omitempty"`
 	SynchronizationIntervalMinutes int                  `json:"SynchronizationIntervalMinutes,omitempty"`
 	LastSynchronizedDate           time.Time            `json:"LastSynchronizedDate,omitempty"`

@@ -25,7 +25,9 @@ func GetRoles(c *client.SafeguardClient, fields client.Filter) ([]Role, error) {
 		return nil, err
 	}
 
-	json.Unmarshal(response, &userRoles)
+	if err := json.Unmarshal(response, &userRoles); err != nil {
+		return nil, err
+	}
 	return userRoles, nil
 }
 
@@ -50,6 +52,8 @@ func GetRole(c *client.SafeguardClient, id int, fields client.Fields) (Role, err
 	if err != nil {
 		return userRole, err
 	}
-	json.Unmarshal(response, &userRole)
+	if err := json.Unmarshal(response, &userRole); err != nil {
+		return userRole, err
+	}
 	return userRole, nil
 }

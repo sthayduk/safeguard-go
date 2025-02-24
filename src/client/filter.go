@@ -162,7 +162,7 @@ func (f *Filter) generateCountQuery() string {
 //   - value: The value to compare the field against.
 func (f *Filter) AddFilter(field, operator, value string) {
 	escapedValue := escapeSpecialChars(value)
-	f.Filter = FilterQuery(string(f.Filter) + field + " " + operator + " " + escapedValue)
+	f.Filter = FilterQuery(string(f.Filter) + field + " " + operator + " \"" + escapedValue + "\"")
 }
 
 // escapeSpecialChars escapes special characters in the filter value.

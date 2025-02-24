@@ -25,7 +25,10 @@ func GetAssetAccounts(c *client.SafeguardClient, fields client.Filter) ([]AssetA
 		return nil, err
 	}
 
-	json.Unmarshal(response, &users)
+	if err := json.Unmarshal(response, &users); err != nil {
+		return nil, err
+	}
+
 	for u := range users {
 		users[u].client = c
 	}
@@ -54,6 +57,8 @@ func GetAssetAccount(c *client.SafeguardClient, id int, fields client.Fields) (A
 	if err != nil {
 		return user, err
 	}
-	json.Unmarshal(response, &user)
+	if err := json.Unmarshal(response, &user); err != nil {
+		return user, err
+	}
 	return user, nil
 }

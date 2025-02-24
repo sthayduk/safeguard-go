@@ -3,10 +3,14 @@ package models
 import (
 	"encoding/json"
 	"time"
+
+	"github.com/sthayduk/safeguard-go/src/client"
 )
 
 // UserGroup represents a group of users in Safeguard
 type UserGroup struct {
+	client *client.SafeguardClient
+
 	Id                           int                          `json:"Id"`
 	Name                         string                       `json:"Name"`
 	Description                  string                       `json:"Description"`

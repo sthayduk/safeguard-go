@@ -125,15 +125,15 @@ func TestAddFilter(t *testing.T) {
 			field:    "field1",
 			operator: "eq",
 			value:    "value1",
-			expected: "field1 eq value1",
+			expected: `field1 eq "value1"`,
 		},
 		{
 			name:     "Add filter to non-empty filter",
-			initial:  "field1 eq value1",
+			initial:  `field1 eq "value1"`,
 			field:    "field2",
 			operator: "ne",
 			value:    "value2",
-			expected: "field1 eq value1field2 ne value2",
+			expected: `field1 eq "value1"field2 ne "value2"`,
 		},
 		{
 			name:     "Add filter with special characters",
@@ -141,7 +141,7 @@ func TestAddFilter(t *testing.T) {
 			field:    "field1",
 			operator: "contains",
 			value:    `value"with\special*chars`,
-			expected: `field1 contains value\"with\\special\*chars`,
+			expected: `field1 contains "value\"with\\special\*chars"`,
 		},
 	}
 
@@ -302,9 +302,9 @@ func TestToQueryString(t *testing.T) {
 		{
 			name: "Filter with filter query",
 			filter: &Filter{
-				Filter: FilterQuery("field1 eq value1"),
+				Filter: FilterQuery(`field1 eq "value1"`),
 			},
-			expected: "?filter=field1%20eq%20value1&count=false",
+			expected: `?filter=field1%20eq%20%22value1%22&count=false`,
 		},
 		{
 			name: "Filter with all parameters",
@@ -312,9 +312,9 @@ func TestToQueryString(t *testing.T) {
 				Fields:  Fields{"field1", "field2"},
 				Orderby: OrderBy{"field1", "field2"},
 				Count:   true,
-				Filter:  FilterQuery("field1 eq value1"),
+				Filter:  FilterQuery(`field1 eq "value1"`),
 			},
-			expected: "?filter=field1%20eq%20value1&fields=field1%2Cfield2&count=true&orderby=field1%2Cfield2",
+			expected: `?filter=field1%20eq%20%22value1%22&fields=field1%2Cfield2&count=true&orderby=field1%2Cfield2`,
 		},
 	}
 

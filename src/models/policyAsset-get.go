@@ -28,7 +28,9 @@ func GetPolicyAssets(c *client.SafeguardClient, fields client.Filter) ([]PolicyA
 		return nil, err
 	}
 
-	json.Unmarshal(response, &policyAssets)
+	if err := json.Unmarshal(response, &policyAssets); err != nil {
+		return nil, err
+	}
 	for i := range policyAssets {
 		policyAssets[i].client = c
 	}
@@ -60,7 +62,9 @@ func GetPolicyAsset(c *client.SafeguardClient, id int, fields client.Fields) (Po
 	if err != nil {
 		return policyAsset, err
 	}
-	json.Unmarshal(response, &policyAsset)
+	if err := json.Unmarshal(response, &policyAsset); err != nil {
+		return policyAsset, err
+	}
 	return policyAsset, nil
 }
 
@@ -84,7 +88,9 @@ func (p PolicyAsset) GetAssetGroups(fields client.Filter) ([]AssetGroup, error) 
 		return nil, err
 	}
 
-	json.Unmarshal(response, &assetGroups)
+	if err := json.Unmarshal(response, &assetGroups); err != nil {
+		return nil, err
+	}
 	return assetGroups, nil
 }
 
@@ -108,7 +114,9 @@ func (p PolicyAsset) GetDirectoryServiceEntries(fields client.Filter) ([]Directo
 		return nil, err
 	}
 
-	json.Unmarshal(response, &directoryServiceEntries)
+	if err := json.Unmarshal(response, &directoryServiceEntries); err != nil {
+		return nil, err
+	}
 	return directoryServiceEntries, nil
 }
 
@@ -132,6 +140,8 @@ func (p PolicyAsset) GetPolicies(fields client.Filter) ([]AssetPolicy, error) {
 		return nil, err
 	}
 
-	json.Unmarshal(response, &policies)
+	if err := json.Unmarshal(response, &policies); err != nil {
+		return nil, err
+	}
 	return policies, nil
 }

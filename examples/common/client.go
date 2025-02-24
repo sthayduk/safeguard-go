@@ -15,13 +15,13 @@ func InitClient() (*client.SafeguardClient, error) {
 	var sgc *client.SafeguardClient
 
 	if accessToken == "" {
-		sgc = client.New(applianceUrl, apiVersion, true)
+		sgc = client.New(applianceUrl, apiVersion, false)
 		err := sgc.OauthConnect()
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		sgc = client.New(applianceUrl, apiVersion, true)
+		sgc = client.New(applianceUrl, apiVersion, false)
 		sgc.AccessToken = &client.TokenResponse{
 			AccessToken: accessToken,
 		}

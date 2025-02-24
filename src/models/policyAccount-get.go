@@ -29,6 +29,11 @@ func GetPolicyAccounts(c *client.SafeguardClient, fields client.Filter) ([]Polic
 	}
 
 	json.Unmarshal(response, &policyAccounts)
+
+	for i := range policyAccounts {
+		policyAccounts[i].client = c
+	}
+
 	return policyAccounts, nil
 }
 
@@ -57,5 +62,6 @@ func GetPolicyAccount(c *client.SafeguardClient, id int, fields client.Fields) (
 		return policyAccount, err
 	}
 	json.Unmarshal(response, &policyAccount)
+	policyAccount.client = c
 	return policyAccount, nil
 }

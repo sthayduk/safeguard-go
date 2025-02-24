@@ -1,9 +1,15 @@
 package models
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"github.com/sthayduk/safeguard-go/src/client"
+)
 
 // PolicyAccount represents a Safeguard account with its associated policies and properties
 type PolicyAccount struct {
+	client *client.SafeguardClient
+
 	Id                          int               `json:"Id"`
 	Name                        string            `json:"Name"`
 	Description                 string            `json:"Description"`
