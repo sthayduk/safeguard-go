@@ -1,10 +1,7 @@
 package main
 
 import (
-	"fmt"
 	"os"
-
-	"github.com/sthayduk/safeguard-go/models"
 
 	"github.com/sthayduk/safeguard-go/client"
 )
@@ -43,80 +40,5 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
-	filter := client.Filter{
-		Fields: []string{"Disabled", "DisplayName"},
-	}
-
-	filter.AddFilter("Disabled", "eq", "true")
-
-	me, err := models.GetAssetPartitions(sgc, client.Filter{})
-	if err != nil {
-		panic(err)
-	}
-
-	for _, user := range me {
-		jsonStr, err := user.ToJson()
-		if err != nil {
-			panic(err)
-		}
-		fmt.Printf("%s", jsonStr)
-	}
-
-	user, err := models.GetAssetPartition(sgc, "1", client.Fields{})
-	if err != nil {
-		panic(err)
-	}
-
-	linkedAccounts, err := user.GetPasswordRules(sgc)
-	if err != nil {
-		panic(err)
-	}
-
-	for _, account := range linkedAccounts {
-		jsonStr, err := account.ToJson()
-		if err != nil {
-			panic(err)
-		}
-		fmt.Printf("%s", jsonStr)
-	}
-
-	taskFilter := client.Filter{}
-	taskFilter.AddFilter("Id", "eq", "18")
-
-	task, err := models.GetAccountTaskSchedules(sgc, models.AccountTaskNames("CheckPassword"), taskFilter)
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Print(task)
-
-	assetAccount, err := models.GetAssetAccount(sgc, "18", client.Fields{})
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Print(assetAccount)
-
-	changePasswordTask, err := assetAccount.ChangePassword(sgc)
-	if err != nil {
-		panic(err)
-	}
-	state, err := changePasswordTask.CheckTaskState(sgc)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("Password Change State: ", state)
-
-	checkPasswordTask, err := assetAccount.CheckPassword(sgc)
-	if err != nil {
-		panic(err)
-	}
-
-	state, err = checkPasswordTask.CheckTaskState(sgc)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("Password Check State: ", state)
 
 }
