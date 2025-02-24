@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 
+	"github.com/sthayduk/safeguard-go/examples/common"
 	"github.com/sthayduk/safeguard-go/src/client"
-	"github.com/sthayduk/safeguard-go/src/examples/common"
 	"github.com/sthayduk/safeguard-go/src/models"
 )
 
