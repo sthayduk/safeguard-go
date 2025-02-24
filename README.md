@@ -4,7 +4,7 @@ A Go library for interacting with the OneIdentity Safeguard for Privileged Passw
 ## Installation
 
 ```sh
-go get github.com/sthayduk/safeguard-go
+go get github.com/sthayduk/safeguard-go/src
 ```
 
 ## Prerequisites
