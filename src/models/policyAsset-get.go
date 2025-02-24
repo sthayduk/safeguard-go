@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/sthayduk/safeguard-go/client"
+	"github.com/sthayduk/safeguard-go/src/client"
 )
 
 // GetPolicyAssets retrieves a list of policy assets from the Safeguard API.

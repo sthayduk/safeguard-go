@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/sthayduk/safeguard-go/client"
+	"github.com/sthayduk/safeguard-go/src/client"
 )
 
 // GetAccountTaskSchedules retrieves the account task schedules for a given task name and filter.

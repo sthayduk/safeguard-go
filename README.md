@@ -51,7 +51,7 @@ The client supports two authentication methods:
 
 ```go
 import (
-    "github.com/sthayduk/safeguard-go/client"
+    "github.com/sthayduk/safeguard-go/src/client"
 )
 
 // Create a new client
@@ -68,7 +68,7 @@ if err != nil {
 
 ```go
 import (
-    "github.com/sthayduk/safeguard-go/client"
+    "github.com/sthayduk/safeguard-go/src/client"
 )
 
 // Create a new client

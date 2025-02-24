@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/sthayduk/safeguard-go/client"
+	"github.com/sthayduk/safeguard-go/src/client"
 )
 
 // GetPolicyAccounts retrieves a list of policy accounts from the Safeguard API.

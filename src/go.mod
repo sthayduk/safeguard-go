@@ -1,4 +1,4 @@
-module github.com/sthayduk/safeguard-go
+module github.com/sthayduk/safeguard-go/src
 
 go 1.24.0
 

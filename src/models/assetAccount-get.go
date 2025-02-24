@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/sthayduk/safeguard-go/client"
+	"github.com/sthayduk/safeguard-go/src/client"
 )
 
 // GetAssetAccounts retrieves a list of asset accounts from Safeguard.

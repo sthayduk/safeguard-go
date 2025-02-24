@@ -3,7 +3,7 @@ package common
 import (
 	"os"
 
-	"github.com/sthayduk/safeguard-go/client"
+	"github.com/sthayduk/safeguard-go/src/client"
 )
 
 // InitClient creates and initializes a SafeguardClient using environment variables

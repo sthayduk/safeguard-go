@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/sthayduk/safeguard-go/client"
+	"github.com/sthayduk/safeguard-go/src/client"
 )
 
 func GetAssetGroups(c *client.SafeguardClient, fields client.Filter) ([]AssetGroup, error) {

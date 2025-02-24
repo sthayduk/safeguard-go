@@ -3,7 +3,7 @@ package models
 import (
 	"encoding/json"
 
-	"github.com/sthayduk/safeguard-go/client"
+	"github.com/sthayduk/safeguard-go/src/client"
 )
 
 // GetMe retrieves information about the currently authenticated user.
