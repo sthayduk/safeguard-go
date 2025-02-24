@@ -17,37 +17,47 @@ The library requires SSL certificates for OAuth authentication:
 
 Currently supports the following Safeguard resources:
 
+- Authentication
+  - Username/Password authentication
+  - OAuth authentication
+  - Multiple authentication provider support
 - Users
   - Get users and user details
   - Get linked accounts
-  - Get user roles
-  - Get user groups
-- Asset Groups
-  - Get asset groups and details
-- Asset Partitions
-  - Get partitions and details
-  - Get password rules
-- Policy Assets
-  - Get policy assets and details
-  - Get asset groups
-  - Get directory service entries
-  - Get policies
-- Policy Accounts
-  - Get policy accounts and details
-- Asset Accounts
-  - Get accounts and details
+  - Get user roles and groups
+  - Get user preferences
+  - Delete users
+  - Link and Unlink PolicyAccounts
+- Identity Providers
+  - Get providers and details
+  - Get directory users
+  - Get directory groups
+  - Support for multiple provider types (LDAP, RADIUS, etc.)
+- User Groups
+  - Get groups and details
+  - Directory properties support
+- Asset Management
+  - Asset Partitions
+    - Get partitions and details
+    - Get password rules
+  - Asset Groups
+    - Get asset groups and details
+    - Dynamic grouping rules
+  - Asset Accounts
+    - Get accounts and details
+    - Password operations (check/change)
+  - Policy Assets
+    - Get policy assets
+    - Asset policy management
 - Reports
-  - Get account task schedules
-- Roles
-  - Get roles and details
+  - Account task schedules
+  - Task execution history
 
 ## Usage
 
 ### Authentication
 
-The client supports two authentication methods:
-
-#### Username/Password Authentication
+The client supports multiple authentication methods:
 
 ```go
 import (
@@ -62,19 +72,8 @@ err := sgc.LoginWithPassword("username", "password")
 if err != nil {
     panic(err)
 }
-```
 
-#### OAuth Authentication
-
-```go
-import (
-    "github.com/sthayduk/safeguard-go/src/client"
-)
-
-// Create a new client
-sgc := client.New("https://your-appliance.domain.com", "v4", true)
-
-// Login with OAuth (requires SSL certificates in prerequisites)
+// Or login with OAuth
 err := sgc.OauthConnect()
 if err != nil {
     panic(err)
@@ -84,7 +83,10 @@ if err != nil {
 ### Working with Users
 
 ```go
-import "github.com/sthayduk/safeguard-go/models"
+import (
+    "github.com/sthayduk/safeguard-go/src/models"
+    "github.com/sthayduk/safeguard-go/src/client"
+)
 
 // Get all users
 users, err := models.GetUsers(sgc, client.Filter{})
@@ -93,23 +95,51 @@ users, err := models.GetUsers(sgc, client.Filter{})
 user, err := models.GetUser(sgc, userId, client.Fields{"Name", "Description"})
 
 // Get user's linked accounts
-accounts, err := user.GetLinkedAccounts(sgc)
+accounts, err := user.GetLinkedAccounts()
 
 // Get user's roles
-roles, err := user.GetRoles(sgc)
+roles, err := user.GetRoles()
+
+// Get user's groups
+groups, err := user.GetGroups()
+
+// Delete a user
+err = user.Delete()
 ```
 
-### Working with Asset Groups
+### Working with Identity Providers
 
 ```go
-// Get all asset groups
-groups, err := models.GetAssetGroups(sgc, client.Filter{})
+// Get all identity providers
+providers, err := models.GetIdentityProviders(sgc)
 
-// Get specific asset group details
-group, err := models.GetAssetGroup(sgc, groupId, client.Fields{"Name", "Description"})
+// Get specific provider
+provider, err := models.GetIdentityProvider(sgc, providerId)
+
+// Get directory users from provider
+users, err := provider.GetDirectoryUsers(client.Filter{})
+
+// Get directory groups from provider
+groups, err := provider.GetDirectoryGroups(client.Filter{})
 ```
 
-## Filters and Fields
+### Working with Asset Accounts
+
+```go
+// Get all asset accounts
+accounts, err := models.GetAssetAccounts(sgc, client.Filter{})
+
+// Get specific account
+account, err := models.GetAssetAccount(sgc, accountId, client.Fields{})
+
+// Check password
+log, err := account.CheckPassword()
+
+// Change password
+log, err := account.ChangePassword()
+```
+
+## Query Parameters
 
 The API supports filtering and field selection:
 
@@ -117,18 +147,15 @@ The API supports filtering and field selection:
 // Create a filter
 filter := client.Filter{}
 filter.AddFilter("Disabled", "eq", "true")
+filter.AddFilter("Name", "like", "admin")
 
 // Specify fields to return
 fields := client.Fields{"Name", "Description", "CreatedDate"}
 
 // Use in API calls
-assets, err := models.GetPolicyAssets(sgc, filter)
-asset, err := models.GetPolicyAsset(sgc, assetId, fields)
+users, err := models.GetUsers(sgc, filter)
+user, err := models.GetUser(sgc, userId, fields)
 ```
-
-## Example Code
-
-See the `examples/` directory for complete usage examples.
 
 ## Contributing
 

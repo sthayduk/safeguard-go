@@ -7,6 +7,41 @@ import (
 	"github.com/sthayduk/safeguard-go/src/client"
 )
 
+type TypeReferenceName string
+
+const (
+	Unknown          TypeReferenceName = "Unknown"
+	LocalMachine     TypeReferenceName = "LocalMachine"
+	Certificate      TypeReferenceName = "Certificate"
+	DirectoryAccount TypeReferenceName = "DirectoryAccount"
+	ExternalFed      TypeReferenceName = "ExternalFederation"
+	Radius           TypeReferenceName = "Radius"
+	OneLoginMfa      TypeReferenceName = "OneLoginMfa"
+	Fido2            TypeReferenceName = "Fido2"
+	Starling         TypeReferenceName = "Starling"
+)
+
+type AuthenticationProvider struct {
+	client *client.SafeguardClient
+
+	Id                 int    `json:"Id,omitempty"`
+	Name               string `json:"Name,omitempty"`
+	TypeReferenceName  string `json:"TypeReferenceName,omitempty"`
+	IdentityProviderId int    `json:"IdentityProviderId,omitempty"`
+	Identity           string `json:"Identity"`
+	RstsProviderId     string `json:"RstsProviderId,omitempty"`
+	RstsProviderScope  string `json:"RstsProviderScope,omitempty"`
+	ForceAsDefault     bool   `json:"ForceAsDefault,omitempty"`
+}
+
+func (a AuthenticationProvider) ToJson() (string, error) {
+	userJSON, err := json.Marshal(a)
+	if err != nil {
+		return "", err
+	}
+	return string(userJSON), nil
+}
+
 // GetAuthenticationProviders retrieves a list of authentication providers from the Safeguard API.
 // It sends a GET request to the "AuthenticationProviders" endpoint and unmarshals the response
 // into a slice of AuthenticationProvider structs. Each AuthenticationProvider is then associated

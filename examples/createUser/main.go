@@ -70,7 +70,7 @@ func main() {
 	if err != nil {
 		logger.Fatalf("Failed to get Authentication Provider: %v", err)
 	}
-	response, err = response.SetAuthenticationProvider(sgc, authProvider)
+	response, err = response.SetAuthenticationProvider(authProvider)
 	if err != nil {
 		logger.Fatalf("Failed to set Authentication Provider: %v", err)
 	}
