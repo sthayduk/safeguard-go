@@ -180,3 +180,29 @@ func GetPasswordRules(c *client.SafeguardClient, AssetPartitionId int, filter cl
 	}
 	return PasswordRules, nil
 }
+
+// DeleteAssetPartition deletes an asset partition with the specified ID using the provided SafeguardClient.
+//
+// Parameters:
+//   - c: A pointer to a SafeguardClient instance used to make the delete request.
+//   - id: The ID of the asset partition to be deleted.
+//
+// Returns:
+//   - error: An error object if the delete request fails, otherwise nil.
+func DeleteAssetPartition(c *client.SafeguardClient, id int) error {
+	query := fmt.Sprintf("AssetPartitions/%d", id)
+
+	_, err := c.DeleteRequest(query)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Delete removes the current AssetPartition instance from the system.
+// It calls the DeleteAssetPartition function with the client and Id of the AssetPartition.
+// Returns an error if the deletion fails.
+func (a AssetPartition) Delete() error {
+	return DeleteAssetPartition(a.client, a.Id)
+}

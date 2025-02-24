@@ -8,6 +8,7 @@ import (
 	"github.com/sthayduk/safeguard-go/src/client"
 )
 
+// ManagedByUser represents a user who manages the asset account
 type ManagedByUser struct {
 	DisplayName                       string `json:"DisplayName"`
 	Id                                int    `json:"Id"`
@@ -22,6 +23,7 @@ type ManagedByUser struct {
 	FullDisplayName                   string `json:"FullDisplayName"`
 }
 
+// Tag represents a tag associated with an asset account
 type Tag struct {
 	Id            int    `json:"Id"`
 	Name          string `json:"Name"`
@@ -29,6 +31,7 @@ type Tag struct {
 	AdminAssigned bool   `json:"AdminAssigned"`
 }
 
+// Profile represents a profile associated with an asset account
 type Profile struct {
 	Id            int    `json:"Id"`
 	Name          string `json:"Name"`
@@ -36,12 +39,14 @@ type Profile struct {
 	EffectiveName string `json:"EffectiveName"`
 }
 
+// DiscoveredGroup represents a discovered group associated with an asset account
 type DiscoveredGroup struct {
 	DiscoveredGroupId                string `json:"DiscoveredGroupId"`
 	DiscoveredGroupName              string `json:"DiscoveredGroupName"`
 	DiscoveredGroupDistinguishedName string `json:"DiscoveredGroupDistinguishedName"`
 }
 
+// DiscoveredProperties represents properties discovered for an asset account
 type DiscoveredProperties struct {
 	AccountDiscoveryScheduleId   int               `json:"AccountDiscoveryScheduleId"`
 	AccountDiscoveryScheduleName string            `json:"AccountDiscoveryScheduleName"`
@@ -50,12 +55,14 @@ type DiscoveredProperties struct {
 	DiscoveredGroups             []DiscoveredGroup `json:"DiscoveredGroups"`
 }
 
+// AssetDirectoryProperties represents directory properties of an asset
 type AssetDirectoryProperties struct {
 	NetbiosName string `json:"NetbiosName"`
 	ObjectGuid  string `json:"ObjectGuid"`
 	ObjectSid   string `json:"ObjectSid"`
 }
 
+// SyncGroup represents a synchronization group for an asset account
 type SyncGroup struct {
 	Id       int    `json:"Id"`
 	Name     string `json:"Name"`
@@ -63,6 +70,7 @@ type SyncGroup struct {
 	Disabled bool   `json:"Disabled"`
 }
 
+// TaskProperties represents task properties for an asset account
 type TaskProperties struct {
 	HasAccountTaskFailure          bool      `json:"HasAccountTaskFailure"`
 	LastPasswordCheckDate          time.Time `json:"LastPasswordCheckDate"`
@@ -138,6 +146,7 @@ type TaskProperties struct {
 	NextElevateAccountDate         time.Time `json:"NextElevateAccountDate"`
 }
 
+// AssetAccount represents an asset account in Safeguard
 type AssetAccount struct {
 	client *client.SafeguardClient
 
@@ -209,6 +218,7 @@ const (
 	SshKeyTypeED25519 SshKeyType = "ED25519"
 )
 
+// ToJson converts an AssetAccount to its JSON string representation
 func (a AssetAccount) ToJson() (string, error) {
 	assetAccountJSON, err := json.Marshal(a)
 	if err != nil {
@@ -225,10 +235,10 @@ func (a AssetAccount) ToJson() (string, error) {
 // Returns:
 //   - []AssetAccount: A slice of asset accounts matching the filter criteria
 //   - error: An error if the request fails, nil otherwise
-func GetAssetAccounts(c *client.SafeguardClient, fields client.Filter) ([]AssetAccount, error) {
+func GetAssetAccounts(c *client.SafeguardClient, filter client.Filter) ([]AssetAccount, error) {
 	var users []AssetAccount
 
-	query := "AssetAccounts" + fields.ToQueryString()
+	query := "AssetAccounts" + filter.ToQueryString()
 
 	response, err := c.GetRequest(query)
 	if err != nil {
@@ -256,7 +266,6 @@ func GetAssetAccounts(c *client.SafeguardClient, fields client.Filter) ([]AssetA
 //   - error: An error if the request fails, nil otherwise
 func GetAssetAccount(c *client.SafeguardClient, id int, fields client.Fields) (AssetAccount, error) {
 	var user AssetAccount
-	user.client = c
 
 	query := fmt.Sprintf("AssetAccounts/%d", id)
 	if len(fields) > 0 {
@@ -270,7 +279,34 @@ func GetAssetAccount(c *client.SafeguardClient, id int, fields client.Fields) (A
 	if err := json.Unmarshal(response, &user); err != nil {
 		return user, err
 	}
+
+	user.client = c
 	return user, nil
+}
+
+// DeleteAssetAccount deletes an asset account from Safeguard.
+// Parameters:
+//   - c: The SafeguardClient instance for making API requests
+//   - id: The ID of the asset account to delete
+//
+// Returns:
+//   - error: An error if the deletion fails, nil otherwise
+func DeleteAssetAccount(c *client.SafeguardClient, id int) error {
+	query := fmt.Sprintf("AssetAccounts/%d", id)
+
+	_, err := c.DeleteRequest(query)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Delete removes the AssetAccount from the system.
+// It calls the DeleteAssetAccount function with the client and Id of the AssetAccount.
+// Returns an error if the deletion fails.
+func (a AssetAccount) Delete() error {
+	return DeleteAssetAccount(a.client, a.Id)
 }
 
 // ChangePassword initiates a password change operation for the asset account.

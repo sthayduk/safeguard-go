@@ -31,7 +31,7 @@ type AuthenticationProvider struct {
 	Identity           string `json:"Identity"`
 	RstsProviderId     string `json:"RstsProviderId,omitempty"`
 	RstsProviderScope  string `json:"RstsProviderScope,omitempty"`
-	ForceAsDefault     bool   `json:"ForceAsDefault,omitempty"`
+	IsDefault          bool   `json:"ForceAsDefault,omitempty"`
 }
 
 func (a AuthenticationProvider) ToJson() (string, error) {
@@ -98,4 +98,56 @@ func GetAuthenticationProvider(c *client.SafeguardClient, id int) (Authenticatio
 		return AuthenticationProvider{}, err
 	}
 	return authProvider, nil
+}
+
+// ClearDefaultAuthProvider clears the default authentication provider in the Safeguard system.
+// It sends a POST request to the "AuthenticationProviders/ClearDefault" endpoint.
+//
+// Parameters:
+//   - c: A pointer to a SafeguardClient instance.
+//
+// Returns:
+//   - error: An error object if the request fails, otherwise nil.
+func ClearDefaultAuthProvider(c *client.SafeguardClient) error {
+	query := "AuthenticationProviders/ClearDefault"
+
+	_, err := c.PostRequest(query, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ForceAsDefaultAuthProvider sets the specified authentication provider as the default one.
+//
+// Parameters:
+//   - c: A pointer to the SafeguardClient instance used to make the request.
+//   - id: The ID of the authentication provider to be set as default.
+//
+// Returns:
+//   - AuthenticationProvider: The updated authentication provider object.
+//   - error: An error object if an error occurred, otherwise nil.
+func ForceAsDefaultAuthProvider(c *client.SafeguardClient, id int) (AuthenticationProvider, error) {
+	var authProvider AuthenticationProvider
+	query := fmt.Sprintf("AuthenticationProviders/%d/ForceAsDefault", id)
+
+	response, err := c.PostRequest(query, nil)
+	if err != nil {
+		return AuthenticationProvider{}, err
+	}
+
+	err = json.Unmarshal(response, &authProvider)
+	if err != nil {
+		return AuthenticationProvider{}, err
+	}
+
+	authProvider.client = c
+	return authProvider, nil
+}
+
+// ForceAsDefault sets the current AuthenticationProvider instance as the default authentication provider.
+// It returns the updated AuthenticationProvider instance and an error if the operation fails.
+func (a AuthenticationProvider) ForceAsDefault() (AuthenticationProvider, error) {
+	return ForceAsDefaultAuthProvider(a.client, a.Id)
 }

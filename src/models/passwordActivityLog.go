@@ -83,6 +83,109 @@ type PasswordActivityLog struct {
 	CustomParams      []CustomScriptParameter `json:"CustomScriptParameters"`
 }
 
+// PasswordChangeSchedule represents a schedule used by a partition profile to change passwords
+type PasswordChangeSchedule struct {
+	Id                  int       `json:"Id,omitempty"`
+	Name                string    `json:"Name,omitempty"`
+	ScheduleType        string    `json:"ScheduleType,omitempty"`
+	TimeZoneId          string    `json:"TimeZoneId,omitempty"`
+	Description         string    `json:"Description,omitempty"`
+	StartDate           time.Time `json:"StartDate,omitempty"`
+	RepeatInterval      int       `json:"RepeatInterval,omitempty"`
+	RepeatIntervalUnit  string    `json:"RepeatIntervalUnit,omitempty"`
+	MonthlyScheduleType string    `json:"MonthlyScheduleType,omitempty"`
+	DayOfMonth          int       `json:"DayOfMonth,omitempty"`
+	DayOfWeek           string    `json:"DayOfWeek,omitempty"`
+	WeekOfMonth         string    `json:"WeekOfMonth,omitempty"`
+	TimeOfDayType       string    `json:"TimeOfDayType,omitempty"`
+	TimeOfDay           string    `json:"TimeOfDay,omitempty"`
+	NoEndDate           bool      `json:"NoEndDate,omitempty"`
+	EndDate             time.Time `json:"EndDate,omitempty"`
+}
+
+// PasswordCheckSchedule represents a schedule used by a partition profile to check passwords
+type PasswordCheckSchedule struct {
+	Id                  int       `json:"Id,omitempty"`
+	Name                string    `json:"Name,omitempty"`
+	ScheduleType        string    `json:"ScheduleType,omitempty"`
+	TimeZoneId          string    `json:"TimeZoneId,omitempty"`
+	Description         string    `json:"Description,omitempty"`
+	StartDate           time.Time `json:"StartDate,omitempty"`
+	RepeatInterval      int       `json:"RepeatInterval,omitempty"`
+	RepeatIntervalUnit  string    `json:"RepeatIntervalUnit,omitempty"`
+	MonthlyScheduleType string    `json:"MonthlyScheduleType,omitempty"`
+	DayOfMonth          int       `json:"DayOfMonth,omitempty"`
+	DayOfWeek           string    `json:"DayOfWeek,omitempty"`
+	WeekOfMonth         string    `json:"WeekOfMonth,omitempty"`
+	TimeOfDayType       string    `json:"TimeOfDayType,omitempty"`
+	TimeOfDay           string    `json:"TimeOfDay,omitempty"`
+	NoEndDate           bool      `json:"NoEndDate,omitempty"`
+	EndDate             time.Time `json:"EndDate,omitempty"`
+}
+
+// ScheduleInterval represents interval of time in which to execute tasks
+type ScheduleInterval struct {
+	RepeatInterval     int    `json:"RepeatInterval,omitempty"`
+	RepeatIntervalUnit string `json:"RepeatIntervalUnit,omitempty"`
+}
+
+// Constants for schedule types and intervals
+const (
+	// Schedule Types
+	ScheduleTypeOnce    = "Once"
+	ScheduleTypeDaily   = "Daily"
+	ScheduleTypeWeekly  = "Weekly"
+	ScheduleTypeMonthly = "Monthly"
+
+	// Time of Day Types
+	TimeOfDayTypeAny   = "Any"
+	TimeOfDayTypeExact = "Exact"
+
+	// Monthly Schedule Types
+	MonthlyDayOfMonth = "DayOfMonth"
+	MonthlyDayOfWeek  = "DayOfWeek"
+
+	// Interval Units
+	IntervalUnitMinutes = "Minutes"
+	IntervalUnitHours   = "Hours"
+	IntervalUnitDays    = "Days"
+	IntervalUnitWeeks   = "Weeks"
+	IntervalUnitMonths  = "Months"
+)
+
+// ConnectionProperties represents connection-specific properties for various services
+type ConnectionProperties struct {
+	// Service Account Properties
+	ServiceAccountUniqueObjectId             string `json:"ServiceAccountUniqueObjectId,omitempty"`
+	ServiceAccountSecurityId                 string `json:"ServiceAccountSecurityId,omitempty"`
+	ServiceAccountId                         int    `json:"ServiceAccountId,omitempty"`
+	ServiceAccountName                       string `json:"ServiceAccountName,omitempty"`
+	ServiceAccountDomainName                 string `json:"ServiceAccountDomainName,omitempty"`
+	ServiceAccountDistinguishedName          string `json:"ServiceAccountDistinguishedName,omitempty"`
+	ServiceAccountNetbiosName                string `json:"ServiceAccountNetbiosName,omitempty"`
+	EffectiveServiceAccountName              string `json:"EffectiveServiceAccountName,omitempty"`
+	EffectiveServiceAccountDistinguishedName string `json:"EffectiveServiceAccountDistinguishedName,omitempty"`
+
+	// Credential Properties
+	ServiceAccountCredentialType string `json:"ServiceAccountCredentialType,omitempty"`
+	ServiceAccountPassword       string `json:"ServiceAccountPassword,omitempty"`
+	ServiceAccountHasPassword    bool   `json:"ServiceAccountHasPassword,omitempty"`
+	ServiceAccountSshKey         SshKey `json:"ServiceAccountSshKey,omitempty"` // Changed from SshKeyData to SshKey
+	ServiceAccountHasSshKey      bool   `json:"ServiceAccountHasSshKey,omitempty"`
+
+	// Connection Settings
+	UseSslEncryption     bool `json:"UseSslEncryption,omitempty"`
+	VerifySslCertificate bool `json:"VerifySslCertificate,omitempty"`
+	Port                 int  `json:"Port,omitempty"`
+
+	// Asset Properties
+	ServiceAccountAssetId                  int    `json:"ServiceAccountAssetId,omitempty"`
+	ServiceAccountAssetName                string `json:"ServiceAccountAssetName,omitempty"`
+	ServiceAccountAssetPlatformId          int    `json:"ServiceAccountAssetPlatformId,omitempty"`
+	ServiceAccountAssetPlatformType        string `json:"ServiceAccountAssetPlatformType,omitempty"`
+	ServiceAccountAssetPlatformDisplayName string `json:"ServiceAccountAssetPlatformDisplayName,omitempty"`
+}
+
 // CheckTaskState monitors the state of a password activity task.
 // It polls the task status periodically for up to 30 seconds.
 // Parameters:
@@ -242,107 +345,4 @@ func (p PasswordActivityLog) getMatchingAccountTask() (AccountTaskData, error) {
 			}
 		}
 	}
-}
-
-// PasswordChangeSchedule represents a schedule used by a partition profile to change passwords
-type PasswordChangeSchedule struct {
-	Id                  int       `json:"Id,omitempty"`
-	Name                string    `json:"Name,omitempty"`
-	ScheduleType        string    `json:"ScheduleType,omitempty"`
-	TimeZoneId          string    `json:"TimeZoneId,omitempty"`
-	Description         string    `json:"Description,omitempty"`
-	StartDate           time.Time `json:"StartDate,omitempty"`
-	RepeatInterval      int       `json:"RepeatInterval,omitempty"`
-	RepeatIntervalUnit  string    `json:"RepeatIntervalUnit,omitempty"`
-	MonthlyScheduleType string    `json:"MonthlyScheduleType,omitempty"`
-	DayOfMonth          int       `json:"DayOfMonth,omitempty"`
-	DayOfWeek           string    `json:"DayOfWeek,omitempty"`
-	WeekOfMonth         string    `json:"WeekOfMonth,omitempty"`
-	TimeOfDayType       string    `json:"TimeOfDayType,omitempty"`
-	TimeOfDay           string    `json:"TimeOfDay,omitempty"`
-	NoEndDate           bool      `json:"NoEndDate,omitempty"`
-	EndDate             time.Time `json:"EndDate,omitempty"`
-}
-
-// PasswordCheckSchedule represents a schedule used by a partition profile to check passwords
-type PasswordCheckSchedule struct {
-	Id                  int       `json:"Id,omitempty"`
-	Name                string    `json:"Name,omitempty"`
-	ScheduleType        string    `json:"ScheduleType,omitempty"`
-	TimeZoneId          string    `json:"TimeZoneId,omitempty"`
-	Description         string    `json:"Description,omitempty"`
-	StartDate           time.Time `json:"StartDate,omitempty"`
-	RepeatInterval      int       `json:"RepeatInterval,omitempty"`
-	RepeatIntervalUnit  string    `json:"RepeatIntervalUnit,omitempty"`
-	MonthlyScheduleType string    `json:"MonthlyScheduleType,omitempty"`
-	DayOfMonth          int       `json:"DayOfMonth,omitempty"`
-	DayOfWeek           string    `json:"DayOfWeek,omitempty"`
-	WeekOfMonth         string    `json:"WeekOfMonth,omitempty"`
-	TimeOfDayType       string    `json:"TimeOfDayType,omitempty"`
-	TimeOfDay           string    `json:"TimeOfDay,omitempty"`
-	NoEndDate           bool      `json:"NoEndDate,omitempty"`
-	EndDate             time.Time `json:"EndDate,omitempty"`
-}
-
-// ScheduleInterval represents interval of time in which to execute tasks
-type ScheduleInterval struct {
-	RepeatInterval     int    `json:"RepeatInterval,omitempty"`
-	RepeatIntervalUnit string `json:"RepeatIntervalUnit,omitempty"`
-}
-
-// Constants for schedule types and intervals
-const (
-	// Schedule Types
-	ScheduleTypeOnce    = "Once"
-	ScheduleTypeDaily   = "Daily"
-	ScheduleTypeWeekly  = "Weekly"
-	ScheduleTypeMonthly = "Monthly"
-
-	// Time of Day Types
-	TimeOfDayTypeAny   = "Any"
-	TimeOfDayTypeExact = "Exact"
-
-	// Monthly Schedule Types
-	MonthlyDayOfMonth = "DayOfMonth"
-	MonthlyDayOfWeek  = "DayOfWeek"
-
-	// Interval Units
-	IntervalUnitMinutes = "Minutes"
-	IntervalUnitHours   = "Hours"
-	IntervalUnitDays    = "Days"
-	IntervalUnitWeeks   = "Weeks"
-	IntervalUnitMonths  = "Months"
-)
-
-// ConnectionProperties represents connection-specific properties for various services
-type ConnectionProperties struct {
-	// Service Account Properties
-	ServiceAccountUniqueObjectId             string `json:"ServiceAccountUniqueObjectId,omitempty"`
-	ServiceAccountSecurityId                 string `json:"ServiceAccountSecurityId,omitempty"`
-	ServiceAccountId                         int    `json:"ServiceAccountId,omitempty"`
-	ServiceAccountName                       string `json:"ServiceAccountName,omitempty"`
-	ServiceAccountDomainName                 string `json:"ServiceAccountDomainName,omitempty"`
-	ServiceAccountDistinguishedName          string `json:"ServiceAccountDistinguishedName,omitempty"`
-	ServiceAccountNetbiosName                string `json:"ServiceAccountNetbiosName,omitempty"`
-	EffectiveServiceAccountName              string `json:"EffectiveServiceAccountName,omitempty"`
-	EffectiveServiceAccountDistinguishedName string `json:"EffectiveServiceAccountDistinguishedName,omitempty"`
-
-	// Credential Properties
-	ServiceAccountCredentialType string `json:"ServiceAccountCredentialType,omitempty"`
-	ServiceAccountPassword       string `json:"ServiceAccountPassword,omitempty"`
-	ServiceAccountHasPassword    bool   `json:"ServiceAccountHasPassword,omitempty"`
-	ServiceAccountSshKey         SshKey `json:"ServiceAccountSshKey,omitempty"` // Changed from SshKeyData to SshKey
-	ServiceAccountHasSshKey      bool   `json:"ServiceAccountHasSshKey,omitempty"`
-
-	// Connection Settings
-	UseSslEncryption     bool `json:"UseSslEncryption,omitempty"`
-	VerifySslCertificate bool `json:"VerifySslCertificate,omitempty"`
-	Port                 int  `json:"Port,omitempty"`
-
-	// Asset Properties
-	ServiceAccountAssetId                  int    `json:"ServiceAccountAssetId,omitempty"`
-	ServiceAccountAssetName                string `json:"ServiceAccountAssetName,omitempty"`
-	ServiceAccountAssetPlatformId          int    `json:"ServiceAccountAssetPlatformId,omitempty"`
-	ServiceAccountAssetPlatformType        string `json:"ServiceAccountAssetPlatformType,omitempty"`
-	ServiceAccountAssetPlatformDisplayName string `json:"ServiceAccountAssetPlatformDisplayName,omitempty"`
 }

@@ -89,6 +89,16 @@ type PolicyScopeItem struct {
 	Type               string `json:"Type"`
 }
 
+// GetAccessPolicies retrieves a list of access policies from the Safeguard API.
+// It takes a SafeguardClient and a Filter as parameters and returns a slice of AccessPolicy and an error.
+//
+// Parameters:
+//   - c: A pointer to a SafeguardClient used to make the API request.
+//   - filter: A Filter object used to filter the access policies.
+//
+// Returns:
+//   - A slice of AccessPolicy objects.
+//   - An error if the request fails or the response cannot be unmarshaled.
 func GetAccessPolicies(c *client.SafeguardClient, filter client.Filter) ([]AccessPolicy, error) {
 	var accessPolicies []AccessPolicy
 
@@ -110,6 +120,18 @@ func GetAccessPolicies(c *client.SafeguardClient, filter client.Filter) ([]Acces
 	return accessPolicies, nil
 }
 
+// GetAccessPolicy retrieves an access policy by its ID from the Safeguard API.
+// It takes a SafeguardClient, an integer ID of the access policy, and optional fields to include in the query.
+// It returns the AccessPolicy and an error if any occurred during the request or unmarshalling process.
+//
+// Parameters:
+//   - c: A pointer to the SafeguardClient used to make the API request.
+//   - id: An integer representing the ID of the access policy to retrieve.
+//   - fields: Optional fields to include in the query.
+//
+// Returns:
+//   - AccessPolicy: The retrieved access policy.
+//   - error: An error if any occurred during the request or unmarshalling process.
 func GetAccessPolicy(c *client.SafeguardClient, id int, fields client.Fields) (AccessPolicy, error) {
 	var accessPolicy AccessPolicy
 
@@ -129,4 +151,32 @@ func GetAccessPolicy(c *client.SafeguardClient, id int, fields client.Fields) (A
 
 	accessPolicy.client = c
 	return accessPolicy, nil
+}
+
+// DeleteAccessPolicy deletes an access policy with the given ID using the provided SafeguardClient.
+// It constructs a query string with the access policy ID and sends a DELETE request.
+// If the request fails, it returns an error.
+//
+// Parameters:
+//   - c: A pointer to a SafeguardClient instance used to send the DELETE request.
+//   - id: An integer representing the ID of the access policy to be deleted.
+//
+// Returns:
+//   - error: An error object if the DELETE request fails, otherwise nil.
+func DeleteAccessPolicy(c *client.SafeguardClient, id int) error {
+	query := fmt.Sprintf("AccessPolicies/%d", id)
+
+	_, err := c.DeleteRequest(query)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Delete removes the access policy from the system.
+// It calls the DeleteAccessPolicy function with the client and policy ID.
+// Returns an error if the deletion fails.
+func (a AccessPolicy) Delete() error {
+	return DeleteAccessPolicy(a.client, a.Id)
 }
