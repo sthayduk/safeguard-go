@@ -8,27 +8,99 @@ import (
 	"github.com/sthayduk/safeguard-go/client"
 )
 
+// SessionAccessAccountType represents the type of session access account
+type SessionAccessAccountType string
+
+const (
+	None          SessionAccessAccountType = "None"
+	LinkedAccount SessionAccessAccountType = "LinkedAccount"
+	Custom        SessionAccessAccountType = "Custom"
+)
+
+// TimeOfDay represents the hours in a day (0-23)
+type TimeOfDay int
+
+// DayOfWeek represents days of the week
+type DayOfWeek string
+
+const (
+	Monday    DayOfWeek = "Monday"
+	Tuesday   DayOfWeek = "Tuesday"
+	Wednesday DayOfWeek = "Wednesday"
+	Thursday  DayOfWeek = "Thursday"
+	Friday    DayOfWeek = "Friday"
+	Saturday  DayOfWeek = "Saturday"
+	Sunday    DayOfWeek = "Sunday"
+)
+
+// NotificationContact represents contact info for different roles in access policy
+type NotificationContact struct {
+	Name            string                  `json:"Name"`
+	EmailAddress    string                  `json:"EmailAddress,omitempty"`
+	ContactType     NotificationContactType `json:"ContactType"`
+	UserId          int                     `json:"UserId,omitempty"`
+	UserDisplayName string                  `json:"UserDisplayName,omitempty"`
+	UserGroupId     int                     `json:"UserGroupId,omitempty"`
+	UserGroupName   string                  `json:"UserGroupName,omitempty"`
+}
+
+// NotificationContactType represents the type of notification contact
+type NotificationContactType string
+
+const (
+	Email NotificationContactType = "Email"
+	SMS   NotificationContactType = "SMS"
+)
+
+// ApproverSet represents a set of identities required to approve an access request
+type ApproverSet struct {
+	Name        string     `json:"Name"`
+	Description string     `json:"Description,omitempty"`
+	IsDefault   bool       `json:"IsDefault"`
+	Identities  []Identity `json:"Identities"`
+}
+
+// ReasonCode represents a predefined reason for access requests
+type ReasonCode struct {
+	Id          int    `json:"Id"`
+	Name        string `json:"Name"`
+	Description string `json:"Description,omitempty"`
+	Category    string `json:"Category,omitempty"`
+}
+
 // AccessPolicy represents security configuration governing the access to assets and accounts
 type AccessPolicy struct {
 	client *client.SafeguardClient
 
-	Id                        int                             `json:"Id"`
-	Name                      string                          `json:"Name"`
-	Priority                  int                             `json:"Priority"`
-	RoleId                    int                             `json:"RoleId"`
-	RoleName                  string                          `json:"RoleName"`
-	AccessRequestProperties   AccessRequestProperties         `json:"AccessRequestProperties"`
-	ApproverProperties        PolicyApproverProperties        `json:"ApproverProperties"`
-	ReviewerProperties        PolicyReviewerProperties        `json:"ReviewerProperties"`
-	RequesterProperties       PolicyRequesterProperties       `json:"RequesterProperties"`
-	EmergencyAccessProperties PolicyEmergencyAccessProperties `json:"EmergencyAccessProperties"`
-	ExpirationDate            time.Time                       `json:"ExpirationDate"`
-	IsExpired                 bool                            `json:"IsExpired"`
-	IsValid                   bool                            `json:"IsValid"`
-	CreatedDate               time.Time                       `json:"CreatedDate"`
-	CreatedByUserId           int                             `json:"CreatedByUserId"`
-	CreatedByUserDisplayName  string                          `json:"CreatedByUserDisplayName"`
-	ScopeItems                []PolicyScopeItem               `json:"ScopeItems"`
+	Id                          int                         `json:"Id"`
+	Name                        string                      `json:"Name"`
+	Description                 string                      `json:"Description,omitempty"`
+	RoleId                      int                         `json:"RoleId"`
+	RoleName                    string                      `json:"RoleName"`
+	RolePriority                int                         `json:"RolePriority"`
+	Priority                    int                         `json:"Priority"`
+	AccountCount                int                         `json:"AccountCount"`
+	AssetCount                  int                         `json:"AssetCount"`
+	AccountGroupCount           int                         `json:"AccountGroupCount"`
+	AssetGroupCount             int                         `json:"AssetGroupCount"`
+	CreatedDate                 time.Time                   `json:"CreatedDate"`
+	CreatedByUserId             int                         `json:"CreatedByUserId"`
+	CreatedByUserDisplayName    string                      `json:"CreatedByUserDisplayName"`
+	RequesterProperties         RequesterProperties         `json:"RequesterProperties"`
+	ApproverProperties          ApproverProperties          `json:"ApproverProperties"`
+	ReviewerProperties          ReviewerProperties          `json:"ReviewerProperties"`
+	AccessRequestProperties     AccessRequestProperties     `json:"AccessRequestProperties"`
+	SessionProperties           *SessionProperties          `json:"SessionProperties,omitempty"`
+	EmergencyAccessProperties   EmergencyAccessProperties   `json:"EmergencyAccessProperties"`
+	ApproverSets                []ApproverSet               `json:"ApproverSets"`
+	Reviewers                   []Identity                  `json:"Reviewers"`
+	NotificationContacts        []NotificationContact       `json:"NotificationContacts"`
+	ReasonCodes                 []ReasonCode                `json:"ReasonCodes"`
+	ScopeItems                  []PolicyScopeItem           `json:"ScopeItems"`
+	ExpirationDate              *time.Time                  `json:"ExpirationDate,omitempty"`
+	IsExpired                   bool                        `json:"IsExpired"`
+	InvalidConnectionPolicy     bool                        `json:"InvalidConnectionPolicy"`
+	HourlyRestrictionProperties HourlyRestrictionProperties `json:"HourlyRestrictionProperties"`
 }
 
 func (a AccessPolicy) ToJson() (string, error) {
@@ -39,12 +111,57 @@ func (a AccessPolicy) ToJson() (string, error) {
 	return string(accessPolicyJSON), nil
 }
 
+// GetReasonCodes returns the list of reason codes assigned to this policy.
+// If no reason codes are assigned, it returns an empty slice.
+//
+// Returns:
+//   - A slice of ReasonCode objects assigned to this policy.
+func (a AccessPolicy) GetReasonCodes() []ReasonCode {
+	if a.ReasonCodes == nil {
+		return []ReasonCode{}
+	}
+	return a.ReasonCodes
+}
+
 // AccessRequestProperties represents configuration governing access requests
 type AccessRequestProperties struct {
-	AllowSimultaneousAccess    bool     `json:"AllowSimultaneousAccess"`
-	ChangePasswordAfterCheckin bool     `json:"ChangePasswordAfterCheckin"`
-	MaximumDuration            int      `json:"MaximumDuration"`
-	AllowedRequestTypes        []string `json:"AllowedRequestTypes"`
+	AccessRequestType                AccessRequestType        `json:"AccessRequestType"`
+	AllowSimultaneousAccess          bool                     `json:"AllowSimultaneousAccess"`
+	MaximumSimultaneousReleases      int                      `json:"MaximumSimultaneousReleases"`
+	ChangePasswordAfterCheckin       bool                     `json:"ChangePasswordAfterCheckin"`
+	ChangeSshKeyAfterCheckin         bool                     `json:"ChangeSshKeyAfterCheckin"`
+	AllowSessionPasswordRelease      bool                     `json:"AllowSessionPasswordRelease"`
+	AllowSessionSshKeyRelease        bool                     `json:"AllowSessionSshKeyRelease"`
+	IncludePasswordRelease           bool                     `json:"IncludePasswordRelease"`
+	IncludeSshKeyRelease             bool                     `json:"IncludeSshKeyRelease"`
+	SessionAccessAccountType         SessionAccessAccountType `json:"SessionAccessAccountType"`
+	SessionAccessAccounts            []int                    `json:"SessionAccessAccounts"`
+	TerminateExpiredSessions         bool                     `json:"TerminateExpiredSessions"`
+	AllowLinkedAccountPasswordAccess bool                     `json:"AllowLinkedAccountPasswordAccess"`
+	PassphraseProtectSshKey          bool                     `json:"PassphraseProtectSshKey"`
+	UseAltLoginName                  bool                     `json:"UseAltLoginName"`
+	LinkedAccountScopeFiltering      bool                     `json:"LinkedAccountScopeFiltering"`
+}
+
+// SessionProperties represents session-specific configuration
+type SessionProperties struct {
+	SessionModuleConnectionId          int                                 `json:"SessionModuleConnectionId"`
+	SessionConnectionPolicyRef         string                              `json:"SessionConnectionPolicyRef"`
+	RdpShowWallpaper                   bool                                `json:"RdpShowWallpaper"`
+	RemoteDesktopApplicationProperties *RemoteDesktopApplicationProperties `json:"RemoteDesktopApplicationProperties"`
+}
+
+// RemoteDesktopApplicationProperties represents RDP application-specific settings
+type RemoteDesktopApplicationProperties struct {
+	ApplicationHostAssetId      *int    `json:"ApplicationHostAssetId"`
+	ApplicationHostAsset        *Asset  `json:"ApplicationHostAsset"`
+	ApplicationHostAccountId    *int    `json:"ApplicationHostAccountId"`
+	ApplicationHostLoginAccount *string `json:"ApplicationHostLoginAccount"`
+	ApplicationDisplayName      *string `json:"ApplicationDisplayName"`
+	ApplicationAlias            *string `json:"ApplicationAlias"`
+	ApplicationProgram          *string `json:"ApplicationProgram"`
+	ApplicationCmdLine          *string `json:"ApplicationCmdLine"`
+	ApplicationHostUserSupplied bool    `json:"ApplicationHostUserSupplied"`
 }
 
 // PolicyApproverProperties represents settings related to approving an access request
@@ -87,6 +204,26 @@ type PolicyScopeItem struct {
 	AssetPartitionId   int    `json:"AssetPartitionId"`
 	AssetPartitionName string `json:"AssetPartitionName"`
 	Type               string `json:"Type"`
+}
+
+// ApproverProperties represents settings related to approving access requests
+type ApproverProperties struct {
+	RequireApproval                                bool `json:"RequireApproval"`
+	PendingApprovalEscalationEnabled               bool `json:"PendingApprovalEscalationEnabled"`
+	PendingApprovalDurationBeforeEscalationDays    int  `json:"PendingApprovalDurationBeforeEscalationDays"`
+	PendingApprovalDurationBeforeEscalationHours   int  `json:"PendingApprovalDurationBeforeEscalationHours"`
+	PendingApprovalDurationBeforeEscalationMinutes int  `json:"PendingApprovalDurationBeforeEscalationMinutes"`
+}
+
+// ReviewerProperties represents settings related to reviewing access requests
+type ReviewerProperties struct {
+	RequiredReviewers                            int  `json:"RequiredReviewers"`
+	RequireReviewerComment                       bool `json:"RequireReviewerComment"`
+	AllowSubsequentAccessRequestsWithoutReview   bool `json:"AllowSubsequentAccessRequestsWithoutReview"`
+	PendingReviewEscalationEnabled               bool `json:"PendingReviewEscalationEnabled"`
+	PendingReviewDurationBeforeEscalationDays    int  `json:"PendingReviewDurationBeforeEscalationDays"`
+	PendingReviewDurationBeforeEscalationHours   int  `json:"PendingReviewDurationBeforeEscalationHours"`
+	PendingReviewDurationBeforeEscalationMinutes int  `json:"PendingReviewDurationBeforeEscalationMinutes"`
 }
 
 // GetAccessPolicies retrieves a list of access policies from the Safeguard API.

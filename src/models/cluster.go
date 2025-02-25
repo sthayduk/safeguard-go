@@ -12,7 +12,7 @@ import (
 type ClusterMember struct {
 	client *client.SafeguardClient
 
-	Id                 int                    `json:"Id"`
+	Id                 string                 `json:"Id"`
 	Name               string                 `json:"Name"`
 	NetworkAddress     string                 `json:"NetworkAddress"`
 	Description        string                 `json:"Description"`
@@ -144,10 +144,10 @@ func GetClusterMembers(c *client.SafeguardClient, filter client.Filter) ([]Clust
 // Returns:
 //   - ClusterMember: The retrieved cluster member.
 //   - error: An error if the request or unmarshalling fails.
-func GetClusterMember(c *client.SafeguardClient, id int) (ClusterMember, error) {
+func GetClusterMember(c *client.SafeguardClient, id string) (ClusterMember, error) {
 	var clusterMember ClusterMember
 
-	query := fmt.Sprintf("Cluster/Members/%d", id)
+	query := fmt.Sprintf("Cluster/Members/%s", id)
 
 	response, err := c.GetRequest(query)
 	if err != nil {
@@ -204,23 +204,20 @@ func GetClusterLeader(c *client.SafeguardClient) (ClusterMember, error) {
 // Returns:
 //   - A slice of ClusterMember structs containing the details of each cluster member.
 //   - An error if the request or unmarshalling fails.
-func ForceClusterHealthCheck(c *client.SafeguardClient) ([]ClusterMember, error) {
-	var clusterMembers []ClusterMember
+func ForceClusterHealthCheck(c *client.SafeguardClient) (ClusterMember, error) {
+	var clusterMembers ClusterMember
 	query := "Cluster/Members/Self"
 
 	response, err := c.GetRequest(query)
 	if err != nil {
-		return []ClusterMember{}, err
+		return ClusterMember{}, err
 	}
 
 	if err := json.Unmarshal(response, &clusterMembers); err != nil {
-		return []ClusterMember{}, err
+		return ClusterMember{}, err
 	}
 
-	for i := range clusterMembers {
-		clusterMembers[i].client = c
-	}
-
+	clusterMembers.client = c
 	return clusterMembers, nil
 }
 

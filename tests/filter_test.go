@@ -1,34 +1,36 @@
-package client
+package tests
 
 import (
 	"reflect"
 	"testing"
+
+	"github.com/sthayduk/safeguard-go/client"
 )
 
 func TestAddField(t *testing.T) {
 	tests := []struct {
 		name     string
-		initial  Fields
+		initial  client.Fields
 		field    string
-		expected Fields
+		expected client.Fields
 	}{
 		{
 			name:     "Add field to empty list",
-			initial:  Fields{},
+			initial:  client.Fields{},
 			field:    "newField",
-			expected: Fields{"newField"},
+			expected: client.Fields{"newField"},
 		},
 		{
 			name:     "Add field to non-empty list",
-			initial:  Fields{"field1", "field2"},
+			initial:  client.Fields{"field1", "field2"},
 			field:    "newField",
-			expected: Fields{"field1", "field2", "newField"},
+			expected: client.Fields{"field1", "field2", "newField"},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			filter := &Filter{Fields: tt.initial}
+			filter := &client.Filter{Fields: tt.initial}
 			filter.AddField(tt.field)
 			if !reflect.DeepEqual(filter.Fields, tt.expected) {
 				t.Errorf("expected %v, got %v", tt.expected, filter.Fields)
@@ -40,39 +42,39 @@ func TestAddField(t *testing.T) {
 func TestRemoveField(t *testing.T) {
 	tests := []struct {
 		name     string
-		initial  Fields
+		initial  client.Fields
 		field    string
-		expected Fields
+		expected client.Fields
 	}{
 		{
 			name:     "Remove field from list with one element",
-			initial:  Fields{"field1"},
+			initial:  client.Fields{"field1"},
 			field:    "field1",
-			expected: Fields{},
+			expected: client.Fields{},
 		},
 		{
 			name:     "Remove field from list with multiple elements",
-			initial:  Fields{"field1", "field2", "field3"},
+			initial:  client.Fields{"field1", "field2", "field3"},
 			field:    "field2",
-			expected: Fields{"field1", "field3"},
+			expected: client.Fields{"field1", "field3"},
 		},
 		{
 			name:     "Remove field that does not exist",
-			initial:  Fields{"field1", "field2"},
+			initial:  client.Fields{"field1", "field2"},
 			field:    "field3",
-			expected: Fields{"field1", "field2"},
+			expected: client.Fields{"field1", "field2"},
 		},
 		{
 			name:     "Remove field from empty list",
-			initial:  Fields{},
+			initial:  client.Fields{},
 			field:    "field1",
-			expected: Fields{},
+			expected: client.Fields{},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			filter := &Filter{Fields: tt.initial}
+			filter := &client.Filter{Fields: tt.initial}
 			filter.RemoveField(tt.field)
 			if !reflect.DeepEqual(filter.Fields, tt.expected) {
 				t.Errorf("expected %v, got %v", tt.expected, filter.Fields)
@@ -84,24 +86,24 @@ func TestRemoveField(t *testing.T) {
 func TestGetFields(t *testing.T) {
 	tests := []struct {
 		name     string
-		initial  Fields
-		expected Fields
+		initial  client.Fields
+		expected client.Fields
 	}{
 		{
 			name:     "Get fields from empty list",
-			initial:  Fields{},
-			expected: Fields{},
+			initial:  client.Fields{},
+			expected: client.Fields{},
 		},
 		{
 			name:     "Get fields from non-empty list",
-			initial:  Fields{"field1", "field2"},
-			expected: Fields{"field1", "field2"},
+			initial:  client.Fields{"field1", "field2"},
+			expected: client.Fields{"field1", "field2"},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			filter := &Filter{Fields: tt.initial}
+			filter := &client.Filter{Fields: tt.initial}
 			got := filter.GetFields()
 			if !reflect.DeepEqual(got, tt.expected) {
 				t.Errorf("expected %v, got %v", tt.expected, got)
@@ -113,11 +115,11 @@ func TestGetFields(t *testing.T) {
 func TestAddFilter(t *testing.T) {
 	tests := []struct {
 		name     string
-		initial  FilterQuery
+		initial  client.FilterQuery
 		field    string
 		operator string
 		value    string
-		expected FilterQuery
+		expected client.FilterQuery
 	}{
 		{
 			name:     "Add filter to empty filter",
@@ -147,7 +149,7 @@ func TestAddFilter(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			filter := &Filter{Filter: tt.initial}
+			filter := &client.Filter{Filter: tt.initial}
 			filter.AddFilter(tt.field, tt.operator, tt.value)
 			if filter.Filter != tt.expected {
 				t.Errorf("expected %v, got %v", tt.expected, filter.Filter)
@@ -159,27 +161,27 @@ func TestAddFilter(t *testing.T) {
 func TestAddOrderBy(t *testing.T) {
 	tests := []struct {
 		name     string
-		initial  OrderBy
+		initial  client.OrderBy
 		field    string
-		expected OrderBy
+		expected client.OrderBy
 	}{
 		{
 			name:     "Add orderby to empty list",
-			initial:  OrderBy{},
+			initial:  client.OrderBy{},
 			field:    "newOrderBy",
-			expected: OrderBy{"newOrderBy"},
+			expected: client.OrderBy{"newOrderBy"},
 		},
 		{
 			name:     "Add orderby to non-empty list",
-			initial:  OrderBy{"orderby1", "orderby2"},
+			initial:  client.OrderBy{"orderby1", "orderby2"},
 			field:    "newOrderBy",
-			expected: OrderBy{"orderby1", "orderby2", "newOrderBy"},
+			expected: client.OrderBy{"orderby1", "orderby2", "newOrderBy"},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			filter := &Filter{Orderby: tt.initial}
+			filter := &client.Filter{Orderby: tt.initial}
 			filter.AddOrderBy(tt.field)
 			if !reflect.DeepEqual(filter.Orderby, tt.expected) {
 				t.Errorf("expected %v, got %v", tt.expected, filter.Orderby)
@@ -191,24 +193,24 @@ func TestAddOrderBy(t *testing.T) {
 func TestGetOrderBy(t *testing.T) {
 	tests := []struct {
 		name     string
-		initial  OrderBy
-		expected OrderBy
+		initial  client.OrderBy
+		expected client.OrderBy
 	}{
 		{
 			name:     "Get orderby from empty list",
-			initial:  OrderBy{},
-			expected: OrderBy{},
+			initial:  client.OrderBy{},
+			expected: client.OrderBy{},
 		},
 		{
 			name:     "Get orderby from non-empty list",
-			initial:  OrderBy{"orderby1", "orderby2"},
-			expected: OrderBy{"orderby1", "orderby2"},
+			initial:  client.OrderBy{"orderby1", "orderby2"},
+			expected: client.OrderBy{"orderby1", "orderby2"},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			filter := &Filter{Orderby: tt.initial}
+			filter := &client.Filter{Orderby: tt.initial}
 			got := filter.GetOrderBy()
 			if !reflect.DeepEqual(got, tt.expected) {
 				t.Errorf("expected %v, got %v", tt.expected, got)
@@ -220,39 +222,39 @@ func TestGetOrderBy(t *testing.T) {
 func TestRemoveOrderBy(t *testing.T) {
 	tests := []struct {
 		name     string
-		initial  OrderBy
+		initial  client.OrderBy
 		field    string
-		expected OrderBy
+		expected client.OrderBy
 	}{
 		{
 			name:     "Remove orderby from list with one element",
-			initial:  OrderBy{"orderby1"},
+			initial:  client.OrderBy{"orderby1"},
 			field:    "orderby1",
-			expected: OrderBy{},
+			expected: client.OrderBy{},
 		},
 		{
 			name:     "Remove orderby from list with multiple elements",
-			initial:  OrderBy{"orderby1", "orderby2", "orderby3"},
+			initial:  client.OrderBy{"orderby1", "orderby2", "orderby3"},
 			field:    "orderby2",
-			expected: OrderBy{"orderby1", "orderby3"},
+			expected: client.OrderBy{"orderby1", "orderby3"},
 		},
 		{
 			name:     "Remove orderby that does not exist",
-			initial:  OrderBy{"orderby1", "orderby2"},
+			initial:  client.OrderBy{"orderby1", "orderby2"},
 			field:    "orderby3",
-			expected: OrderBy{"orderby1", "orderby2"},
+			expected: client.OrderBy{"orderby1", "orderby2"},
 		},
 		{
 			name:     "Remove orderby from empty list",
-			initial:  OrderBy{},
+			initial:  client.OrderBy{},
 			field:    "orderby1",
-			expected: OrderBy{},
+			expected: client.OrderBy{},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			filter := &Filter{Orderby: tt.initial}
+			filter := &client.Filter{Orderby: tt.initial}
 			filter.RemoveOrderBy(tt.field)
 			if !reflect.DeepEqual(filter.Orderby, tt.expected) {
 				t.Errorf("expected %v, got %v", tt.expected, filter.Orderby)
@@ -263,56 +265,56 @@ func TestRemoveOrderBy(t *testing.T) {
 func TestToQueryString(t *testing.T) {
 	tests := []struct {
 		name     string
-		filter   *Filter
+		filter   *client.Filter
 		expected string
 	}{
 		{
 			name:     "Empty filter",
-			filter:   &Filter{},
+			filter:   &client.Filter{},
 			expected: "?count=false",
 		},
 		{
-			name: "Filter with fields",
-			filter: &Filter{
-				Fields: Fields{"field1", "field2"},
+			name: "client.Filter with fields",
+			filter: &client.Filter{
+				Fields: client.Fields{"field1", "field2"},
 			},
 			expected: "?fields=field1%2Cfield2&count=false",
 		},
 		{
-			name: "Filter with orderby",
-			filter: &Filter{
-				Orderby: OrderBy{"field1", "field2"},
+			name: "client.Filter with orderby",
+			filter: &client.Filter{
+				Orderby: client.OrderBy{"field1", "field2"},
 			},
 			expected: "?count=false&orderby=field1%2Cfield2",
 		},
 		{
-			name: "Filter with count true",
-			filter: &Filter{
+			name: "client.Filter with count true",
+			filter: &client.Filter{
 				Count: true,
 			},
 			expected: "?count=true",
 		},
 		{
-			name: "Filter with count false",
-			filter: &Filter{
+			name: "client.Filter with count false",
+			filter: &client.Filter{
 				Count: false,
 			},
 			expected: "?count=false",
 		},
 		{
-			name: "Filter with filter query",
-			filter: &Filter{
-				Filter: FilterQuery(`field1 eq "value1"`),
+			name: "client.Filter with filter query",
+			filter: &client.Filter{
+				Filter: client.FilterQuery(`field1 eq "value1"`),
 			},
 			expected: `?filter=field1%20eq%20%22value1%22&count=false`,
 		},
 		{
-			name: "Filter with all parameters",
-			filter: &Filter{
-				Fields:  Fields{"field1", "field2"},
-				Orderby: OrderBy{"field1", "field2"},
+			name: "client.Filter with all parameters",
+			filter: &client.Filter{
+				Fields:  client.Fields{"field1", "field2"},
+				Orderby: client.OrderBy{"field1", "field2"},
 				Count:   true,
-				Filter:  FilterQuery(`field1 eq "value1"`),
+				Filter:  client.FilterQuery(`field1 eq "value1"`),
 			},
 			expected: `?filter=field1%20eq%20%22value1%22&fields=field1%2Cfield2&count=true&orderby=field1%2Cfield2`,
 		},
@@ -336,33 +338,33 @@ func TestTypeStrings(t *testing.T) {
 		expected string
 	}{
 		{
-			name:     "Fields with multiple values",
-			input:    Fields{"field1", "field2", "field3"},
+			name:     "client.Fields with multiple values",
+			input:    client.Fields{"field1", "field2", "field3"},
 			expected: "field1,field2,field3",
 		},
 		{
-			name:     "Empty Fields",
-			input:    Fields{},
+			name:     "Empty client.Fields",
+			input:    client.Fields{},
 			expected: "",
 		},
 		{
-			name:     "FilterQuery with value",
-			input:    FilterQuery("name eq 'John'"),
+			name:     "client.FilterQuery with value",
+			input:    client.FilterQuery("name eq 'John'"),
 			expected: "name eq 'John'",
 		},
 		{
-			name:     "Empty FilterQuery",
-			input:    FilterQuery(""),
+			name:     "Empty client.FilterQuery",
+			input:    client.FilterQuery(""),
 			expected: "",
 		},
 		{
 			name:     "OrderBy with multiple values",
-			input:    OrderBy{"name", "age", "date"},
+			input:    client.OrderBy{"name", "age", "date"},
 			expected: "name,age,date",
 		},
 		{
 			name:     "Empty OrderBy",
-			input:    OrderBy{},
+			input:    client.OrderBy{},
 			expected: "",
 		},
 	}
@@ -371,11 +373,11 @@ func TestTypeStrings(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var got string
 			switch v := tt.input.(type) {
-			case Fields:
+			case client.Fields:
 				got = v.String()
-			case FilterQuery:
+			case client.FilterQuery:
 				got = v.String()
-			case OrderBy:
+			case client.OrderBy:
 				got = v.String()
 			}
 			if got != tt.expected {

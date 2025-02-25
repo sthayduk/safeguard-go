@@ -37,10 +37,15 @@ type AssetPolicyMembership struct {
 type AccessRequestType string
 
 const (
-	AccessRequestTypePassword AccessRequestType = "Password"
-	AccessRequestTypeSSH      AccessRequestType = "SSH"
-	AccessRequestTypeAPI      AccessRequestType = "API"
-	AccessRequestTypeRDP      AccessRequestType = "RDP"
+	AccessRequestTypePassword       AccessRequestType = "Password"
+	AccessRequestTypeRDPFile        AccessRequestType = "RemoteDesktop"
+	AccessRequestTypeSSHFile        AccessRequestType = "SSH"
+	AccessRequestTypeSSHKey         AccessRequestType = "SSHKey"
+	AccessRequestTypeAPIKey         AccessRequestType = "APIKey"
+	AccessRequestTypeRDP            AccessRequestType = "RemoteDesktop"
+	AccessRequestTypeTelnet         AccessRequestType = "Telnet"
+	AccessRequestTypeRDPApplication AccessRequestType = "RemoteDesktopApplication"
+	AccessRequestTypeFile           AccessRequestType = "File"
 )
 
 // ToJson converts an AssetPolicy to its JSON string representation

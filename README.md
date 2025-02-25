@@ -4,7 +4,7 @@ A Go library for interacting with the OneIdentity Safeguard for Privileged Passw
 ## Installation
 
 ```sh
-go get github.com/sthayduk/safeguard-go/src
+go get github.com/sthayduk/safeguard-go
 ```
 
 ## Prerequisites
@@ -21,6 +21,21 @@ Currently supports the following Safeguard resources:
   - Username/Password authentication
   - OAuth authentication
   - Multiple authentication provider support
+- Access Requests
+  - Create single and batch access requests
+  - Check out passwords
+  - Check in access requests
+  - Cancel access requests
+  - Close access requests based on state
+  - Handle emergency access
+  - Review and approve requests
+  - Monitor request states and sessions
+- Me (Current User)
+  - Get current user details
+  - Get accessible assets and accounts
+  - Get actionable requests by role
+  - Get account entitlements
+  - Request access to accounts
 - Users
   - Get users and user details
   - Get linked accounts
@@ -137,6 +152,35 @@ log, err := account.CheckPassword()
 
 // Change password
 log, err := account.ChangePassword()
+```
+
+### Working with Current User
+
+```go
+// Get current user's actionable requests
+requests, err := models.GetMeActionableRequests(sgc, client.Filter{})
+
+// Get requests for specific role
+requests, err := models.GetMeActionableRequestsByRole(sgc, models.ApproverRole, client.Filter{})
+
+// Get detailed actionable requests with helper methods
+result, err := models.GetMeActionableRequestsDetailed(sgc, client.Filter{})
+
+// Get pending requests
+pending := result.GetPendingRequests()
+
+// Filter requests by state
+available := result.FilterRequestsByState(models.StateRequestAvailable)
+
+// Get account entitlements
+entitlements, err := models.GetMeAccountEntitlements(sgc, 
+    models.PasswordEntitlement,
+    true,  // includeActiveRequests
+    false, // filterByCredential
+    client.Filter{})
+
+// Get accessible assets
+assets, err := models.GetMeAccessRequestAssets(sgc, client.Filter{})
 ```
 
 ## Query Parameters
