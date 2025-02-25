@@ -2,6 +2,7 @@ package models
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -96,6 +97,10 @@ type AccessRequest struct {
 	SessionModuleConnectionId                  int                    `json:"SessionModuleConnectionId,omitempty"`
 	SessionConnectionPolicyRef                 string                 `json:"SessionConnectionPolicyRef,omitempty"`
 	SessionRdpShowWallpaper                    bool                   `json:"SessionRdpShowWallpaper,omitempty"`
+}
+
+func (ar AccessRequest) GetState() AccessRequestState {
+	return ar.State
 }
 
 // AccessRequestSession represents information about sessions initialized using this request
@@ -422,7 +427,7 @@ func batchCreateAccessRequest(c *client.SafeguardClient, accessRequests []batchA
 // Close attempts to close the AccessRequest based on its current state.
 // It performs different actions depending on the state of the AccessRequest:
 // - If the state is "PasswordCheckedOut", it checks the password back in.
-// - If the state is "Pending" or "RequestAvailable", it cancels the request.
+// - If the state is "Pending", "RequestAvailable" or "PendingAccountRestored", it cancels the request.
 // - If the state is "Complete", it returns the AccessRequest as is.
 // - For any other state, it returns an error indicating that the request cannot be closed.
 //
@@ -436,6 +441,8 @@ func (ar AccessRequest) Close() (AccessRequest, error) {
 	case "Pending":
 		return ar.Cancel()
 	case "RequestAvailable":
+		return ar.Cancel()
+	case "PendingAccountRestored":
 		return ar.Cancel()
 	case "Complete":
 		return ar, nil
@@ -522,13 +529,98 @@ func (ar AccessRequest) CheckIn() (AccessRequest, error) {
 // Note:
 //   - The password can only be checked out if the state is PasswordCheckedOut or RequestAvailable.
 //   - The password cannot be checked out if the state is Complete or Pending.
-func CheckOutPassword(c *client.SafeguardClient, id string) (string, error) {
+func CheckOutPassword(ctx context.Context, c *client.SafeguardClient, accessRequest AccessRequest, waitForPending bool) (string, error) {
 
 	// TODO: Check if Password is requestable
 	// State must be PasswordCheckedOut, RequestAvailable
 	// State must not be Complete, Pending
 
-	response, err := c.PostRequest("AccessRequests/"+id+"/CheckOutPassword", nil)
+	if accessRequest.IsInvalid() {
+		return "", fmt.Errorf("cannot check out password for access request in state: %s", accessRequest.State)
+	}
+
+	if accessRequest.IsPending() {
+		if !waitForPending {
+			return "", fmt.Errorf("cannot check out password for access request in state: %s", accessRequest.State)
+		}
+
+		ticker := time.NewTicker(1 * time.Second)
+		defer ticker.Stop()
+
+	outerLoop:
+		for {
+			select {
+			case <-ctx.Done():
+				return "", fmt.Errorf("password request timed out")
+			case <-ticker.C:
+				accessRequest, err := GetAccessRequest(c, accessRequest.Id, nil)
+				if err != nil {
+					return "", err
+				}
+
+				if accessRequest.IsValid() {
+					break outerLoop
+				}
+			}
+		}
+	}
+
+	return getPasswordforAccessRequest(c, accessRequest)
+}
+
+func (ar AccessRequest) IsPending() bool {
+	return isAccessRequestPending(ar)
+}
+
+func (ar AccessRequest) IsValid() bool {
+	return isAccessRequestValid(ar)
+}
+
+func (ar AccessRequest) IsInvalid() bool {
+	return isAccessRequestInvalid(ar)
+}
+
+func isAccessRequestPending(accessRequest AccessRequest) bool {
+	pendingStates := map[AccessRequestState]bool{
+		StatePending:                true,
+		StatePendingApproval:        true,
+		StatePendingTimeRequested:   true,
+		StatePendingAccountRestored: true,
+		StatePendingAccountElevated: true,
+		StatePendingReview:          true,
+		StatePendingPasswordReset:   true,
+		StatePendingAcknowledgment:  true,
+	}
+
+	return pendingStates[accessRequest.State]
+}
+
+func isAccessRequestInvalid(accessRequest AccessRequest) bool {
+	invalidStates := map[AccessRequestState]bool{
+		StateCompleted: true,
+		StateExpired:   true,
+		StateDenied:    true,
+		StateCanceled:  true,
+		StateRevoked:   true,
+	}
+
+	return invalidStates[accessRequest.State]
+}
+
+func isAccessRequestValid(accessRequest AccessRequest) bool {
+	validStates := map[AccessRequestState]bool{
+		StatePasswordCheckedOut: true,
+		StateRequestAvailable:   true,
+		StateAcknowledged:       true,
+	}
+
+	return validStates[accessRequest.State]
+}
+
+func getPasswordforAccessRequest(c *client.SafeguardClient, accessRequest AccessRequest) (string, error) {
+	query := fmt.Sprintf("AccessRequests/%s/CheckOutPassword", accessRequest.Id)
+
+	response, err := c.PostRequest(query, nil)
 	if err != nil {
 		return "", err
 	}
@@ -542,6 +634,10 @@ func CheckOutPassword(c *client.SafeguardClient, id string) (string, error) {
 // Returns:
 //   - string: The checked-out password.
 //   - error: An error if the password checkout fails.
-func (ar AccessRequest) CheckOutPassword() (string, error) {
-	return CheckOutPassword(ar.client, ar.Id)
+func (ar AccessRequest) CheckOutPassword(ctx context.Context, waitForPending bool) (string, error) {
+	return CheckOutPassword(ctx, ar.client, ar, waitForPending)
+}
+
+func (ar AccessRequest) RefreshState() (AccessRequest, error) {
+	return GetAccessRequest(ar.client, ar.Id, nil)
 }

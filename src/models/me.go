@@ -140,6 +140,8 @@ const (
 	StateRevoked                AccessRequestState = "Revoked"
 	StatePendingAcknowledgment  AccessRequestState = "PendingAcknowledgment"
 	StateAcknowledged           AccessRequestState = "Acknowledged"
+	StateCompleted              AccessRequestState = "Complete"
+	StatePending                AccessRequestState = "Pending"
 )
 
 type EntitlementType string

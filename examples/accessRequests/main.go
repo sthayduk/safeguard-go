@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"time"
 
 	"github.com/sthayduk/safeguard-go/client"
 	"github.com/sthayduk/safeguard-go/examples/common"
@@ -62,7 +64,7 @@ func main() {
 	accessRequest, err := models.NewAccessRequests(sgc, entitlements)
 	if err != nil {
 		fmt.Printf("Error creating access request: %s\n", err)
-		panic(err)
+		//panic(err)
 	}
 
 	fmt.Println("Access Request ID: ", accessRequest[0].Response.Id)
@@ -88,18 +90,20 @@ func main() {
 			fmt.Println("  Asset Name:   ", request.AccountAssetName)
 			fmt.Println("  State:        ", request.State)
 
-			password, err := request.CheckOutPassword()
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			password, err := request.CheckOutPassword(ctx, true)
 			if err != nil {
 				fmt.Printf("Error checking out password: %s\n", err)
-				panic(err)
+				//panic(err)
 			} else {
 				fmt.Printf("Password: %s\n", password)
 			}
 		}
 	}
 
-	// Example 5: Cancel Access Requests
-	fmt.Println("Example 5: Canceling an access request")
+	// Example 5: Close Access Requests
+	fmt.Println("Example 5: Close an access request")
 	for _, entitlement := range entitlements {
 		fmt.Printf("(%d) AccountName: %s (AccountDomain: %s)\n", entitlement.Account.Id, entitlement.Account.Name, entitlement.Account.DomainName)
 		fmt.Println("Get Access Request for Account")
