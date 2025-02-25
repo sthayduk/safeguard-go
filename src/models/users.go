@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sthayduk/safeguard-go/src/client"
+	"github.com/sthayduk/safeguard-go/client"
 )
 
 type User struct {

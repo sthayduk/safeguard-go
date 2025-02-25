@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sthayduk/safeguard-go/src/client"
+	"github.com/sthayduk/safeguard-go/client"
 )
 
 // ManagedByUser represents a user who manages the asset account

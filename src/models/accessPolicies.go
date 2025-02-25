@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sthayduk/safeguard-go/src/client"
+	"github.com/sthayduk/safeguard-go/client"
 )
 
 // AccessPolicy represents security configuration governing the access to assets and accounts

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sthayduk/safeguard-go/src/client"
+	"github.com/sthayduk/safeguard-go/client"
 )
 
 // ClusterMember represents a node in the Safeguard cluster

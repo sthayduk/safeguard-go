@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/sthayduk/safeguard-go/src/client"
+	"github.com/sthayduk/safeguard-go/client"
 )
 
 // PolicyAccount represents a Safeguard account with its associated policies and properties

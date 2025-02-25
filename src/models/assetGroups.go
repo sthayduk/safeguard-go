@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sthayduk/safeguard-go/src/client"
+	"github.com/sthayduk/safeguard-go/client"
 )
 
 // AssetGroup represents a group of assets on the appliance for use in session policy.

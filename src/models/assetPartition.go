@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sthayduk/safeguard-go/src/client"
+	"github.com/sthayduk/safeguard-go/client"
 )
 
 // AssetPartition represents a collection of assets and accounts along with management configuration

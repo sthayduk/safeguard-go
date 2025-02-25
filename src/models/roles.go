@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sthayduk/safeguard-go/src/client"
+	"github.com/sthayduk/safeguard-go/client"
 )
 
 // Role represents roles in Safeguard made up of members, security scopes, and permissions

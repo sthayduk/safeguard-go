@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/sthayduk/safeguard-go/examples/common"
-	"github.com/sthayduk/safeguard-go/src/models"
+	"github.com/sthayduk/safeguard-go/models"
 )
 
 func main() {

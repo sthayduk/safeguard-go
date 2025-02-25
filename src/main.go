@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/sthayduk/safeguard-go/src/client"
+	"github.com/sthayduk/safeguard-go/client"
 )
 
 // Swagger URL:  https://<applianceHost>/service/core/swagger/index.html
