@@ -20,7 +20,7 @@ func (m AccountEntitlement) GetAccountId() int {
 	return m.Account.Id
 }
 
-func (m AccountEntitlement) GetAccountIdFilter() client.Filter {
+func (m AccountEntitlement) GetFilter() client.Filter {
 	var filter client.Filter
 	filter.AddFilter("AccountId", "eq", strconv.Itoa(m.GetAccountId()))
 	return filter

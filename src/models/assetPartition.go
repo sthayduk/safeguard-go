@@ -108,10 +108,10 @@ func (r AccountPasswordRule) ToJson() (string, error) {
 // Returns:
 //   - []AssetPartition: A slice of asset partitions matching the filter criteria
 //   - error: An error if the request fails, nil otherwise
-func GetAssetPartitions(c *client.SafeguardClient, fields client.Filter) ([]AssetPartition, error) {
+func GetAssetPartitions(c *client.SafeguardClient, filter client.Filter) ([]AssetPartition, error) {
 	var AssetPartitions []AssetPartition
 
-	query := "AssetPartitions" + fields.ToQueryString()
+	query := "AssetPartitions" + filter.ToQueryString()
 
 	response, err := c.GetRequest(query)
 	if err != nil {
@@ -159,7 +159,7 @@ func GetAssetPartition(c *client.SafeguardClient, id int, fields client.Fields) 
 //   - []AccountPasswordRule: A slice of password rules
 //   - error: An error if the request fails, nil otherwise
 func (a AssetPartition) GetPasswordRules() ([]AccountPasswordRule, error) {
-	return GetPasswordRules(a.client, a.Id, client.Filter{})
+	return GetPasswordRules(a.client, a, client.Filter{})
 }
 
 // GetPasswordRules retrieves the password rules for a specific asset partition.
@@ -171,10 +171,10 @@ func (a AssetPartition) GetPasswordRules() ([]AccountPasswordRule, error) {
 // Returns:
 //   - []AccountPasswordRule: A slice of password rules
 //   - error: An error if the request fails, nil otherwise
-func GetPasswordRules(c *client.SafeguardClient, AssetPartitionId int, filter client.Filter) ([]AccountPasswordRule, error) {
+func GetPasswordRules(c *client.SafeguardClient, assetPartition AssetPartition, filter client.Filter) ([]AccountPasswordRule, error) {
 	var PasswordRules []AccountPasswordRule
 
-	query := fmt.Sprintf("AssetPartitions/%d/Profiles", AssetPartitionId) + filter.ToQueryString()
+	query := fmt.Sprintf("AssetPartitions/%d/Profiles", assetPartition.Id) + filter.ToQueryString()
 
 	response, err := c.GetRequest(query)
 	if err != nil {
@@ -183,6 +183,10 @@ func GetPasswordRules(c *client.SafeguardClient, AssetPartitionId int, filter cl
 
 	if err := json.Unmarshal(response, &PasswordRules); err != nil {
 		return nil, err
+	}
+
+	if len(PasswordRules) == 0 {
+		return PasswordRules, fmt.Errorf("no password rules found for asset partition %d", assetPartition.Id)
 	}
 
 	for i := range PasswordRules {
