@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"time"
 
 	"github.com/sthayduk/safeguard-go/client"
 	"github.com/sthayduk/safeguard-go/examples/common"
@@ -14,7 +16,7 @@ func main() {
 		panic(err)
 	}
 
-	assetAccount, err := models.GetAssetAccount(sgc, 18, client.Fields{})
+	assetAccount, err := models.GetAssetAccount(sgc, 249, client.Fields{})
 	if err != nil {
 		panic(err)
 	}
@@ -24,7 +26,10 @@ func main() {
 		panic(err)
 	}
 
-	state, err := changePasswordTask.CheckTaskState()
+	// Wait for the task to complete
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	state, err := changePasswordTask.CheckTaskState(ctx)
 	if err != nil {
 		panic(err)
 	}

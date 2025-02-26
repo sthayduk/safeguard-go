@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"time"
 
 	"github.com/sthayduk/safeguard-go/client"
 	"github.com/sthayduk/safeguard-go/examples/common"
@@ -24,7 +26,10 @@ func main() {
 		panic(err)
 	}
 
-	state, err := checkPasswordTask.CheckTaskState()
+	// Check the task state
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	state, err := checkPasswordTask.CheckTaskState(ctx)
 	if err != nil {
 		panic(err)
 	}
