@@ -37,6 +37,10 @@ func (o OrderBy) String() string {
 	return strings.Join(o, ",")
 }
 
+// Filter Example from PAM UI
+// TODO: Add support for:
+// (Name contains 'muster' or DomainName contains 'muster' or AccountNamespace contains 'muster' or Asset.Name contains 'muster' or PasswordProfile.EffectiveName contains 'muster' or SshKeyProfile.EffectiveName contains 'muster' or Description contains 'muster' or Tags.Name icontains 'muster' or PrivilegeGroupMembership contains 'muster')
+
 type Filter struct {
 	Fields  Fields      `json:"fields,omitempty"`
 	Filter  FilterQuery `json:"filter,omitempty"`
