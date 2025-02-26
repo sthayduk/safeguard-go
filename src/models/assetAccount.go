@@ -1,6 +1,7 @@
 package models
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -10,178 +11,178 @@ import (
 
 // ManagedByUser represents a user who manages the asset account
 type ManagedByUser struct {
-	DisplayName                       string `json:"DisplayName"`
-	Id                                int    `json:"Id"`
-	IdentityProviderId                int    `json:"IdentityProviderId"`
-	IdentityProviderName              string `json:"IdentityProviderName"`
-	IdentityProviderTypeReferenceName string `json:"IdentityProviderTypeReferenceName"`
-	IsSystemOwned                     bool   `json:"IsSystemOwned"`
-	Name                              string `json:"Name"`
-	PrincipalKind                     string `json:"PrincipalKind"`
-	EmailAddress                      string `json:"EmailAddress"`
-	DomainName                        string `json:"DomainName"`
-	FullDisplayName                   string `json:"FullDisplayName"`
+	DisplayName                       string `json:"DisplayName,omitempty"`
+	Id                                int    `json:"Id,omitempty"`
+	IdentityProviderId                int    `json:"IdentityProviderId,omitempty"`
+	IdentityProviderName              string `json:"IdentityProviderName,omitempty"`
+	IdentityProviderTypeReferenceName string `json:"IdentityProviderTypeReferenceName,omitempty"`
+	IsSystemOwned                     bool   `json:"IsSystemOwned,omitempty"`
+	Name                              string `json:"Name,omitempty"`
+	PrincipalKind                     string `json:"PrincipalKind,omitempty"`
+	EmailAddress                      string `json:"EmailAddress,omitempty"`
+	DomainName                        string `json:"DomainName,omitempty"`
+	FullDisplayName                   string `json:"FullDisplayName,omitempty"`
 }
 
 // Tag represents a tag associated with an asset account
 type Tag struct {
-	Id            int    `json:"Id"`
-	Name          string `json:"Name"`
-	Description   string `json:"Description"`
-	AdminAssigned bool   `json:"AdminAssigned"`
+	Id            int    `json:"Id,omitempty"`
+	Name          string `json:"Name,omitempty"`
+	Description   string `json:"Description,omitempty"`
+	AdminAssigned bool   `json:"AdminAssigned,omitempty"`
 }
 
 // Profile represents a profile associated with an asset account
 type Profile struct {
-	Id            int    `json:"Id"`
-	Name          string `json:"Name"`
-	EffectiveId   int    `json:"EffectiveId"`
-	EffectiveName string `json:"EffectiveName"`
+	Id            int    `json:"Id,omitempty"`
+	Name          string `json:"Name,omitempty"`
+	EffectiveId   int    `json:"EffectiveId,omitempty"`
+	EffectiveName string `json:"EffectiveName,omitempty"`
 }
 
 // DiscoveredGroup represents a discovered group associated with an asset account
 type DiscoveredGroup struct {
-	DiscoveredGroupId                string `json:"DiscoveredGroupId"`
-	DiscoveredGroupName              string `json:"DiscoveredGroupName"`
-	DiscoveredGroupDistinguishedName string `json:"DiscoveredGroupDistinguishedName"`
+	DiscoveredGroupId                string `json:"DiscoveredGroupId,omitempty"`
+	DiscoveredGroupName              string `json:"DiscoveredGroupName,omitempty"`
+	DiscoveredGroupDistinguishedName string `json:"DiscoveredGroupDistinguishedName,omitempty"`
 }
 
 // DiscoveredProperties represents properties discovered for an asset account
 type DiscoveredProperties struct {
-	AccountDiscoveryScheduleId   int               `json:"AccountDiscoveryScheduleId"`
-	AccountDiscoveryScheduleName string            `json:"AccountDiscoveryScheduleName"`
-	DiscoveredUserId             string            `json:"DiscoveredUserId"`
-	DiscoveredDate               string            `json:"DiscoveredDate"`
-	DiscoveredGroups             []DiscoveredGroup `json:"DiscoveredGroups"`
+	AccountDiscoveryScheduleId   int               `json:"AccountDiscoveryScheduleId,omitempty"`
+	AccountDiscoveryScheduleName string            `json:"AccountDiscoveryScheduleName,omitempty"`
+	DiscoveredUserId             string            `json:"DiscoveredUserId,omitempty"`
+	DiscoveredDate               string            `json:"DiscoveredDate,omitempty"`
+	DiscoveredGroups             []DiscoveredGroup `json:"DiscoveredGroups,omitempty"`
 }
 
 // AssetDirectoryProperties represents directory properties of an asset
 type AssetDirectoryProperties struct {
-	NetbiosName string `json:"NetbiosName"`
-	ObjectGuid  string `json:"ObjectGuid"`
-	ObjectSid   string `json:"ObjectSid"`
+	NetbiosName string `json:"NetbiosName,omitempty"`
+	ObjectGuid  string `json:"ObjectGuid,omitempty"`
+	ObjectSid   string `json:"ObjectSid,omitempty"`
 }
 
 // SyncGroup represents a synchronization group for an asset account
 type SyncGroup struct {
-	Id       int    `json:"Id"`
-	Name     string `json:"Name"`
-	Priority int    `json:"Priority"`
-	Disabled bool   `json:"Disabled"`
+	Id       int    `json:"Id,omitempty"`
+	Name     string `json:"Name,omitempty"`
+	Priority int    `json:"Priority,omitempty"`
+	Disabled bool   `json:"Disabled,omitempty"`
 }
 
 // TaskProperties represents task properties for an asset account
 type TaskProperties struct {
-	HasAccountTaskFailure          bool      `json:"HasAccountTaskFailure"`
-	LastPasswordCheckDate          time.Time `json:"LastPasswordCheckDate"`
-	LastSuccessPasswordCheckDate   time.Time `json:"LastSuccessPasswordCheckDate"`
-	LastFailurePasswordCheckDate   time.Time `json:"LastFailurePasswordCheckDate"`
-	LastPasswordCheckTaskId        string    `json:"LastPasswordCheckTaskId"`
-	FailedPasswordCheckAttempts    int       `json:"FailedPasswordCheckAttempts"`
-	NextPasswordCheckDate          time.Time `json:"NextPasswordCheckDate"`
-	LastPasswordChangeDate         time.Time `json:"LastPasswordChangeDate"`
-	LastSuccessPasswordChangeDate  time.Time `json:"LastSuccessPasswordChangeDate"`
-	LastFailurePasswordChangeDate  time.Time `json:"LastFailurePasswordChangeDate"`
-	LastPasswordChangeTaskId       string    `json:"LastPasswordChangeTaskId"`
-	FailedPasswordChangeAttempts   int       `json:"FailedPasswordChangeAttempts"`
-	NextPasswordChangeDate         time.Time `json:"NextPasswordChangeDate"`
-	LastSshKeyCheckDate            time.Time `json:"LastSshKeyCheckDate"`
-	LastSuccessSshKeyCheckDate     time.Time `json:"LastSuccessSshKeyCheckDate"`
-	LastFailureSshKeyCheckDate     time.Time `json:"LastFailureSshKeyCheckDate"`
-	LastSshKeyCheckTaskId          string    `json:"LastSshKeyCheckTaskId"`
-	FailedSshKeyCheckAttempts      int       `json:"FailedSshKeyCheckAttempts"`
-	NextSshKeyCheckDate            time.Time `json:"NextSshKeyCheckDate"`
-	LastSshKeyChangeDate           time.Time `json:"LastSshKeyChangeDate"`
-	LastSuccessSshKeyChangeDate    time.Time `json:"LastSuccessSshKeyChangeDate"`
-	LastFailureSshKeyChangeDate    time.Time `json:"LastFailureSshKeyChangeDate"`
-	LastSshKeyChangeTaskId         string    `json:"LastSshKeyChangeTaskId"`
-	FailedSshKeyChangeAttempts     int       `json:"FailedSshKeyChangeAttempts"`
-	NextSshKeyChangeDate           time.Time `json:"NextSshKeyChangeDate"`
-	LastSshKeyDiscoveryDate        time.Time `json:"LastSshKeyDiscoveryDate"`
-	LastSuccessSshKeyDiscoveryDate time.Time `json:"LastSuccessSshKeyDiscoveryDate"`
-	LastFailureSshKeyDiscoveryDate time.Time `json:"LastFailureSshKeyDiscoveryDate"`
-	LastSshKeyDiscoveryTaskId      string    `json:"LastSshKeyDiscoveryTaskId"`
-	FailedSshKeyDiscoveryAttempts  int       `json:"FailedSshKeyDiscoveryAttempts"`
-	NextSshKeyDiscoveryDate        time.Time `json:"NextSshKeyDiscoveryDate"`
-	LastSshKeyRevokeDate           time.Time `json:"LastSshKeyRevokeDate"`
-	LastSuccessSshKeyRevokeDate    time.Time `json:"LastSuccessSshKeyRevokeDate"`
-	LastFailureSshKeyRevokeDate    time.Time `json:"LastFailureSshKeyRevokeDate"`
-	LastSshKeyRevokeTaskId         string    `json:"LastSshKeyRevokeTaskId"`
-	FailedSshKeyRevokeAttempts     int       `json:"FailedSshKeyRevokeAttempts"`
-	LastSuspendAccountDate         time.Time `json:"LastSuspendAccountDate"`
-	LastSuccessSuspendAccountDate  time.Time `json:"LastSuccessSuspendAccountDate"`
-	LastFailureSuspendAccountDate  time.Time `json:"LastFailureSuspendAccountDate"`
-	LastSuspendAccountTaskId       string    `json:"LastSuspendAccountTaskId"`
-	FailedSuspendAccountAttempts   int       `json:"FailedSuspendAccountAttempts"`
-	NextSuspendAccountDate         time.Time `json:"NextSuspendAccountDate"`
-	LastRestoreAccountDate         time.Time `json:"LastRestoreAccountDate"`
-	LastSuccessRestoreAccountDate  time.Time `json:"LastSuccessRestoreAccountDate"`
-	LastFailureRestoreAccountDate  time.Time `json:"LastFailureRestoreAccountDate"`
-	LastRestoreAccountTaskId       string    `json:"LastRestoreAccountTaskId"`
-	FailedRestoreAccountAttempts   int       `json:"FailedRestoreAccountAttempts"`
-	NextRestoreAccountDate         time.Time `json:"NextRestoreAccountDate"`
-	FailedApiKeyCheckAttempts      int       `json:"FailedApiKeyCheckAttempts"`
-	FailedApiKeyChangeAttempts     int       `json:"FailedApiKeyChangeAttempts"`
-	LastFileCheckDate              time.Time `json:"LastFileCheckDate"`
-	LastSuccessFileCheckDate       time.Time `json:"LastSuccessFileCheckDate"`
-	LastFailureFileCheckDate       time.Time `json:"LastFailureFileCheckDate"`
-	LastFileCheckTaskId            string    `json:"LastFileCheckTaskId"`
-	FailedFileCheckAttempts        int       `json:"FailedFileCheckAttempts"`
-	LastFileChangeDate             time.Time `json:"LastFileChangeDate"`
-	LastSuccessFileChangeDate      time.Time `json:"LastSuccessFileChangeDate"`
-	LastFailureFileChangeDate      time.Time `json:"LastFailureFileChangeDate"`
-	LastFileChangeTaskId           time.Time `json:"LastFileChangeTaskId"`
-	FailedFileChangeAttempts       int       `json:"FailedFileChangeAttempts"`
-	LastDemoteAccountDate          time.Time `json:"LastDemoteAccountDate"`
-	LastSuccessDemoteAccountDate   time.Time `json:"LastSuccessDemoteAccountDate"`
-	LastFailureDemoteAccountDate   time.Time `json:"LastFailureDemoteAccountDate"`
-	LastDemoteAccountTaskId        string    `json:"LastDemoteAccountTaskId"`
-	FailedDemoteAccountAttempts    int       `json:"FailedDemoteAccountAttempts"`
-	NextDemoteAccountDate          time.Time `json:"NextDemoteAccountDate"`
-	LastElevateAccountDate         time.Time `json:"LastElevateAccountDate"`
-	LastSuccessElevateAccountDate  time.Time `json:"LastSuccessElevateAccountDate"`
-	LastFailureElevateAccountDate  time.Time `json:"LastFailureElevateAccountDate"`
-	LastElevateAccountTaskId       string    `json:"LastElevateAccountTaskId"`
-	FailedElevateAccountAttempts   int       `json:"FailedElevateAccountAttempts"`
-	NextElevateAccountDate         time.Time `json:"NextElevateAccountDate"`
+	HasAccountTaskFailure          bool      `json:"HasAccountTaskFailure,omitempty"`
+	LastPasswordCheckDate          time.Time `json:"LastPasswordCheckDate,omitempty"`
+	LastSuccessPasswordCheckDate   time.Time `json:"LastSuccessPasswordCheckDate,omitempty"`
+	LastFailurePasswordCheckDate   time.Time `json:"LastFailurePasswordCheckDate,omitempty"`
+	LastPasswordCheckTaskId        string    `json:"LastPasswordCheckTaskId,omitempty"`
+	FailedPasswordCheckAttempts    int       `json:"FailedPasswordCheckAttempts,omitempty"`
+	NextPasswordCheckDate          time.Time `json:"NextPasswordCheckDate,omitempty"`
+	LastPasswordChangeDate         time.Time `json:"LastPasswordChangeDate,omitempty"`
+	LastSuccessPasswordChangeDate  time.Time `json:"LastSuccessPasswordChangeDate,omitempty"`
+	LastFailurePasswordChangeDate  time.Time `json:"LastFailurePasswordChangeDate,omitempty"`
+	LastPasswordChangeTaskId       string    `json:"LastPasswordChangeTaskId,omitempty"`
+	FailedPasswordChangeAttempts   int       `json:"FailedPasswordChangeAttempts,omitempty"`
+	NextPasswordChangeDate         time.Time `json:"NextPasswordChangeDate,omitempty"`
+	LastSshKeyCheckDate            time.Time `json:"LastSshKeyCheckDate,omitempty"`
+	LastSuccessSshKeyCheckDate     time.Time `json:"LastSuccessSshKeyCheckDate,omitempty"`
+	LastFailureSshKeyCheckDate     time.Time `json:"LastFailureSshKeyCheckDate,omitempty"`
+	LastSshKeyCheckTaskId          string    `json:"LastSshKeyCheckTaskId,omitempty"`
+	FailedSshKeyCheckAttempts      int       `json:"FailedSshKeyCheckAttempts,omitempty"`
+	NextSshKeyCheckDate            time.Time `json:"NextSshKeyCheckDate,omitempty"`
+	LastSshKeyChangeDate           time.Time `json:"LastSshKeyChangeDate,omitempty"`
+	LastSuccessSshKeyChangeDate    time.Time `json:"LastSuccessSshKeyChangeDate,omitempty"`
+	LastFailureSshKeyChangeDate    time.Time `json:"LastFailureSshKeyChangeDate,omitempty"`
+	LastSshKeyChangeTaskId         string    `json:"LastSshKeyChangeTaskId,omitempty"`
+	FailedSshKeyChangeAttempts     int       `json:"FailedSshKeyChangeAttempts,omitempty"`
+	NextSshKeyChangeDate           time.Time `json:"NextSshKeyChangeDate,omitempty"`
+	LastSshKeyDiscoveryDate        time.Time `json:"LastSshKeyDiscoveryDate,omitempty"`
+	LastSuccessSshKeyDiscoveryDate time.Time `json:"LastSuccessSshKeyDiscoveryDate,omitempty"`
+	LastFailureSshKeyDiscoveryDate time.Time `json:"LastFailureSshKeyDiscoveryDate,omitempty"`
+	LastSshKeyDiscoveryTaskId      string    `json:"LastSshKeyDiscoveryTaskId,omitempty"`
+	FailedSshKeyDiscoveryAttempts  int       `json:"FailedSshKeyDiscoveryAttempts,omitempty"`
+	NextSshKeyDiscoveryDate        time.Time `json:"NextSshKeyDiscoveryDate,omitempty"`
+	LastSshKeyRevokeDate           time.Time `json:"LastSshKeyRevokeDate,omitempty"`
+	LastSuccessSshKeyRevokeDate    time.Time `json:"LastSuccessSshKeyRevokeDate,omitempty"`
+	LastFailureSshKeyRevokeDate    time.Time `json:"LastFailureSshKeyRevokeDate,omitempty"`
+	LastSshKeyRevokeTaskId         string    `json:"LastSshKeyRevokeTaskId,omitempty"`
+	FailedSshKeyRevokeAttempts     int       `json:"FailedSshKeyRevokeAttempts,omitempty"`
+	LastSuspendAccountDate         time.Time `json:"LastSuspendAccountDate,omitempty"`
+	LastSuccessSuspendAccountDate  time.Time `json:"LastSuccessSuspendAccountDate,omitempty"`
+	LastFailureSuspendAccountDate  time.Time `json:"LastFailureSuspendAccountDate,omitempty"`
+	LastSuspendAccountTaskId       string    `json:"LastSuspendAccountTaskId,omitempty"`
+	FailedSuspendAccountAttempts   int       `json:"FailedSuspendAccountAttempts,omitempty"`
+	NextSuspendAccountDate         time.Time `json:"NextSuspendAccountDate,omitempty"`
+	LastRestoreAccountDate         time.Time `json:"LastRestoreAccountDate,omitempty"`
+	LastSuccessRestoreAccountDate  time.Time `json:"LastSuccessRestoreAccountDate,omitempty"`
+	LastFailureRestoreAccountDate  time.Time `json:"LastFailureRestoreAccountDate,omitempty"`
+	LastRestoreAccountTaskId       string    `json:"LastRestoreAccountTaskId,omitempty"`
+	FailedRestoreAccountAttempts   int       `json:"FailedRestoreAccountAttempts,omitempty"`
+	NextRestoreAccountDate         time.Time `json:"NextRestoreAccountDate,omitempty"`
+	FailedApiKeyCheckAttempts      int       `json:"FailedApiKeyCheckAttempts,omitempty"`
+	FailedApiKeyChangeAttempts     int       `json:"FailedApiKeyChangeAttempts,omitempty"`
+	LastFileCheckDate              time.Time `json:"LastFileCheckDate,omitempty"`
+	LastSuccessFileCheckDate       time.Time `json:"LastSuccessFileCheckDate,omitempty"`
+	LastFailureFileCheckDate       time.Time `json:"LastFailureFileCheckDate,omitempty"`
+	LastFileCheckTaskId            string    `json:"LastFileCheckTaskId,omitempty"`
+	FailedFileCheckAttempts        int       `json:"FailedFileCheckAttempts,omitempty"`
+	LastFileChangeDate             time.Time `json:"LastFileChangeDate,omitempty"`
+	LastSuccessFileChangeDate      time.Time `json:"LastSuccessFileChangeDate,omitempty"`
+	LastFailureFileChangeDate      time.Time `json:"LastFailureFileChangeDate,omitempty"`
+	LastFileChangeTaskId           time.Time `json:"LastFileChangeTaskId,omitempty"`
+	FailedFileChangeAttempts       int       `json:"FailedFileChangeAttempts,omitempty"`
+	LastDemoteAccountDate          time.Time `json:"LastDemoteAccountDate,omitempty"`
+	LastSuccessDemoteAccountDate   time.Time `json:"LastSuccessDemoteAccountDate,omitempty"`
+	LastFailureDemoteAccountDate   time.Time `json:"LastFailureDemoteAccountDate,omitempty"`
+	LastDemoteAccountTaskId        string    `json:"LastDemoteAccountTaskId,omitempty"`
+	FailedDemoteAccountAttempts    int       `json:"FailedDemoteAccountAttempts,omitempty"`
+	NextDemoteAccountDate          time.Time `json:"NextDemoteAccountDate,omitempty"`
+	LastElevateAccountDate         time.Time `json:"LastElevateAccountDate,omitempty"`
+	LastSuccessElevateAccountDate  time.Time `json:"LastSuccessElevateAccountDate,omitempty"`
+	LastFailureElevateAccountDate  time.Time `json:"LastFailureElevateAccountDate,omitempty"`
+	LastElevateAccountTaskId       string    `json:"LastElevateAccountTaskId,omitempty"`
+	FailedElevateAccountAttempts   int       `json:"FailedElevateAccountAttempts,omitempty"`
+	NextElevateAccountDate         time.Time `json:"NextElevateAccountDate,omitempty"`
 }
 
 // AssetAccount represents an asset account in Safeguard
 type AssetAccount struct {
 	client *client.SafeguardClient
 
-	Id                           int                  `json:"Id"`
-	Name                         string               `json:"Name"`
-	DistinguishedName            string               `json:"DistinguishedName"`
-	DomainName                   string               `json:"DomainName"`
-	AccountNamespace             string               `json:"AccountNamespace"`
-	Description                  string               `json:"Description"`
-	AltLoginName                 string               `json:"AltLoginName"`
-	PrivilegeGroupMembershipList []string             `json:"PrivilegeGroupMembershipList"`
-	CreatedDate                  string               `json:"CreatedDate"`
-	CreatedByUserId              int                  `json:"CreatedByUserId"`
-	CreatedByUserDisplayName     string               `json:"CreatedByUserDisplayName"`
-	ManagedBy                    []ManagedByUser      `json:"ManagedBy"`
-	Disabled                     bool                 `json:"Disabled"`
-	IsServiceAccount             bool                 `json:"IsServiceAccount"`
-	IsApplicationAccount         bool                 `json:"IsApplicationAccount"`
-	SharedServiceAccount         bool                 `json:"SharedServiceAccount"`
-	Tags                         []Tag                `json:"Tags"`
-	Asset                        Asset                `json:"Asset"`
-	PasswordProfile              Profile              `json:"PasswordProfile"`
-	SshKeyProfile                Profile              `json:"SshKeyProfile"`
-	RequestProperties            RequestProperties    `json:"RequestProperties"`
-	Platform                     Platform             `json:"Platform"`
-	DiscoveredProperties         DiscoveredProperties `json:"DiscoveredProperties"`
-	DirectoryProperties          DirectoryProperties  `json:"DirectoryProperties"`
-	SyncGroup                    SyncGroup            `json:"SyncGroup"`
-	SshKeySyncGroup              SyncGroup            `json:"SshKeySyncGroup"`
-	HasPassword                  bool                 `json:"HasPassword"`
-	HasSshKey                    bool                 `json:"HasSshKey"`
-	HasTotpAuthenticator         bool                 `json:"HasTotpAuthenticator"`
-	HasApiKeys                   bool                 `json:"HasApiKeys"`
-	HasFile                      bool                 `json:"HasFile"`
-	TaskProperties               TaskProperties       `json:"TaskProperties"`
+	Id                           int                  `json:"Id,omitempty"`
+	Name                         string               `json:"Name,omitempty"`
+	DistinguishedName            string               `json:"DistinguishedName,omitempty"`
+	DomainName                   string               `json:"DomainName,omitempty"`
+	AccountNamespace             string               `json:"AccountNamespace,omitempty"`
+	Description                  string               `json:"Description,omitempty"`
+	AltLoginName                 string               `json:"AltLoginName,omitempty"`
+	PrivilegeGroupMembershipList []string             `json:"PrivilegeGroupMembershipList,omitempty"`
+	CreatedDate                  string               `json:"CreatedDate,omitempty"`
+	CreatedByUserId              int                  `json:"CreatedByUserId,omitempty"`
+	CreatedByUserDisplayName     string               `json:"CreatedByUserDisplayName,omitempty"`
+	ManagedBy                    []ManagedByUser      `json:"ManagedBy,omitempty"`
+	Disabled                     bool                 `json:"Disabled,omitempty"`
+	IsServiceAccount             bool                 `json:"IsServiceAccount,omitempty"`
+	IsApplicationAccount         bool                 `json:"IsApplicationAccount,omitempty"`
+	SharedServiceAccount         bool                 `json:"SharedServiceAccount,omitempty"`
+	Tags                         []Tag                `json:"Tags,omitempty"`
+	Asset                        Asset                `json:"Asset,omitempty"`
+	PasswordProfile              Profile              `json:"PasswordProfile,omitempty"`
+	SshKeyProfile                Profile              `json:"SshKeyProfile,omitempty"`
+	RequestProperties            RequestProperties    `json:"RequestProperties,omitempty"`
+	Platform                     Platform             `json:"Platform,omitempty"`
+	DiscoveredProperties         DiscoveredProperties `json:"DiscoveredProperties,omitempty"`
+	DirectoryProperties          DirectoryProperties  `json:"DirectoryProperties,omitempty"`
+	SyncGroup                    SyncGroup            `json:"SyncGroup,omitempty"`
+	SshKeySyncGroup              SyncGroup            `json:"SshKeySyncGroup,omitempty"`
+	HasPassword                  bool                 `json:"HasPassword,omitempty"`
+	HasSshKey                    bool                 `json:"HasSshKey,omitempty"`
+	HasTotpAuthenticator         bool                 `json:"HasTotpAuthenticator,omitempty"`
+	HasApiKeys                   bool                 `json:"HasApiKeys,omitempty"`
+	HasFile                      bool                 `json:"HasFile,omitempty"`
+	TaskProperties               TaskProperties       `json:"TaskProperties,omitempty"`
 }
 
 // SshKey represents SSH key information as specified in swagger.json
@@ -351,4 +352,33 @@ func (a AssetAccount) CheckPassword() (PasswordActivityLog, error) {
 
 	json.Unmarshal(response, &log)
 	return log, nil
+}
+
+func CreateAssetAccount(c *client.SafeguardClient, assetAccount AssetAccount) (AssetAccount, error) {
+	// https://spp-itd-01.itdesign.at/service/core/v4/Assets/464/DirectoryAccounts?searchScope=Subtree&searchName=da-hayduk
+
+	query := "AssetAccounts"
+
+	assetAccountJSON, err := json.Marshal(assetAccount)
+	if err != nil {
+		return AssetAccount{}, err
+	}
+
+	response, err := c.PostRequest(query, bytes.NewReader(assetAccountJSON))
+	if err != nil {
+		return AssetAccount{}, err
+	}
+
+	var createdAssetAccount AssetAccount
+	err = json.Unmarshal(response, &createdAssetAccount)
+	if err != nil {
+		return AssetAccount{}, err
+	}
+
+	createdAssetAccount.client = c
+	return createdAssetAccount, nil
+}
+
+func (a AssetAccount) Create() (AssetAccount, error) {
+	return CreateAssetAccount(a.client, a)
 }

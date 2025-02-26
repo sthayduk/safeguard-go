@@ -54,10 +54,10 @@ const (
 
 // ApproverSet represents a set of identities required to approve an access request
 type ApproverSet struct {
-	Name        string     `json:"Name"`
-	Description string     `json:"Description,omitempty"`
-	IsDefault   bool       `json:"IsDefault"`
-	Identities  []Identity `json:"Identities"`
+	Name        string          `json:"Name"`
+	Description string          `json:"Description,omitempty"`
+	IsDefault   bool            `json:"IsDefault"`
+	Identities  []ManagedByUser `json:"Identities"`
 }
 
 // ReasonCode represents a predefined reason for access requests
@@ -93,7 +93,7 @@ type AccessPolicy struct {
 	SessionProperties           *SessionProperties          `json:"SessionProperties,omitempty"`
 	EmergencyAccessProperties   EmergencyAccessProperties   `json:"EmergencyAccessProperties"`
 	ApproverSets                []ApproverSet               `json:"ApproverSets"`
-	Reviewers                   []Identity                  `json:"Reviewers"`
+	Reviewers                   []ManagedByUser             `json:"Reviewers"`
 	NotificationContacts        []NotificationContact       `json:"NotificationContacts"`
 	ReasonCodes                 []ReasonCode                `json:"ReasonCodes"`
 	ScopeItems                  []PolicyScopeItem           `json:"ScopeItems"`

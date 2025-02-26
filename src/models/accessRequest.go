@@ -319,7 +319,7 @@ func GetAccessRequest(c *client.SafeguardClient, id string, fields client.Fields
 // Returns:
 //   - A slice of AccessRequestBatchResponse objects containing the responses for each access request.
 //   - An error if the batch creation of access requests fails.
-func NewAccessRequests(c *client.SafeguardClient, accountEntitlements []MeAccountEntitlement) ([]AccessRequestBatchResponse, error) {
+func NewAccessRequests(c *client.SafeguardClient, accountEntitlements []AccountEntitlement) ([]AccessRequestBatchResponse, error) {
 	var accessRequests []batchAccessRequest
 
 	// Reduce properties to the required on for the request
@@ -514,33 +514,25 @@ func (ar AccessRequest) CheckIn() (AccessRequest, error) {
 	return CheckInAccessRequest(ar.client, ar.Id)
 }
 
-// CheckOutPassword checks out a password for a given access request ID.
-// It sends a POST request to the Safeguard API to check out the password.
-// The function returns the password as a string and an error if any occurred.
+// CheckOutPassword checks out the password for the access request.
+// It returns the password as a string and an error if the operation fails.
 //
 // Parameters:
-//   - c: A pointer to a SafeguardClient instance used to make the API request.
-//   - id: A string representing the access request ID.
+//   - ctx: The context for the operation, which can be used to cancel the request.
+//   - c: The SafeguardClient instance for making API requests.
+//   - accessRequest: The access request for which the password is being checked out.
+//   - waitForPending: A boolean indicating whether to wait for the access request to become valid if it is in a pending state.
 //
 // Returns:
-//   - A string containing the checked-out password.
-//   - An error if the request fails or if the password cannot be checked out.
-//
-// Note:
-//   - The password can only be checked out if the state is PasswordCheckedOut or RequestAvailable.
-//   - The password cannot be checked out if the state is Complete or Pending.
-func CheckOutPassword(ctx context.Context, c *client.SafeguardClient, accessRequest AccessRequest, waitForPending bool) (string, error) {
-
-	// TODO: Check if Password is requestable
-	// State must be PasswordCheckedOut, RequestAvailable
-	// State must not be Complete, Pending
-
+//   - string: The checked-out password.
+//   - error: An error if the password checkout fails.
+func CheckOutPassword(ctx context.Context, c *client.SafeguardClient, accessRequest AccessRequest, shouldWaitForPending bool) (string, error) {
 	if accessRequest.IsInvalid() {
 		return "", fmt.Errorf("cannot check out password for access request in state: %s", accessRequest.State)
 	}
 
 	if accessRequest.IsPending() {
-		if !waitForPending {
+		if !shouldWaitForPending {
 			return "", fmt.Errorf("cannot check out password for access request in state: %s", accessRequest.State)
 		}
 
@@ -568,18 +560,37 @@ func CheckOutPassword(ctx context.Context, c *client.SafeguardClient, accessRequ
 	return getPasswordforAccessRequest(c, accessRequest)
 }
 
+// IsPending checks if the access request is in a pending state.
+//
+// Returns:
+//   - bool: True if the access request is in a pending state, false otherwise.
 func (ar AccessRequest) IsPending() bool {
 	return isAccessRequestPending(ar)
 }
 
+// IsValid checks if the access request is in a valid state for password checkout.
+//
+// Returns:
+//   - bool: True if the access request is in a valid state, false otherwise.
 func (ar AccessRequest) IsValid() bool {
 	return isAccessRequestValid(ar)
 }
 
+// IsInvalid checks if the access request is in an invalid state for password checkout.
+//
+// Returns:
+//   - bool: True if the access request is in an invalid state, false otherwise.
 func (ar AccessRequest) IsInvalid() bool {
 	return isAccessRequestInvalid(ar)
 }
 
+// isAccessRequestPending checks if the access request is in a pending state.
+//
+// Parameters:
+//   - accessRequest: The access request to check.
+//
+// Returns:
+//   - bool: True if the access request is in a pending state, false otherwise.
 func isAccessRequestPending(accessRequest AccessRequest) bool {
 	pendingStates := map[AccessRequestState]bool{
 		StatePending:                true,
@@ -595,6 +606,13 @@ func isAccessRequestPending(accessRequest AccessRequest) bool {
 	return pendingStates[accessRequest.State]
 }
 
+// isAccessRequestInvalid checks if the access request is in an invalid state.
+//
+// Parameters:
+//   - accessRequest: The access request to check.
+//
+// Returns:
+//   - bool: True if the access request is in an invalid state, false otherwise.
 func isAccessRequestInvalid(accessRequest AccessRequest) bool {
 	invalidStates := map[AccessRequestState]bool{
 		StateCompleted: true,
@@ -607,6 +625,13 @@ func isAccessRequestInvalid(accessRequest AccessRequest) bool {
 	return invalidStates[accessRequest.State]
 }
 
+// isAccessRequestValid checks if the access request is in a valid state for password checkout.
+//
+// Parameters:
+//   - accessRequest: The access request to check.
+//
+// Returns:
+//   - bool: True if the access request is in a valid state, false otherwise.
 func isAccessRequestValid(accessRequest AccessRequest) bool {
 	validStates := map[AccessRequestState]bool{
 		StatePasswordCheckedOut: true,
@@ -617,6 +642,16 @@ func isAccessRequestValid(accessRequest AccessRequest) bool {
 	return validStates[accessRequest.State]
 }
 
+// getPasswordforAccessRequest retrieves the password for the given access request.
+// It sends a POST request to the "AccessRequests/{id}/CheckOutPassword" endpoint.
+//
+// Parameters:
+//   - c: The SafeguardClient instance for making API requests.
+//   - accessRequest: The access request for which the password is being checked out.
+//
+// Returns:
+//   - string: The checked-out password.
+//   - error: An error if the password checkout fails.
 func getPasswordforAccessRequest(c *client.SafeguardClient, accessRequest AccessRequest) (string, error) {
 	query := fmt.Sprintf("AccessRequests/%s/CheckOutPassword", accessRequest.Id)
 
@@ -631,6 +666,10 @@ func getPasswordforAccessRequest(c *client.SafeguardClient, accessRequest Access
 // CheckOutPassword checks out the password for the access request.
 // It returns the password as a string and an error if the operation fails.
 //
+// Parameters:
+//   - ctx: The context for the operation, which can be used to cancel the request.
+//   - waitForPending: A boolean indicating whether to wait for the access request to become valid if it is in a pending state.
+//
 // Returns:
 //   - string: The checked-out password.
 //   - error: An error if the password checkout fails.
@@ -638,6 +677,10 @@ func (ar AccessRequest) CheckOutPassword(ctx context.Context, waitForPending boo
 	return CheckOutPassword(ctx, ar.client, ar, waitForPending)
 }
 
+// RefreshState refreshes the state of the current AccessRequest instance by
+// retrieving the latest data from the server using the AccessRequest's client
+// and ID. It returns an updated AccessRequest instance and an error if the
+// operation fails.
 func (ar AccessRequest) RefreshState() (AccessRequest, error) {
 	return GetAccessRequest(ar.client, ar.Id, nil)
 }

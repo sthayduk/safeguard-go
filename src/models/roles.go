@@ -132,8 +132,8 @@ func GetEntitlement(c *client.SafeguardClient, id int, fields client.Fields) (Ro
 	return GetRole(c, id, fields)
 }
 
-func GetRoleMembers(c *client.SafeguardClient, id int, filter client.Filter) ([]Identity, error) {
-	var members []Identity
+func GetRoleMembers(c *client.SafeguardClient, id int, filter client.Filter) ([]ManagedByUser, error) {
+	var members []ManagedByUser
 
 	query := fmt.Sprintf("Roles/%d/Members%s", id, filter.ToQueryString())
 
@@ -148,7 +148,7 @@ func GetRoleMembers(c *client.SafeguardClient, id int, filter client.Filter) ([]
 	return members, nil
 }
 
-func (r Role) GetMembers(filter client.Filter) ([]Identity, error) {
+func (r Role) GetMembers(filter client.Filter) ([]ManagedByUser, error) {
 	return GetRoleMembers(r.client, r.Id, filter)
 }
 

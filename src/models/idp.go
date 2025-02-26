@@ -106,6 +106,12 @@ type DirectoryProperties struct {
 	DomainControllers              []DomainController   `json:"DomainControllers,omitempty"`
 	SchemaProperties               SchemaProperties     `json:"SchemaProperties,omitempty"`
 	ConnectionProperties           ConnectionProperties `json:"ConnectionProperties,omitempty"`
+	DirectoryId                    int                  `json:"DirectoryId"`
+	DirectoryName                  string               `json:"DirectoryName"`
+	NetbiosName                    string               `json:"NetbiosName"`
+	DistinguishedName              string               `json:"DistinguishedName"`
+	ObjectGuid                     string               `json:"ObjectGuid"`
+	ObjectSid                      string               `json:"ObjectSid"`
 }
 
 type Domain struct {
@@ -118,15 +124,12 @@ type Domain struct {
 }
 
 type DomainController struct {
+	Name           string `json:"Name"`
+	Port           int    `json:"Port"`
 	NetworkAddress string `json:"NetworkAddress,omitempty"`
 	DomainName     string `json:"DomainName,omitempty"`
 	IsWritable     bool   `json:"IsWritable,omitempty"`
 	ServerType     string `json:"ServerType,omitempty"`
-}
-
-type SchemaProperties struct {
-	UserProperties  UserProperties  `json:"UserProperties,omitempty"`
-	GroupProperties GroupProperties `json:"GroupProperties,omitempty"`
 }
 
 type UserProperties struct {
@@ -219,10 +222,10 @@ func GetIdentityProvider(c *client.SafeguardClient, id int) (IdentityProvider, e
 // Returns:
 //   - A slice of User objects representing the directory users.
 //   - An error if the request fails or the response cannot be unmarshaled.
-func GetDirectoryUsers(c *client.SafeguardClient, id int, filter client.Filter) ([]User, error) {
+func GetDirectoryUsers(c *client.SafeguardClient, identityProviderId int, filter client.Filter) ([]User, error) {
 	var directoryUsers []User
 
-	query := fmt.Sprintf("IdentityProviders/%d/DirectoryUsers%s", id, filter.ToQueryString())
+	query := fmt.Sprintf("IdentityProviders/%d/DirectoryUsers%s", identityProviderId, filter.ToQueryString())
 
 	response, err := c.GetRequest(query)
 	if err != nil {

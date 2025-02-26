@@ -8,25 +8,25 @@ import (
 	"github.com/sthayduk/safeguard-go/client"
 )
 
-// MeAccountEntitlement represents the full account entitlement structure
-type MeAccountEntitlement struct {
+// AccountEntitlement represents the full account entitlement structure
+type AccountEntitlement struct {
 	Account        AccountInfo         `json:"Account,omitempty"`
 	Asset          AssetInfo           `json:"Asset,omitempty"`
 	Policies       []PolicyInfo        `json:"Policies,omitempty"`
 	ActiveRequests []ActiveRequestInfo `json:"ActiveRequests,omitempty"`
 }
 
-func (m MeAccountEntitlement) GetAccountId() int {
+func (m AccountEntitlement) GetAccountId() int {
 	return m.Account.Id
 }
 
-func (m MeAccountEntitlement) GetAccountIdFilter() client.Filter {
+func (m AccountEntitlement) GetAccountIdFilter() client.Filter {
 	var filter client.Filter
 	filter.AddFilter("AccountId", "eq", strconv.Itoa(m.GetAccountId()))
 	return filter
 }
 
-func (m MeAccountEntitlement) GetAccessRequestType() AccessRequestType {
+func (m AccountEntitlement) GetAccessRequestType() AccessRequestType {
 	for _, policy := range m.Policies {
 		return policy.AccessRequestType
 	}
@@ -343,8 +343,20 @@ func (r *ActionableRequestsResult) GetRequestsForRole(role AccessRequestRole) []
 	return r.RequestsByRole[role]
 }
 
-func GetMeAccountEntitlements(c *client.SafeguardClient, accessRequestType AccessRequestType, includeActiveRequests bool, filterByCredential bool, filter client.Filter) ([]MeAccountEntitlement, error) {
-	var entitlements []MeAccountEntitlement
+// GetMeAccountEntitlements retrieves the account entitlements for the current user.
+//
+// Parameters:
+//   - c: A pointer to the SafeguardClient used to make the request.
+//   - accessRequestType: The type of access request to filter by.
+//   - includeActiveRequests: A boolean indicating whether to include active requests in the response.
+//   - filterByCredential: A boolean indicating whether to filter by credential.
+//   - filter: A client.Filter object to apply additional filtering.
+//
+// Returns:
+//   - A slice of AccountEntitlement objects.
+//   - An error if the request fails or the response cannot be unmarshaled.
+func GetMeAccountEntitlements(c *client.SafeguardClient, accessRequestType AccessRequestType, includeActiveRequests bool, filterByCredential bool, filter client.Filter) ([]AccountEntitlement, error) {
+	var entitlements []AccountEntitlement
 
 	query := "me/AccountEntitlements" + filter.ToQueryString() +
 		"&includeActiveRequests=" + strconv.FormatBool(includeActiveRequests) +
@@ -356,11 +368,11 @@ func GetMeAccountEntitlements(c *client.SafeguardClient, accessRequestType Acces
 
 	response, err := c.GetRequest(query)
 	if err != nil {
-		return []MeAccountEntitlement{}, err
+		return []AccountEntitlement{}, err
 	}
 
 	if err := json.Unmarshal(response, &entitlements); err != nil {
-		return []MeAccountEntitlement{}, err
+		return []AccountEntitlement{}, err
 	}
 
 	return entitlements, nil

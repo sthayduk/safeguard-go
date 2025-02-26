@@ -79,15 +79,6 @@ type Platform struct {
 	PlatformFamily            PlatformFamily `json:"PlatformFamily"`
 }
 
-// Asset represents a Safeguard asset
-type Asset struct {
-	Id                 int    `json:"Id"`
-	Name               string `json:"Name"`
-	NetworkAddress     string `json:"NetworkAddress"`
-	AssetPartitionId   int    `json:"AssetPartitionId"`
-	AssetPartitionName string `json:"AssetPartitionName"`
-}
-
 func (p PolicyAccount) ToJson() (string, error) {
 	policyAccountJSON, err := json.Marshal(p)
 	if err != nil {

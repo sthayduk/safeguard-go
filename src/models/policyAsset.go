@@ -86,24 +86,16 @@ func (p PolicyAsset) ToJson() (string, error) {
 	return string(policyAssetJSON), nil
 }
 
-// AssetType represents the type of asset
-type AssetType string
-
-const (
-	AssetTypeComputer      AssetType = "Computer"
-	AssetTypeDirectory     AssetType = "Directory"
-	AssetTypeDynamicAccess AssetType = "DynamicAccess"
-	AssetTypeStarling      AssetType = "Starling"
-)
-
 // AssetSshHostKey represents an SSH Host Key used to identify assets
 type AssetSshHostKey struct {
-	Id            int    `json:"Id"`
-	Fingerprint   string `json:"Fingerprint,omitempty"`
-	Key           string `json:"Key,omitempty"`
-	KeyType       string `json:"KeyType,omitempty"`
-	Comment       string `json:"Comment,omitempty"`
-	CanBeAccepted bool   `json:"CanBeAccepted,omitempty"`
+	Id                int    `json:"Id"`
+	Fingerprint       string `json:"Fingerprint,omitempty"`
+	Key               string `json:"Key,omitempty"`
+	KeyType           string `json:"KeyType,omitempty"`
+	Comment           string `json:"Comment,omitempty"`
+	CanBeAccepted     bool   `json:"CanBeAccepted,omitempty"`
+	SshHostKey        string `json:"SshHostKey"`
+	FingerprintSha256 string `json:"FingerprintSha256"`
 }
 
 // PolicyAssetPlatform represents platform information specific to policy assets
