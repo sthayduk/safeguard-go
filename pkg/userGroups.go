@@ -1,5 +1,5 @@
-// Package models provides data structures and operations for interacting with Safeguard entities
-package models
+// package pkg provides data structures and operations for interacting with Safeguard entities
+package pkg
 
 import (
 	"encoding/json"

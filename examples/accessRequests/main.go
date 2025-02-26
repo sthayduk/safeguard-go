@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	sg "github.com/sthayduk/safeguard-go"
 	"github.com/sthayduk/safeguard-go/client"
 	"github.com/sthayduk/safeguard-go/examples/common"
-	"github.com/sthayduk/safeguard-go/models"
 )
 
 func main() {
@@ -19,7 +19,7 @@ func main() {
 	// Example 1: Get information about the current user
 	fmt.Println("Example 1: Getting current user information")
 
-	me, err := models.GetMe(sgc, client.Filter{})
+	me, err := sg.GetMe(sgc, client.Filter{})
 	if err != nil {
 		fmt.Printf("Error getting current user: %s\n", err)
 	}
@@ -29,7 +29,7 @@ func main() {
 
 	// Example 2: Get all Entitlements
 	fmt.Println("Example 2: Getting all entitlements")
-	entitlements, err := models.GetMeAccountEntitlements(sgc, models.AccessRequestTypePassword, false, false, client.Filter{})
+	entitlements, err := sg.GetMeAccountEntitlements(sgc, sg.AccessRequestTypePassword, false, false, client.Filter{})
 	if err != nil {
 		fmt.Printf("Error getting entitlements: %s\n", err)
 		panic(err)
@@ -42,7 +42,7 @@ func main() {
 		fmt.Printf("(%d) AccountName: %s (AccountDomain: %s)\n", entitlement.Account.Id, entitlement.Account.Name, entitlement.Account.DomainName)
 		fmt.Println("Get Access Request for Account")
 
-		accessRequest, err := models.GetAccessRequests(sgc, entitlement.GetFilter())
+		accessRequest, err := sg.GetAccessRequests(sgc, entitlement.GetFilter())
 		if err != nil {
 			fmt.Printf("Error getting access request: %s\n", err)
 			panic(err)
@@ -61,7 +61,7 @@ func main() {
 
 	// Example 3: New Access Request
 	fmt.Println("Example 3: Creating a new access request")
-	accessRequest, err := models.NewAccessRequests(sgc, entitlements)
+	accessRequest, err := sg.NewAccessRequests(sgc, entitlements)
 	if err != nil {
 		fmt.Printf("Error creating access request: %s\n", err)
 		//panic(err)
@@ -75,7 +75,7 @@ func main() {
 		fmt.Printf("(%d) AccountName: %s (AccountDomain: %s)\n", entitlement.Account.Id, entitlement.Account.Name, entitlement.Account.DomainName)
 		fmt.Println("Get Access Request for Account")
 
-		accessRequest, err := models.GetAccessRequests(sgc, entitlement.GetFilter())
+		accessRequest, err := sg.GetAccessRequests(sgc, entitlement.GetFilter())
 		if err != nil {
 			fmt.Printf("Error getting access request: %s\n", err)
 			panic(err)
@@ -108,7 +108,7 @@ func main() {
 		fmt.Printf("(%d) AccountName: %s (AccountDomain: %s)\n", entitlement.Account.Id, entitlement.Account.Name, entitlement.Account.DomainName)
 		fmt.Println("Get Access Request for Account")
 
-		accessRequest, err := models.GetAccessRequests(sgc, entitlement.GetFilter())
+		accessRequest, err := sg.GetAccessRequests(sgc, entitlement.GetFilter())
 		if err != nil {
 			fmt.Printf("Error getting access request: %s\n", err)
 			panic(err)

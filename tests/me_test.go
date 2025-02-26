@@ -3,19 +3,17 @@ package tests
 import (
 	"testing"
 	"time"
-
-	"github.com/sthayduk/safeguard-go/models"
 )
 
 func TestGetMaximumReleaseDuration(t *testing.T) {
 	tests := []struct {
 		name     string
-		props    models.RequesterProperties
+		props    RequesterProperties
 		expected time.Duration
 	}{
 		{
 			name: "Zero duration",
-			props: models.RequesterProperties{
+			props: RequesterProperties{
 				MaximumReleaseDurationDays:    0,
 				MaximumReleaseDurationHours:   0,
 				MaximumReleaseDurationMinutes: 0,
@@ -24,7 +22,7 @@ func TestGetMaximumReleaseDuration(t *testing.T) {
 		},
 		{
 			name: "Only days",
-			props: models.RequesterProperties{
+			props: RequesterProperties{
 				MaximumReleaseDurationDays:    2,
 				MaximumReleaseDurationHours:   0,
 				MaximumReleaseDurationMinutes: 0,
@@ -33,7 +31,7 @@ func TestGetMaximumReleaseDuration(t *testing.T) {
 		},
 		{
 			name: "Only hours",
-			props: models.RequesterProperties{
+			props: RequesterProperties{
 				MaximumReleaseDurationDays:    0,
 				MaximumReleaseDurationHours:   5,
 				MaximumReleaseDurationMinutes: 0,
@@ -42,7 +40,7 @@ func TestGetMaximumReleaseDuration(t *testing.T) {
 		},
 		{
 			name: "Only minutes",
-			props: models.RequesterProperties{
+			props: RequesterProperties{
 				MaximumReleaseDurationDays:    0,
 				MaximumReleaseDurationHours:   0,
 				MaximumReleaseDurationMinutes: 30,
@@ -51,7 +49,7 @@ func TestGetMaximumReleaseDuration(t *testing.T) {
 		},
 		{
 			name: "Days, hours, and minutes",
-			props: models.RequesterProperties{
+			props: RequesterProperties{
 				MaximumReleaseDurationDays:    1,
 				MaximumReleaseDurationHours:   2,
 				MaximumReleaseDurationMinutes: 30,
@@ -71,12 +69,12 @@ func TestGetMaximumReleaseDuration(t *testing.T) {
 func TestGetDefaultReleaseDuration(t *testing.T) {
 	tests := []struct {
 		name     string
-		props    models.RequesterProperties
+		props    RequesterProperties
 		expected time.Duration
 	}{
 		{
 			name: "Zero duration",
-			props: models.RequesterProperties{
+			props: RequesterProperties{
 				DefaultReleaseDurationDays:    0,
 				DefaultReleaseDurationHours:   0,
 				DefaultReleaseDurationMinutes: 0,
@@ -85,7 +83,7 @@ func TestGetDefaultReleaseDuration(t *testing.T) {
 		},
 		{
 			name: "Only days",
-			props: models.RequesterProperties{
+			props: RequesterProperties{
 				DefaultReleaseDurationDays:    2,
 				DefaultReleaseDurationHours:   0,
 				DefaultReleaseDurationMinutes: 0,
@@ -94,7 +92,7 @@ func TestGetDefaultReleaseDuration(t *testing.T) {
 		},
 		{
 			name: "Only hours",
-			props: models.RequesterProperties{
+			props: RequesterProperties{
 				DefaultReleaseDurationDays:    0,
 				DefaultReleaseDurationHours:   5,
 				DefaultReleaseDurationMinutes: 0,
@@ -103,7 +101,7 @@ func TestGetDefaultReleaseDuration(t *testing.T) {
 		},
 		{
 			name: "Only minutes",
-			props: models.RequesterProperties{
+			props: RequesterProperties{
 				DefaultReleaseDurationDays:    0,
 				DefaultReleaseDurationHours:   0,
 				DefaultReleaseDurationMinutes: 30,
@@ -112,7 +110,7 @@ func TestGetDefaultReleaseDuration(t *testing.T) {
 		},
 		{
 			name: "Days, hours, and minutes",
-			props: models.RequesterProperties{
+			props: RequesterProperties{
 				DefaultReleaseDurationDays:    1,
 				DefaultReleaseDurationHours:   2,
 				DefaultReleaseDurationMinutes: 30,

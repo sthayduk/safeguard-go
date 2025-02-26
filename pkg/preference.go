@@ -1,4 +1,4 @@
-package models
+package pkg
 
 // Represents an application user's preference.
 type Preference struct {

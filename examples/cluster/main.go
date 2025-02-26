@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 
+	sg "github.com/sthayduk/safeguard-go"
 	"github.com/sthayduk/safeguard-go/client"
 	"github.com/sthayduk/safeguard-go/examples/common"
-	"github.com/sthayduk/safeguard-go/models"
 )
 
 func main() {
@@ -16,7 +16,7 @@ func main() {
 
 	// Example: GetClusterMembers
 	filter := client.Filter{}
-	clusterMembers, err := models.GetClusterMembers(sgc, filter)
+	clusterMembers, err := sg.GetClusterMembers(sgc, filter)
 	if err != nil {
 		fmt.Printf("Error getting cluster members: %v\n", err)
 	} else {
@@ -25,7 +25,7 @@ func main() {
 
 	// Example: GetClusterMember
 	memberID := "46995a16b0b7482899cc6c60f4a0d86d" // Replace with actual member ID
-	clusterMember, err := models.GetClusterMember(sgc, memberID)
+	clusterMember, err := sg.GetClusterMember(sgc, memberID)
 	if err != nil {
 		fmt.Printf("Error getting cluster member: %v\n", err)
 	} else {
@@ -33,7 +33,7 @@ func main() {
 	}
 
 	// Example: GetClusterLeader
-	clusterLeader, err := models.GetClusterLeader(sgc)
+	clusterLeader, err := sg.GetClusterLeader(sgc)
 	if err != nil {
 		fmt.Printf("Error getting cluster leader: %v\n", err)
 	} else {
@@ -41,7 +41,7 @@ func main() {
 	}
 
 	// Example: ForceClusterHealthCheck
-	clusterHealth, err := models.ForceClusterHealthCheck(sgc)
+	clusterHealth, err := sg.ForceClusterHealthCheck(sgc)
 	if err != nil {
 		fmt.Printf("Error forcing cluster health check: %v\n", err)
 	} else {

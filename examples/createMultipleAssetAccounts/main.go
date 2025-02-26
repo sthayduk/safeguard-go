@@ -8,10 +8,11 @@ import (
 	"sync"
 	"time"
 
+	sg "github.com/sthayduk/safeguard-go"
+
 	"github.com/fatih/color"
 	"github.com/sthayduk/safeguard-go/client"
 	"github.com/sthayduk/safeguard-go/examples/common"
-	"github.com/sthayduk/safeguard-go/models"
 )
 
 func main() {
@@ -36,7 +37,7 @@ func main() {
 
 	// Get the Active Directory
 	logger.Printf("Getting Active Directory with ID: %d", adId)
-	ad, err := models.GetAsset(sgc, adId, client.Fields{"Id", "Name"})
+	ad, err := sg.GetAsset(sgc, adId, client.Fields{"Id", "Name"})
 	if err != nil {
 		logger.Fatalf("Failed to get Active Directory: %v", err)
 	}
@@ -54,7 +55,7 @@ func main() {
 		logger.Printf("Found user: %s", user.Name)
 	}
 
-	createdUsers, err := models.CreateAssetAccounts(sgc, users)
+	createdUsers, err := sg.CreateAssetAccounts(sgc, users)
 	if err != nil {
 		logger.Fatalf("Failed to create asset accounts: %s", err)
 	}
@@ -99,20 +100,20 @@ func main() {
 
 }
 
-func updateAndCheckPassword(wg *sync.WaitGroup, sgc *client.SafeguardClient, logger *log.Logger, createdUser models.AssetAccount) {
+func updateAndCheckPassword(wg *sync.WaitGroup, sgc *client.SafeguardClient, logger *log.Logger, createdUser sg.AssetAccount) {
 	// Initialize colored output
 	info := color.New(color.FgCyan).SprintFunc()
 
 	// Update Password Profile
 	logger.Println("Updating password profile...")
-	assetPartition, err := models.GetAssetPartition(sgc, 1, client.Fields{"Id", "Name"})
+	assetPartition, err := sg.GetAssetPartition(sgc, 1, client.Fields{"Id", "Name"})
 	if err != nil {
 		logger.Fatalf("Failed to get asset partition: %v", err)
 	}
 
 	filter := client.Filter{}
 	filter.AddFilter("Name", "eq", "ITdesign Profile Suspend")
-	passwordProfile, err := models.GetPasswordRules(sgc, assetPartition, filter)
+	passwordProfile, err := sg.GetPasswordRules(sgc, assetPartition, filter)
 	if err != nil {
 		logger.Fatalf("Failed to get password profile: %v", err)
 	}

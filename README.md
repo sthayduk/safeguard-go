@@ -130,15 +130,15 @@ if err != nil {
 
 ```go
 import (
-    "github.com/sthayduk/safeguard-go/models"
+    
     "github.com/sthayduk/safeguard-go/client"
 )
 
 // Get all users
-users, err := models.GetUsers(sgc, client.Filter{})
+users, err := GetUsers(sgc, client.Filter{})
 
 // Get a specific user
-user, err := models.GetUser(sgc, userId, client.Fields{"Name", "Description"})
+user, err := GetUser(sgc, userId, client.Fields{"Name", "Description"})
 
 // Get user's linked accounts
 accounts, err := user.GetLinkedAccounts()
@@ -157,10 +157,10 @@ err = user.Delete()
 
 ```go
 // Get all identity providers
-providers, err := models.GetIdentityProviders(sgc)
+providers, err := GetIdentityProviders(sgc)
 
 // Get specific provider
-provider, err := models.GetIdentityProvider(sgc, providerId)
+provider, err := GetIdentityProvider(sgc, providerId)
 
 // Get directory users from provider
 users, err := provider.GetDirectoryUsers(client.Filter{})
@@ -173,10 +173,10 @@ groups, err := provider.GetDirectoryGroups(client.Filter{})
 
 ```go
 // Get all asset accounts
-accounts, err := models.GetAssetAccounts(sgc, client.Filter{})
+accounts, err := GetAssetAccounts(sgc, client.Filter{})
 
 // Get specific account
-account, err := models.GetAssetAccount(sgc, accountId, client.Fields{})
+account, err := GetAssetAccount(sgc, accountId, client.Fields{})
 
 // Check password
 log, err := account.CheckPassword()
@@ -189,29 +189,29 @@ log, err := account.ChangePassword()
 
 ```go
 // Get current user's actionable requests
-requests, err := models.GetMeActionableRequests(sgc, client.Filter{})
+requests, err := GetMeActionableRequests(sgc, client.Filter{})
 
 // Get requests for specific role
-requests, err := models.GetMeActionableRequestsByRole(sgc, models.ApproverRole, client.Filter{})
+requests, err := GetMeActionableRequestsByRole(sgc, ApproverRole, client.Filter{})
 
 // Get detailed actionable requests with helper methods
-result, err := models.GetMeActionableRequestsDetailed(sgc, client.Filter{})
+result, err := GetMeActionableRequestsDetailed(sgc, client.Filter{})
 
 // Get pending requests
 pending := result.GetPendingRequests()
 
 // Filter requests by state
-available := result.FilterRequestsByState(models.StateRequestAvailable)
+available := result.FilterRequestsByState(StateRequestAvailable)
 
 // Get account entitlements
-entitlements, err := models.GetMeAccountEntitlements(sgc, 
-    models.PasswordEntitlement,
+entitlements, err := GetMeAccountEntitlements(sgc, 
+    PasswordEntitlement,
     true,  // includeActiveRequests
     false, // filterByCredential
     client.Filter{})
 
 // Get accessible assets
-assets, err := models.GetMeAccessRequestAssets(sgc, client.Filter{})
+assets, err := GetMeAccessRequestAssets(sgc, client.Filter{})
 ```
 
 ## Query Parameters
@@ -228,8 +228,8 @@ filter.AddFilter("Name", "like", "admin")
 fields := client.Fields{"Name", "Description", "CreatedDate"}
 
 // Use in API calls
-users, err := models.GetUsers(sgc, filter)
-user, err := models.GetUser(sgc, userId, fields)
+users, err := GetUsers(sgc, filter)
+user, err := GetUser(sgc, userId, fields)
 ```
 
 ## Contributing
