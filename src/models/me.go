@@ -16,16 +16,20 @@ type AccountEntitlement struct {
 	ActiveRequests []ActiveRequestInfo `json:"ActiveRequests,omitempty"`
 }
 
+// GetAccountId returns the ID of the account associated with this entitlement
 func (m AccountEntitlement) GetAccountId() int {
 	return m.Account.Id
 }
 
+// GetFilter returns a filter object configured with the account ID
 func (m AccountEntitlement) GetFilter() client.Filter {
 	var filter client.Filter
 	filter.AddFilter("AccountId", "eq", strconv.Itoa(m.GetAccountId()))
 	return filter
 }
 
+// GetAccessRequestType returns the access request type from the first policy
+// If no policies exist, returns an empty string
 func (m AccountEntitlement) GetAccessRequestType() AccessRequestType {
 	for _, policy := range m.Policies {
 		return policy.AccessRequestType
@@ -97,10 +101,12 @@ type RequesterProperties struct {
 	RequireServiceTicket          bool `json:"RequireServiceTicket,omitempty"`
 }
 
+// GetDefaultReleaseDuration calculates and returns the default release duration as a time.Duration
 func (r RequesterProperties) GetDefaultReleaseDuration() time.Duration {
 	return time.Duration(r.DefaultReleaseDurationDays*24*60*60+r.DefaultReleaseDurationHours*60*60+r.DefaultReleaseDurationMinutes*60) * time.Second
 }
 
+// GetMaximumReleaseDuration calculates and returns the maximum release duration as a time.Duration
 func (r RequesterProperties) GetMaximumReleaseDuration() time.Duration {
 	return time.Duration(r.MaximumReleaseDurationDays*24*60*60+r.MaximumReleaseDurationHours*60*60+r.MaximumReleaseDurationMinutes*60) * time.Second
 }
@@ -178,6 +184,14 @@ func GetMe(c *client.SafeguardClient, filter client.Filter) (User, error) {
 	return me, nil
 }
 
+// GetMeAccessRequestAssets retrieves all assets that the current user can request access to
+// Parameters:
+//   - c: The SafeguardClient instance for making API requests
+//   - filter: Filter criteria for the request
+//
+// Returns:
+//   - []PolicyAsset: A slice of assets the user can request access to
+//   - error: An error if the request fails, nil otherwise
 func GetMeAccessRequestAssets(c *client.SafeguardClient, filter client.Filter) ([]PolicyAsset, error) {
 	var assets []PolicyAsset
 
@@ -199,6 +213,14 @@ func GetMeAccessRequestAssets(c *client.SafeguardClient, filter client.Filter) (
 	return assets, nil
 }
 
+// GetMeAccessRequestAsset retrieves a specific asset that the current user can request access to
+// Parameters:
+//   - c: The SafeguardClient instance for making API requests
+//   - assetId: The ID of the asset to retrieve
+//
+// Returns:
+//   - PolicyAsset: The requested asset information
+//   - error: An error if the request fails, nil otherwise
 func GetMeAccessRequestAsset(c *client.SafeguardClient, assetId string) (PolicyAsset, error) {
 	query := "me/AccessRequestAssets/" + assetId
 

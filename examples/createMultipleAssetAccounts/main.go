@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/fatih/color"
@@ -16,7 +17,7 @@ import (
 func main() {
 	start := time.Now()
 	adId := 464
-	samAccountName := "mustermann"
+	samAccountName := "muster"
 
 	// Initialize colored output
 	success := color.New(color.FgGreen).SprintFunc()
@@ -43,34 +44,64 @@ func main() {
 	// Search for the user
 	logger.Printf("Searching for user: %s", samAccountName)
 	filter := client.Filter{}
-	filter.AddFilter("Name", "eq", samAccountName)
+	filter.AddFilter("Name", "contains", samAccountName)
 	users, err := ad.GetDirectoryAccounts(filter)
 	if err != nil {
 		logger.Fatalf("Failed to get directory users: %v", err)
 	}
 
-	// Validate search results
-	if len(users) == 0 {
-		logger.Fatalf("No user found with name: %s", samAccountName)
-	}
-	if len(users) > 1 {
-		logger.Fatalf("Multiple users found with name: %s", samAccountName)
+	for _, user := range users {
+		logger.Printf("Found user: %s", user.Name)
 	}
 
-	// Create the user
-	logger.Println("Creating user in Safeguard...")
-	createdUser, err := users[0].Create()
+	createdUsers, err := models.CreateAssetAccounts(sgc, users)
 	if err != nil {
-		logger.Fatalf("%s Failed to create user: %v", warning("ERROR:"), err)
+		logger.Fatalf("Failed to create asset accounts: %s", err)
 	}
 
-	// Print user details in a formatted box
-	fmt.Printf("\n%s\n", info("╭─────────── User Details ───────────╮"))
-	fmt.Printf("│ ID:                %-15d │\n", createdUser.Id)
-	fmt.Printf("│ Name:              %-15s │\n", createdUser.Name)
-	fmt.Printf("│ DistinguishedName: %-15s │\n", createdUser.DistinguishedName)
-	fmt.Printf("│ Created by:        %-15s │\n", createdUser.CreatedByUserDisplayName)
-	fmt.Printf("%s\n\n", info("╰──────────────────────────────────╯"))
+	var wg sync.WaitGroup
+	for _, createdUser := range createdUsers {
+		// Print user details in a formatted box
+		fmt.Printf("\n%s\n", info("╭─────────── User Details ───────────╮"))
+		fmt.Printf("│ ID:                %-15d │\n", createdUser.Id)
+		fmt.Printf("│ Name:              %-15s │\n", createdUser.Name)
+		fmt.Printf("│ DistinguishedName: %-15s │\n", createdUser.DistinguishedName)
+		fmt.Printf("│ Created by:        %-15s │\n", createdUser.CreatedByUserDisplayName)
+		fmt.Printf("%s\n\n", info("╰──────────────────────────────────╯"))
+
+		// Suspend User
+		logger.Println("Suspending user...")
+		task, err := createdUser.Suspend()
+		if err != nil {
+			logger.Fatalf("Failed to suspend user: %v", err)
+		}
+
+		// Wait for the task to complete
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		logger.Println("Waiting for task to complete...")
+		if _, err := task.CheckTaskState(ctx); err != nil {
+			logger.Fatalf("Failed to check task state: %v", err)
+		}
+
+		// Update and check password in a goroutine
+		wg.Add(1)
+		go updateAndCheckPassword(&wg, sgc, logger, createdUser)
+	}
+
+	// Wait for all goroutines to complete
+	wg.Wait()
+	fmt.Printf("\n%s All users' passwords successfully updated\n", success("✓"))
+
+	// Print total execution time
+	duration := time.Since(start)
+	fmt.Printf("\n%s Total execution time: %s\n", success("✓"), duration.Round(time.Millisecond))
+
+}
+
+func updateAndCheckPassword(wg *sync.WaitGroup, sgc *client.SafeguardClient, logger *log.Logger, createdUser models.AssetAccount) {
+	// Initialize colored output
+	info := color.New(color.FgCyan).SprintFunc()
 
 	// Update Password Profile
 	logger.Println("Updating password profile...")
@@ -79,9 +110,9 @@ func main() {
 		logger.Fatalf("Failed to get asset partition: %v", err)
 	}
 
-	filter = client.Filter{}
+	filter := client.Filter{}
 	filter.AddFilter("Name", "eq", "ITdesign Profile Suspend")
-	passwordProfile, err := models.GetPasswordRules(sgc, assetPartition.Id, filter)
+	passwordProfile, err := models.GetPasswordRules(sgc, assetPartition, filter)
 	if err != nil {
 		logger.Fatalf("Failed to get password profile: %v", err)
 	}
@@ -112,7 +143,7 @@ func main() {
 	}
 
 	// Wait for the task to complete
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 300*time.Second)
 	defer cancel()
 
 	logger.Println("Waiting for task to complete...")
@@ -129,12 +160,11 @@ func main() {
 
 	// Print password status in a formatted way
 	fmt.Printf("\n%s\n", info("╭─────────── Password Status ───────────╮"))
+	fmt.Printf("│ User:      %-25s │\n", updatedUser.Name)
 	fmt.Printf("│ Status:    %-25s │\n", passwordStatus.RequestStatus.State)
 	fmt.Printf("│ Message:   %-25s │\n", passwordStatus.RequestStatus.Message)
 	fmt.Printf("│ Duration:  %-25s │\n", passwordStatus.RequestStatus.TotalDuration)
 	fmt.Printf("%s\n", info("╰────────────────────────────────────╯"))
 
-	// Print total execution time
-	duration := time.Since(start)
-	fmt.Printf("\n%s Total execution time: %s\n", success("✓"), duration.Round(time.Millisecond))
+	wg.Done()
 }

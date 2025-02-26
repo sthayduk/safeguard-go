@@ -57,6 +57,10 @@ type User struct {
 	LinkedAccountsCount                       int                    `json:"LinkedAccountsCount,omitempty"`
 }
 
+// ToJson converts a User object to its JSON string representation.
+// Returns:
+//   - string: The JSON string representation of the user
+//   - error: An error if marshaling fails, nil otherwise
 func (u User) ToJson() (string, error) {
 	userJSON, err := json.Marshal(u)
 	if err != nil {
@@ -229,6 +233,14 @@ func (u User) GetGroups() ([]UserGroup, error) {
 	return GetGroups(u.client, fmt.Sprintf("%d", u.Id))
 }
 
+// GetUserPreferences retrieves the preferences for a specific user by ID.
+// Parameters:
+//   - c: The SafeguardClient instance for making API requests
+//   - id: The numeric ID of the user whose preferences to retrieve
+//
+// Returns:
+//   - []Preference: A slice of user preferences
+//   - error: An error if the request fails, nil otherwise
 func GetUserPreferences(c *client.SafeguardClient, id int) ([]Preference, error) {
 	var userPreferences []Preference
 
@@ -245,6 +257,10 @@ func GetUserPreferences(c *client.SafeguardClient, id int) ([]Preference, error)
 	return userPreferences, nil
 }
 
+// GetPreferences retrieves the preferences for the current user instance.
+// Returns:
+//   - []Preference: A slice of user preferences
+//   - error: An error if the request fails, nil otherwise
 func (u User) GetPreferences() ([]Preference, error) {
 	return GetUserPreferences(u.client, u.Id)
 }
@@ -276,6 +292,13 @@ func AddLinkedAccounts(c *client.SafeguardClient, user User, policyAccount []Pol
 	return linkedAccounts, nil
 }
 
+// AddLinkedAccounts adds linked policy accounts to the current user instance.
+// Parameters:
+//   - policyAccount: A slice of PolicyAccount objects to be linked to the user
+//
+// Returns:
+//   - []PolicyAccount: A slice of PolicyAccount objects that were successfully linked
+//   - error: An error if the operation fails, nil otherwise
 func (u User) AddLinkedAccounts(policyAccount []PolicyAccount) ([]PolicyAccount, error) {
 	return AddLinkedAccounts(u.client, u, policyAccount)
 }
@@ -307,6 +330,13 @@ func RemoveLinkedAccounts(c *client.SafeguardClient, user User, policyAccount []
 	return linkedAccounts, nil
 }
 
+// RemoveLinkedAccounts removes linked policy accounts from the current user instance.
+// Parameters:
+//   - policyAccount: A slice of PolicyAccount objects to be removed from the user
+//
+// Returns:
+//   - []PolicyAccount: A slice of PolicyAccount objects that were successfully removed
+//   - error: An error if the operation fails, nil otherwise
 func (u User) RemoveLinkedAccounts(policyAccount []PolicyAccount) ([]PolicyAccount, error) {
 	return RemoveLinkedAccounts(u.client, u, policyAccount)
 }
@@ -423,6 +453,13 @@ func updateUser(c *client.SafeguardClient, user User) (User, error) {
 	return updatedUser, nil
 }
 
+// DeleteUser removes a user from the Safeguard system by their ID.
+// Parameters:
+//   - c: The SafeguardClient instance for making API requests
+//   - id: The numeric ID of the user to delete
+//
+// Returns:
+//   - error: An error if the deletion fails, nil otherwise
 func DeleteUser(c *client.SafeguardClient, id int) error {
 
 	query := fmt.Sprintf("users/%d", id)
@@ -435,6 +472,9 @@ func DeleteUser(c *client.SafeguardClient, id int) error {
 	return nil
 }
 
+// Delete removes the current user instance from the Safeguard system.
+// Returns:
+//   - error: An error if the deletion fails, nil otherwise
 func (u *User) Delete() error {
 	return DeleteUser(u.client, u.Id)
 }

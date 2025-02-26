@@ -31,6 +31,10 @@ type Role struct {
 	Members                     []RoleMember                `json:"Members"`
 }
 
+// ToJson converts a Role object to its JSON string representation
+// Returns:
+//   - string: JSON representation of the role
+//   - error: An error if marshaling fails, nil otherwise
 func (u Role) ToJson() (string, error) {
 	userJSON, err := json.Marshal(u)
 	if err != nil {
@@ -95,6 +99,14 @@ func GetRoles(c *client.SafeguardClient, fields client.Filter) ([]Role, error) {
 	return userRoles, nil
 }
 
+// GetEntitlements is an alias for GetRoles that retrieves a list of roles from Safeguard.
+// Parameters:
+//   - c: The SafeguardClient instance for making API requests
+//   - fields: Filter criteria for the request
+//
+// Returns:
+//   - []Role: A slice of roles matching the filter criteria
+//   - error: An error if the request fails, nil otherwise
 func GetEntitlements(c *client.SafeguardClient, fields client.Filter) ([]Role, error) {
 	return GetRoles(c, fields)
 }
@@ -128,10 +140,28 @@ func GetRole(c *client.SafeguardClient, id int, fields client.Fields) (Role, err
 	return userRole, nil
 }
 
+// GetEntitlement is an alias for GetRole that retrieves details for a specific role.
+// Parameters:
+//   - c: The SafeguardClient instance for making API requests
+//   - id: The numeric ID of the role to retrieve
+//   - fields: Specific fields to include in the response
+//
+// Returns:
+//   - Role: The requested role object
+//   - error: An error if the request fails, nil otherwise
 func GetEntitlement(c *client.SafeguardClient, id int, fields client.Fields) (Role, error) {
 	return GetRole(c, id, fields)
 }
 
+// GetRoleMembers retrieves the list of members belonging to a specific role.
+// Parameters:
+//   - c: The SafeguardClient instance for making API requests
+//   - id: The numeric ID of the role
+//   - filter: Filter criteria for the request
+//
+// Returns:
+//   - []ManagedByUser: A slice of users who are members of the role
+//   - error: An error if the request fails, nil otherwise
 func GetRoleMembers(c *client.SafeguardClient, id int, filter client.Filter) ([]ManagedByUser, error) {
 	var members []ManagedByUser
 
@@ -148,10 +178,26 @@ func GetRoleMembers(c *client.SafeguardClient, id int, filter client.Filter) ([]
 	return members, nil
 }
 
+// GetMembers retrieves the list of members for the current role instance.
+// Parameters:
+//   - filter: Filter criteria for the request
+//
+// Returns:
+//   - []ManagedByUser: A slice of users who are members of the role
+//   - error: An error if the request fails, nil otherwise
 func (r Role) GetMembers(filter client.Filter) ([]ManagedByUser, error) {
 	return GetRoleMembers(r.client, r.Id, filter)
 }
 
+// GetRolePolicies retrieves the list of access policies associated with a specific role.
+// Parameters:
+//   - c: The SafeguardClient instance for making API requests
+//   - id: The numeric ID of the role
+//   - filter: Filter criteria for the request
+//
+// Returns:
+//   - []AccessPolicy: A slice of access policies associated with the role
+//   - error: An error if the request fails, nil otherwise
 func GetRolePolicies(c *client.SafeguardClient, id int, filter client.Filter) ([]AccessPolicy, error) {
 	var policies []AccessPolicy
 
@@ -173,6 +219,13 @@ func GetRolePolicies(c *client.SafeguardClient, id int, filter client.Filter) ([
 	return policies, nil
 }
 
+// GetPolicies retrieves the list of access policies for the current role instance.
+// Parameters:
+//   - filter: Filter criteria for the request
+//
+// Returns:
+//   - []AccessPolicy: A slice of access policies associated with the role
+//   - error: An error if the request fails, nil otherwise
 func (r Role) GetPolicies(filter client.Filter) ([]AccessPolicy, error) {
 	return GetRolePolicies(r.client, r.Id, filter)
 }

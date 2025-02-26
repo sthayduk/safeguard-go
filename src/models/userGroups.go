@@ -1,3 +1,4 @@
+// Package models provides data structures and operations for interacting with Safeguard entities
 package models
 
 import (
@@ -8,7 +9,7 @@ import (
 	"github.com/sthayduk/safeguard-go/client"
 )
 
-// UserGroup represents a group of users in Safeguard
+// UserGroup represents a group of users in Safeguard with associated properties and memberships
 type UserGroup struct {
 	client *client.SafeguardClient
 
@@ -28,7 +29,7 @@ type UserGroup struct {
 	DirectoryGroupSyncProperties DirectoryGroupSyncProperties `json:"DirectoryGroupSyncProperties"`
 }
 
-// GroupIdentityProvider represents identity provider information for a user group
+// GroupIdentityProvider represents authentication provider information for a user group
 type GroupIdentityProvider struct {
 	Id                int    `json:"Id"`
 	Name              string `json:"Name"`
@@ -47,7 +48,8 @@ type UserGroupDirectoryProperties struct {
 	ObjectSid         string `json:"ObjectSid"`
 }
 
-// UserGroupMember represents a user that is a member of a user group
+// UserGroupMember represents a user that belongs to a Safeguard user group,
+// including their roles and authentication configuration
 type UserGroupMember struct {
 	AdminRoles                                []string               `json:"AdminRoles"`
 	Id                                        int                    `json:"Id"`
@@ -92,7 +94,7 @@ type UserGroupMember struct {
 	LinkedAccountsCount                       int                    `json:"LinkedAccountsCount"`
 }
 
-// DirectoryGroupSyncProperties represents synchronization properties for directory groups
+// DirectoryGroupSyncProperties represents synchronization properties for groups synced from a directory
 type DirectoryGroupSyncProperties struct {
 	PrimaryAuthenticationProviderId                  int      `json:"PrimaryAuthenticationProviderId"`
 	PrimaryAuthenticationProviderTypeReferenceName   string   `json:"PrimaryAuthenticationProviderTypeReferenceName"`
@@ -106,6 +108,10 @@ type DirectoryGroupSyncProperties struct {
 	AdminRoles                                       []string `json:"AdminRoles"`
 }
 
+// ToJson converts a UserGroup to its JSON string representation
+// Returns:
+//   - string: The JSON string representation of the user group
+//   - error: An error if JSON marshaling fails
 func (u UserGroup) ToJson() (string, error) {
 	userGroupJSON, err := json.Marshal(u)
 	if err != nil {
@@ -117,11 +123,11 @@ func (u UserGroup) ToJson() (string, error) {
 // GetUserGroups retrieves a list of user groups from Safeguard.
 // Parameters:
 //   - c: The SafeguardClient instance for making API requests
-//   - fields: Filter criteria for the request
+//   - fields: Filter criteria for the request to specify which groups to return
 //
 // Returns:
 //   - []UserGroup: A slice of user groups matching the filter criteria
-//   - error: An error if the request fails, nil otherwise
+//   - error: An error if the request fails or the response cannot be unmarshaled
 func GetUserGroups(c *client.SafeguardClient, fields client.Filter) ([]UserGroup, error) {
 	var userGroups []UserGroup
 

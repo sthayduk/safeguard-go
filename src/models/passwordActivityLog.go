@@ -9,7 +9,8 @@ import (
 	"github.com/sthayduk/safeguard-go/client"
 )
 
-// UserLogProperties represents the user properties in a log entry
+// UserLogProperties represents the user properties in a log entry including permissions,
+// IP address, and user identification information
 type UserLogProperties struct {
 	ClientIpAddress           string `json:"ClientIpAddress,omitempty"`
 	UserName                  string `json:"UserName,omitempty"`
@@ -29,14 +30,14 @@ type UserLogProperties struct {
 	UserWasOperationsAdmin    bool   `json:"UserWasOperationsAdmin,omitempty"`
 }
 
-// LogEntry represents an individual log message
+// LogEntry represents an individual log message with timestamp, status, and message content
 type LogEntry struct {
 	Timestamp time.Time `json:"Timestamp"`
 	Status    string    `json:"Status"`
 	Message   string    `json:"Message"`
 }
 
-// RequestStatus represents the status of a password request
+// RequestStatus represents the status and timing information of a password request
 type RequestStatus struct {
 	State              string    `json:"State"`
 	PercentComplete    int       `json:"PercentComplete"`
@@ -51,7 +52,7 @@ type RequestStatus struct {
 	Message            string    `json:"Message"`
 }
 
-// CustomScriptParameter represents a parameter for custom scripts
+// CustomScriptParameter represents a parameter used in custom scripts for password management
 type CustomScriptParameter struct {
 	Name     string `json:"Name"`
 	Value    string `json:"Value"`
@@ -59,7 +60,8 @@ type CustomScriptParameter struct {
 	TaskName string `json:"TaskName"`
 }
 
-// PasswordActivityLog represents a password activity log entry
+// PasswordActivityLog represents a comprehensive log entry for password-related activities
+// including user actions, asset details, and request status
 type PasswordActivityLog struct {
 	client *client.SafeguardClient
 
@@ -84,7 +86,8 @@ type PasswordActivityLog struct {
 	CustomParams      []CustomScriptParameter `json:"CustomScriptParameters"`
 }
 
-// PasswordChangeSchedule represents a schedule used by a partition profile to change passwords
+// PasswordChangeSchedule represents a configuration for scheduled password changes
+// including timing, repetition, and timezone settings
 type PasswordChangeSchedule struct {
 	Id                  int       `json:"Id,omitempty"`
 	Name                string    `json:"Name,omitempty"`
@@ -104,7 +107,8 @@ type PasswordChangeSchedule struct {
 	EndDate             time.Time `json:"EndDate,omitempty"`
 }
 
-// PasswordCheckSchedule represents a schedule used by a partition profile to check passwords
+// PasswordCheckSchedule represents a configuration for scheduled password verification
+// including timing, repetition, and timezone settings
 type PasswordCheckSchedule struct {
 	Id                  int       `json:"Id,omitempty"`
 	Name                string    `json:"Name,omitempty"`
@@ -124,7 +128,7 @@ type PasswordCheckSchedule struct {
 	EndDate             time.Time `json:"EndDate,omitempty"`
 }
 
-// ScheduleInterval represents interval of time in which to execute tasks
+// ScheduleInterval represents a time interval configuration for scheduled tasks
 type ScheduleInterval struct {
 	RepeatInterval     int    `json:"RepeatInterval,omitempty"`
 	RepeatIntervalUnit string `json:"RepeatIntervalUnit,omitempty"`
@@ -155,6 +159,7 @@ const (
 )
 
 // ConnectionProperties represents connection-specific properties for various services
+// including service account details, credentials, and connection settings
 type ConnectionProperties struct {
 	// Service Account Properties
 	ServiceAccountUniqueObjectId             string `json:"ServiceAccountUniqueObjectId,omitempty"`
@@ -188,9 +193,10 @@ type ConnectionProperties struct {
 }
 
 // CheckTaskState monitors the state of a password activity task.
-// It polls the task status periodically for up to 30 seconds.
+// It polls the task status periodically until completion or timeout.
+//
 // Parameters:
-//   - c: The SafeguardClient instance for making API requests
+//   - ctx: Context for timeout and cancellation control
 //
 // Returns:
 //   - bool: true if task completed successfully, false if failed
@@ -245,6 +251,16 @@ func (p *PasswordActivityLog) CheckTaskState(ctx context.Context) (bool, error) 
 	}
 }
 
+// isTaskCompleteForType checks if a specific task type has completed successfully.
+//
+// Parameters:
+//   - task: The AccountTaskData to check
+//   - logTime: The time of the log entry to compare against
+//   - taskType: The type of task being checked
+//
+// Returns:
+//   - bool: true if the task is complete, false otherwise
+//   - error: An error if the task type is unknown
 func isTaskCompleteForType(task AccountTaskData, logTime time.Time, taskType AccountTaskNames) (bool, error) {
 	var successTime time.Time
 	var successCounter int
@@ -281,6 +297,16 @@ func isTaskCompleteForType(task AccountTaskData, logTime time.Time, taskType Acc
 	return !successTime.IsZero() && (successTime.After(logTime) || successTime.Equal(logTime)), nil
 }
 
+// isTaskFailedForType checks if a specific task type has failed.
+//
+// Parameters:
+//   - task: The AccountTaskData to check
+//   - logTime: The time of the log entry to compare against
+//   - taskType: The type of task being checked
+//
+// Returns:
+//   - bool: true if the task has failed, false otherwise
+//   - error: An error if the task type is unknown
 func isTaskFailedForType(task AccountTaskData, logTime time.Time, taskType AccountTaskNames) (bool, error) {
 	var failureTime time.Time
 	var failureCounter int
@@ -317,6 +343,15 @@ func isTaskFailedForType(task AccountTaskData, logTime time.Time, taskType Accou
 	return !failureTime.IsZero() && (failureTime.After(logTime) || failureTime.Equal(logTime)), nil
 }
 
+// getTaskIdForType retrieves the task ID for a specific task type.
+//
+// Parameters:
+//   - task: The AccountTaskData containing the task information
+//   - taskType: The type of task to get the ID for
+//
+// Returns:
+//   - string: The task ID
+//   - error: An error if the task type is unknown
 func getTaskIdForType(task AccountTaskData, taskType AccountTaskNames) (string, error) {
 	switch taskType {
 	case CheckPassword:
@@ -342,6 +377,14 @@ func getTaskIdForType(task AccountTaskData, taskType AccountTaskNames) (string, 
 	}
 }
 
+// getMatchingAccountTask retrieves the account task data matching the password activity log.
+//
+// Parameters:
+//   - ctx: Context for timeout and cancellation control
+//
+// Returns:
+//   - AccountTaskData: The matching task data
+//   - error: An error if the task cannot be found or if there's a timeout
 func (p PasswordActivityLog) getMatchingAccountTask(ctx context.Context) (AccountTaskData, error) {
 	if p.Id == "" {
 		return AccountTaskData{}, fmt.Errorf("invalid task ID")

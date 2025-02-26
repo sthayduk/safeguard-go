@@ -8,7 +8,8 @@ import (
 	"github.com/sthayduk/safeguard-go/client"
 )
 
-// AssetPartition represents a collection of assets and accounts along with management configuration
+// AssetPartition represents a collection of assets and accounts along with management configuration.
+// The partition defines boundaries for asset management and access control within Safeguard.
 type AssetPartition struct {
 	client *client.SafeguardClient
 
@@ -37,7 +38,9 @@ func (u AssetPartition) ToJson() (string, error) {
 	return string(assetPartitionJSON), nil
 }
 
-// AccountPasswordRule represents a password rule used to generate account passwords
+// AccountPasswordRule defines the requirements and constraints for generating and validating
+// account passwords within an asset partition. It specifies character requirements, restrictions,
+// and other password complexity rules.
 type AccountPasswordRule struct {
 	client *client.SafeguardClient
 
@@ -103,7 +106,7 @@ func (r AccountPasswordRule) ToJson() (string, error) {
 // GetAssetPartitions retrieves a list of asset partitions from Safeguard.
 // Parameters:
 //   - c: The SafeguardClient instance for making API requests
-//   - fields: Filter criteria for the request
+//   - filter: Criteria to filter the returned partitions
 //
 // Returns:
 //   - []AssetPartition: A slice of asset partitions matching the filter criteria
@@ -151,26 +154,25 @@ func GetAssetPartition(c *client.SafeguardClient, id int, fields client.Fields) 
 	return AssetPartition, nil
 }
 
-// GetPasswordRules retrieves the password rules for this asset partition.
-// Parameters:
-//   - c: The SafeguardClient instance for making API requests
+// GetPasswordRules retrieves all password rules defined for this asset partition.
+// It uses the current client instance to make the API request.
 //
 // Returns:
-//   - []AccountPasswordRule: A slice of password rules
+//   - []AccountPasswordRule: A slice of password rules defined for this partition
 //   - error: An error if the request fails, nil otherwise
 func (a AssetPartition) GetPasswordRules() ([]AccountPasswordRule, error) {
 	return GetPasswordRules(a.client, a, client.Filter{})
 }
 
-// GetPasswordRules retrieves the password rules for a specific asset partition.
+// GetPasswordRules retrieves all password rules for a specific asset partition.
 // Parameters:
 //   - c: The SafeguardClient instance for making API requests
-//   - AssetPartitionId: The ID of the asset partition
-//   - filter: Filter criteria for the request
+//   - assetPartition: The asset partition to get rules for
+//   - filter: Criteria to filter the returned rules
 //
 // Returns:
-//   - []AccountPasswordRule: A slice of password rules
-//   - error: An error if the request fails, nil otherwise
+//   - []AccountPasswordRule: A slice of password rules matching the filter
+//   - error: An error if the request fails or no rules are found
 func GetPasswordRules(c *client.SafeguardClient, assetPartition AssetPartition, filter client.Filter) ([]AccountPasswordRule, error) {
 	var PasswordRules []AccountPasswordRule
 
@@ -196,14 +198,13 @@ func GetPasswordRules(c *client.SafeguardClient, assetPartition AssetPartition, 
 	return PasswordRules, nil
 }
 
-// DeleteAssetPartition deletes an asset partition with the specified ID using the provided SafeguardClient.
-//
+// DeleteAssetPartition deletes an asset partition with the specified ID.
 // Parameters:
-//   - c: A pointer to a SafeguardClient instance used to make the delete request.
-//   - id: The ID of the asset partition to be deleted.
+//   - c: The SafeguardClient instance for making API requests
+//   - id: The ID of the asset partition to delete
 //
 // Returns:
-//   - error: An error object if the delete request fails, otherwise nil.
+//   - error: An error if the deletion fails, nil otherwise
 func DeleteAssetPartition(c *client.SafeguardClient, id int) error {
 	query := fmt.Sprintf("AssetPartitions/%d", id)
 
@@ -215,9 +216,11 @@ func DeleteAssetPartition(c *client.SafeguardClient, id int) error {
 	return nil
 }
 
-// Delete removes the current AssetPartition instance from the system.
-// It calls the DeleteAssetPartition function with the client and Id of the AssetPartition.
-// Returns an error if the deletion fails.
+// Delete removes this asset partition from the system.
+// Uses the DeleteAssetPartition function with the current client instance.
+//
+// Returns:
+//   - error: An error if the deletion fails, nil otherwise
 func (a AssetPartition) Delete() error {
 	return DeleteAssetPartition(a.client, a.Id)
 }
