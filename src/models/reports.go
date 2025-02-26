@@ -18,6 +18,12 @@ const (
 	DiscoverAccounts AccountTaskNames = "DiscoverAccounts"
 	CheckApiKey      AccountTaskNames = "CheckApiKey"
 	ChangeApiKey     AccountTaskNames = "ChangeApiKey"
+	SuspendAccount   AccountTaskNames = "SuspendAccount"
+	RestoreAccount   AccountTaskNames = "RestoreAccount"  // Added
+	DiscoverSshKeys  AccountTaskNames = "DiscoverSshKeys" // Added
+	InstallSshKey    AccountTaskNames = "InstallSshKey"   // Added
+	ElevateAccount   AccountTaskNames = "ElevateAccount"  // Added
+	DemoteAccount    AccountTaskNames = "DemoteAccount"   // Added
 )
 
 // ScheduledAccountTask represents a scheduled task that runs against accounts

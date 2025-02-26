@@ -201,10 +201,21 @@ func (p *PasswordActivityLog) CheckTaskState(ctx context.Context) (bool, error) 
 		return false, err
 	}
 
-	if isTaskCompleteForType(task, p.LogTime, AccountTaskNames(p.Name)) {
+	// Return the error only on the first check, as it indicates that the taskType is missing in the function
+	isComplete, err := isTaskCompleteForType(task, p.LogTime, AccountTaskNames(p.Name))
+	if err != nil {
+		return false, err
+	}
+	if isComplete {
 		return true, nil
 	}
-	if isTaskFailedForType(task, p.LogTime, AccountTaskNames(p.Name)) {
+
+	// Return the error only on the first check, as it indicates that the taskType is missing in the function
+	isFailed, err := isTaskFailedForType(task, p.LogTime, AccountTaskNames(p.Name))
+	if err != nil {
+		return false, err
+	}
+	if isFailed {
 		return false, nil
 	}
 
@@ -221,17 +232,20 @@ func (p *PasswordActivityLog) CheckTaskState(ctx context.Context) (bool, error) 
 				return false, err
 			}
 
-			if isTaskCompleteForType(newTask, p.LogTime, AccountTaskNames(p.Name)) {
+			isComplete, _ := isTaskCompleteForType(newTask, p.LogTime, AccountTaskNames(p.Name))
+			if isComplete {
 				return true, nil
 			}
-			if isTaskFailedForType(newTask, p.LogTime, AccountTaskNames(p.Name)) {
+
+			isFailed, _ := isTaskFailedForType(newTask, p.LogTime, AccountTaskNames(p.Name))
+			if isFailed {
 				return false, nil
 			}
 		}
 	}
 }
 
-func isTaskCompleteForType(task AccountTaskData, logTime time.Time, taskType AccountTaskNames) bool {
+func isTaskCompleteForType(task AccountTaskData, logTime time.Time, taskType AccountTaskNames) (bool, error) {
 	var successTime time.Time
 	var successCounter int
 
@@ -244,22 +258,30 @@ func isTaskCompleteForType(task AccountTaskData, logTime time.Time, taskType Acc
 		successTime = task.TaskProperties.LastSuccessSshKeyCheckDate
 	case ChangeSshKey:
 		successTime = task.TaskProperties.LastSuccessSshKeyChangeDate
-	case DiscoverAccounts:
+	case DiscoverSshKeys:
 		successTime = task.TaskProperties.LastSuccessSshKeyDiscoveryDate
 	case CheckApiKey:
 		successCounter = task.TaskProperties.FailedApiKeyCheckAttempts
-		return successCounter == 0
+		return successCounter == 0, nil
 	case ChangeApiKey:
 		successCounter = task.TaskProperties.FailedApiKeyChangeAttempts
-		return successCounter == 0
+		return successCounter == 0, nil
+	case SuspendAccount:
+		successTime = task.TaskProperties.LastSuccessSuspendAccountDate
+	case RestoreAccount:
+		successTime = task.TaskProperties.LastSuccessRestoreAccountDate
+	case ElevateAccount:
+		successTime = task.TaskProperties.LastSuccessElevateAccountDate
+	case DemoteAccount:
+		successTime = task.TaskProperties.LastSuccessDemoteAccountDate
 	default:
-		return false
+		return false, fmt.Errorf("unknown task type: %v", taskType)
 	}
 
-	return !successTime.IsZero() && (successTime.After(logTime) || successTime.Equal(logTime))
+	return !successTime.IsZero() && (successTime.After(logTime) || successTime.Equal(logTime)), nil
 }
 
-func isTaskFailedForType(task AccountTaskData, logTime time.Time, taskType AccountTaskNames) bool {
+func isTaskFailedForType(task AccountTaskData, logTime time.Time, taskType AccountTaskNames) (bool, error) {
 	var failureTime time.Time
 	var failureCounter int
 
@@ -272,33 +294,51 @@ func isTaskFailedForType(task AccountTaskData, logTime time.Time, taskType Accou
 		failureTime = task.TaskProperties.LastFailureSshKeyCheckDate
 	case ChangeSshKey:
 		failureTime = task.TaskProperties.LastFailureSshKeyChangeDate
-	case DiscoverAccounts:
+	case DiscoverSshKeys:
 		failureTime = task.TaskProperties.LastFailureSshKeyDiscoveryDate
 	case CheckApiKey:
 		failureCounter = task.TaskProperties.FailedApiKeyCheckAttempts
-		return failureCounter > 0
+		return failureCounter > 0, nil
 	case ChangeApiKey:
 		failureCounter = task.TaskProperties.FailedApiKeyChangeAttempts
-		return failureCounter > 0
+		return failureCounter > 0, nil
+	case SuspendAccount:
+		failureTime = task.TaskProperties.LastFailureSuspendAccountDate
+	case RestoreAccount:
+		failureTime = task.TaskProperties.LastFailureRestoreAccountDate
+	case ElevateAccount:
+		failureTime = task.TaskProperties.LastFailureElevateAccountDate
+	case DemoteAccount:
+		failureTime = task.TaskProperties.LastFailureDemoteAccountDate
 	default:
-		return false
+		return false, fmt.Errorf("unknown task type: %v", taskType)
 	}
 
-	return !failureTime.IsZero() && (failureTime.After(logTime) || failureTime.Equal(logTime))
+	return !failureTime.IsZero() && (failureTime.After(logTime) || failureTime.Equal(logTime)), nil
 }
 
-func getTaskIdForType(task AccountTaskData, taskType AccountTaskNames) string {
+func getTaskIdForType(task AccountTaskData, taskType AccountTaskNames) (string, error) {
 	switch taskType {
 	case CheckPassword:
-		return task.TaskProperties.LastPasswordCheckTaskId
+		return task.TaskProperties.LastPasswordCheckTaskId, nil
 	case ChangePassword:
-		return task.TaskProperties.LastPasswordChangeTaskId
+		return task.TaskProperties.LastPasswordChangeTaskId, nil
 	case CheckSshKey:
-		return task.TaskProperties.LastSshKeyCheckTaskId
+		return task.TaskProperties.LastSshKeyCheckTaskId, nil
 	case ChangeSshKey:
-		return task.TaskProperties.LastSshKeyChangeTaskId
+		return task.TaskProperties.LastSshKeyChangeTaskId, nil
+	case DiscoverSshKeys:
+		return task.TaskProperties.LastSshKeyDiscoveryTaskId, nil
+	case SuspendAccount:
+		return task.TaskProperties.LastSuspendAccountTaskId, nil
+	case RestoreAccount:
+		return task.TaskProperties.LastRestoreAccountTaskId, nil
+	case ElevateAccount:
+		return task.TaskProperties.LastElevateAccountTaskId, nil
+	case DemoteAccount:
+		return task.TaskProperties.LastDemoteAccountTaskId, nil
 	default:
-		return ""
+		return "", fmt.Errorf("unknown task type: %v", taskType)
 	}
 }
 
@@ -334,7 +374,8 @@ func (p PasswordActivityLog) getMatchingAccountTask(ctx context.Context) (Accoun
 
 			taskType := AccountTaskNames(p.Name)
 			for _, task := range taskData {
-				if getTaskIdForType(task, taskType) == p.Id {
+				taskId, err := getTaskIdForType(task, taskType)
+				if err == nil && taskId == p.Id {
 					return task, nil
 				}
 			}
