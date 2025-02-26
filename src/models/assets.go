@@ -365,6 +365,17 @@ func GetAsset(c *client.SafeguardClient, id int, fields client.Fields) (Asset, e
 	return asset, nil
 }
 
+// GetAssetDirectoryAccounts retrieves the directory accounts associated with a specific asset.
+// It sends a GET request to the Safeguard API to fetch the accounts.
+//
+// Parameters:
+//   - c: A pointer to a SafeguardClient instance used to make the API request.
+//   - assetId: An integer representing the ID of the asset.
+//   - filter: A Filter object used to apply query parameters to the request.
+//
+// Returns:
+//   - A slice of AssetAccount objects representing the directory accounts.
+//   - An error if the request fails or the response cannot be unmarshaled.
 func GetAssetDirectoryAccounts(c *client.SafeguardClient, assetId int, filter client.Filter) ([]AssetAccount, error) {
 	var accounts []AssetAccount
 
@@ -387,10 +398,31 @@ func GetAssetDirectoryAccounts(c *client.SafeguardClient, assetId int, filter cl
 	return accounts, nil
 }
 
+// GetDirectoryAccounts retrieves the directory accounts associated with the asset.
+// It accepts a filter parameter to narrow down the results based on specific criteria.
+// Returns a slice of AssetAccount and an error if the operation fails.
+//
+// Parameters:
+//   - filter: A client.Filter object to apply filtering criteria.
+//
+// Returns:
+//   - []AssetAccount: A slice of AssetAccount objects that match the filter criteria.
+//   - error: An error object if there is an issue retrieving the directory accounts.
 func (a Asset) GetDirectoryAccounts(filter client.Filter) ([]AssetAccount, error) {
 	return GetAssetDirectoryAccounts(a.client, a.Id, filter)
 }
 
+// GetAssetDirectoryAssets retrieves a list of directory assets associated with a given asset ID.
+// It sends a GET request to the Safeguard API and parses the response into a slice of Asset objects.
+//
+// Parameters:
+//   - c: A pointer to a SafeguardClient instance used to make the API request.
+//   - assetId: An integer representing the ID of the asset whose directory assets are to be retrieved.
+//   - filter: A Filter object containing fields to filter the directory assets.
+//
+// Returns:
+//   - A slice of Asset objects representing the directory assets.
+//   - An error if the request fails or the response cannot be unmarshaled.
 func GetAssetDirectoryAssets(c *client.SafeguardClient, assetId int, filter client.Filter) ([]Asset, error) {
 	var assets []Asset
 
@@ -416,6 +448,15 @@ func GetAssetDirectoryAssets(c *client.SafeguardClient, assetId int, filter clie
 	return assets, nil
 }
 
+// GetDirectoryAssets retrieves a list of directory assets based on the provided filter.
+// It returns a slice of Asset and an error if any occurs during the retrieval process.
+//
+// Parameters:
+//   - filter: A client.Filter object that specifies the criteria for filtering the assets.
+//
+// Returns:
+//   - []Asset: A slice of Asset objects that match the filter criteria.
+//   - error: An error object if an error occurs, otherwise nil.
 func (a Asset) GetDirectoryAssets(filter client.Filter) ([]Asset, error) {
 	return GetAssetDirectoryAssets(a.client, a.Id, filter)
 }

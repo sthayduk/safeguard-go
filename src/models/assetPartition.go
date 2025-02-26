@@ -25,6 +25,10 @@ type AssetPartition struct {
 	DefaultSshKeyProfileName string          `json:"DefaultSshKeyProfileName"`
 }
 
+// ToJson converts the AssetPartition struct to a JSON string representation.
+// Returns:
+//   - string: JSON string of the asset partition
+//   - error: An error if JSON marshaling fails, nil otherwise
 func (u AssetPartition) ToJson() (string, error) {
 	assetPartitionJSON, err := json.Marshal(u)
 	if err != nil {
@@ -35,6 +39,8 @@ func (u AssetPartition) ToJson() (string, error) {
 
 // AccountPasswordRule represents a password rule used to generate account passwords
 type AccountPasswordRule struct {
+	client *client.SafeguardClient
+
 	Id                                      int       `json:"Id"`
 	IsSystemOwned                           bool      `json:"IsSystemOwned"`
 	AssetPartitionId                        int       `json:"AssetPartitionId"`
@@ -71,6 +77,21 @@ type AccountPasswordRule struct {
 	RepeatedCharacterRestriction            string    `json:"RepeatedCharacterRestriction"`
 }
 
+// Assign applies this password rule to the specified asset account.
+// Parameters:
+//   - assetAccount: The asset account to which the password rule should be applied
+//
+// Returns:
+//   - AssetAccount: The updated asset account with the applied password rule
+//   - error: An error if the assignment fails, nil otherwise
+func (r AccountPasswordRule) Assign(assetAccount AssetAccount) (AssetAccount, error) {
+	return UpdatePasswordProfile(r.client, assetAccount, r)
+}
+
+// ToJson converts the AccountPasswordRule struct to a JSON string representation.
+// Returns:
+//   - string: JSON string of the password rule
+//   - error: An error if JSON marshaling fails, nil otherwise
 func (r AccountPasswordRule) ToJson() (string, error) {
 	ruleJSON, err := json.Marshal(r)
 	if err != nil {
@@ -153,7 +174,7 @@ func (a AssetPartition) GetPasswordRules() ([]AccountPasswordRule, error) {
 func GetPasswordRules(c *client.SafeguardClient, AssetPartitionId int, filter client.Filter) ([]AccountPasswordRule, error) {
 	var PasswordRules []AccountPasswordRule
 
-	query := fmt.Sprintf("AssetPartitions/%d/PasswordRules", AssetPartitionId) + filter.ToQueryString()
+	query := fmt.Sprintf("AssetPartitions/%d/Profiles", AssetPartitionId) + filter.ToQueryString()
 
 	response, err := c.GetRequest(query)
 	if err != nil {
@@ -163,6 +184,11 @@ func GetPasswordRules(c *client.SafeguardClient, AssetPartitionId int, filter cl
 	if err := json.Unmarshal(response, &PasswordRules); err != nil {
 		return nil, err
 	}
+
+	for i := range PasswordRules {
+		PasswordRules[i].client = c
+	}
+
 	return PasswordRules, nil
 }
 

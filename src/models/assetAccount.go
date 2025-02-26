@@ -354,9 +354,15 @@ func (a AssetAccount) CheckPassword() (PasswordActivityLog, error) {
 	return log, nil
 }
 
+// CreateAssetAccount creates a new asset account in Safeguard.
+// Parameters:
+//   - c: The SafeguardClient instance for making API requests
+//   - assetAccount: The AssetAccount object containing the account details to create
+//
+// Returns:
+//   - AssetAccount: The newly created asset account with updated fields
+//   - error: An error if the creation fails, nil otherwise
 func CreateAssetAccount(c *client.SafeguardClient, assetAccount AssetAccount) (AssetAccount, error) {
-	// https://spp-itd-01.itdesign.at/service/core/v4/Assets/464/DirectoryAccounts?searchScope=Subtree&searchName=da-hayduk
-
 	query := "AssetAccounts"
 
 	assetAccountJSON, err := json.Marshal(assetAccount)
@@ -379,6 +385,91 @@ func CreateAssetAccount(c *client.SafeguardClient, assetAccount AssetAccount) (A
 	return createdAssetAccount, nil
 }
 
+// Create creates a new instance of this asset account in Safeguard.
+// It uses the CreateAssetAccount function with the current client.
+//
+// Returns:
+//   - AssetAccount: The newly created asset account with updated fields
+//   - error: An error if the creation fails, nil otherwise
 func (a AssetAccount) Create() (AssetAccount, error) {
 	return CreateAssetAccount(a.client, a)
+}
+
+// UpdateAssetAccount updates an existing asset account in Safeguard.
+// Parameters:
+//   - c: The SafeguardClient instance for making API requests
+//   - assetAccount: The AssetAccount object containing the updated account details
+//
+// Returns:
+//   - AssetAccount: The updated asset account with current fields
+//   - error: An error if the update fails, nil otherwise
+func UpdateAssetAccount(c *client.SafeguardClient, assetAccount AssetAccount) (AssetAccount, error) {
+	query := fmt.Sprintf("AssetAccounts/%d", assetAccount.Id)
+
+	assetAccountJSON, err := json.Marshal(assetAccount)
+	if err != nil {
+		return AssetAccount{}, err
+	}
+
+	response, err := c.PutRequest(query, bytes.NewReader(assetAccountJSON))
+	if err != nil {
+		return AssetAccount{}, err
+	}
+
+	var updatedAssetAccount AssetAccount
+	err = json.Unmarshal(response, &updatedAssetAccount)
+	if err != nil {
+		return AssetAccount{}, err
+	}
+
+	updatedAssetAccount.client = c
+	return updatedAssetAccount, nil
+}
+
+// Update modifies the current asset account in Safeguard with any changes.
+// It uses the UpdateAssetAccount function with the current client.
+//
+// Returns:
+//   - AssetAccount: The updated asset account with current fields
+//   - error: An error if the update fails, nil otherwise
+func (a AssetAccount) Update() (AssetAccount, error) {
+	return UpdateAssetAccount(a.client, a)
+}
+
+// UpdatePasswordProfile updates the password profile for an asset account.
+// Parameters:
+//   - c: The SafeguardClient instance for making API requests
+//   - assetAccount: The AssetAccount object to update
+//   - passwordPolicy: The AccountPasswordRule to apply to the account
+//
+// Returns:
+//   - AssetAccount: The updated asset account with the new password profile
+//   - error: An error if the update fails, nil otherwise
+func UpdatePasswordProfile(c *client.SafeguardClient, assetAccount AssetAccount, passwordPolicy AccountPasswordRule) (AssetAccount, error) {
+	var passwordProfile Profile
+	passwordProfile.Id = passwordPolicy.Id
+	passwordProfile.Name = passwordPolicy.Name
+	passwordProfile.EffectiveId = passwordPolicy.Id
+
+	assetAccount.PasswordProfile = passwordProfile
+
+	updatedAssetAccount, err := UpdateAssetAccount(c, assetAccount)
+	if err != nil {
+		return AssetAccount{}, err
+	}
+
+	updatedAssetAccount.client = c
+	return updatedAssetAccount, nil
+}
+
+// UpdatePasswordProfile updates the password profile for this asset account.
+// It uses the UpdatePasswordProfile function with the current client.
+// Parameters:
+//   - passwordPolicy: The AccountPasswordRule to apply to this account
+//
+// Returns:
+//   - AssetAccount: The updated asset account with the new password profile
+//   - error: An error if the update fails, nil otherwise
+func (a AssetAccount) UpdatePasswordProfile(passwordPolicy AccountPasswordRule) (AssetAccount, error) {
+	return UpdatePasswordProfile(a.client, a, passwordPolicy)
 }
