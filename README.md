@@ -21,21 +21,28 @@ Currently supports the following Safeguard resources:
   - Username/Password authentication
   - OAuth authentication
   - Multiple authentication provider support
+  - OAuth Connect with callback server
+  - Certificate-based authentication
 - Access Requests
   - Create single and batch access requests
-  - Check out passwords
+  - Check out passwords with timeout support
   - Check in access requests
   - Cancel access requests
   - Close access requests based on state
   - Handle emergency access
   - Review and approve requests
   - Monitor request states and sessions
+  - Support for reason codes and comments
+  - Password activity logging
+  - Session management and monitoring
 - Me (Current User)
   - Get current user details
   - Get accessible assets and accounts
   - Get actionable requests by role
   - Get account entitlements
   - Request access to accounts
+  - Get preferences
+  - Get available approval/review requests
 - Users
   - Get users and user details
   - Get linked accounts
@@ -52,18 +59,42 @@ Currently supports the following Safeguard resources:
   - Get groups and details
   - Directory properties support
 - Asset Management
+  - Assets
+    - Get assets and details
+    - Platform configuration
+    - Connection properties
+    - Session access properties
+    - Directory properties
+    - Task scheduling and history
   - Asset Partitions
     - Get partitions and details
     - Get password rules
+    - Manage partition owners
   - Asset Groups
     - Get asset groups and details
     - Dynamic grouping rules
+    - Tag-based grouping
   - Asset Accounts
+    - Create Asset Accounts
     - Get accounts and details
     - Password operations (check/change)
+    - SSH key management
+    - Account discovery
+    - Synchronization groups
+    - Task scheduling
+    - Enable/disable accounts
+    - Suspend/restore accounts
   - Policy Assets
     - Get policy assets
     - Asset policy management
+    - SSH host key verification
+    - Session access configuration
+- Cluster Management
+  - Get cluster members
+  - Get cluster leader
+  - Monitor cluster health
+  - Force health checks
+  - Network configuration
 - Reports
   - Account task schedules
   - Task execution history
