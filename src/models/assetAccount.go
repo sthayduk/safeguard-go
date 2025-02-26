@@ -228,6 +228,24 @@ func (a AssetAccount) ToJson() (string, error) {
 	return string(assetAccountJSON), nil
 }
 
+// AssetAccountBatchResponse represents a single item in the batch response array
+type AssetAccountBatchResponse struct {
+	Response         AssetAccount `json:"Response,omitempty"`
+	StatusCode       string       `json:"StatusCode,omitempty"`
+	StatusCodeNumber int          `json:"StatusCodeNumber,omitempty"`
+	IsSuccess        bool         `json:"IsSuccess,omitempty"`
+	Error            ApiError     `json:"Error,omitempty"`
+	Request          AssetAccount `json:"Request,omitempty"`
+}
+
+func (ab AssetAccountBatchResponse) hasError() error {
+	if ab.IsSuccess {
+		return nil
+	}
+
+	return fmt.Errorf("error: %s", ab.Error.Message)
+}
+
 // GetAssetAccounts retrieves a list of asset accounts from Safeguard.
 // Parameters:
 //   - c: The SafeguardClient instance for making API requests
@@ -363,26 +381,40 @@ func (a AssetAccount) CheckPassword() (PasswordActivityLog, error) {
 //   - AssetAccount: The newly created asset account with updated fields
 //   - error: An error if the creation fails, nil otherwise
 func CreateAssetAccount(c *client.SafeguardClient, assetAccount AssetAccount) (AssetAccount, error) {
-	query := "AssetAccounts"
-
-	assetAccountJSON, err := json.Marshal(assetAccount)
+	assetAccountsBatch, err := batchCreateAssetAccounts(c, []AssetAccount{assetAccount})
 	if err != nil {
 		return AssetAccount{}, err
 	}
 
-	response, err := c.PostRequest(query, bytes.NewReader(assetAccountJSON))
-	if err != nil {
-		return AssetAccount{}, err
+	if len(assetAccountsBatch) > 1 {
+		return AssetAccount{}, fmt.Errorf("expected 1 response, got %d", len(assetAccountsBatch))
 	}
 
-	var createdAssetAccount AssetAccount
-	err = json.Unmarshal(response, &createdAssetAccount)
+	assetAccountsBatch[0].Response.client = c
+	return assetAccountsBatch[0].Response, nil
+}
+
+// CreateAssetAccounts creates multiple asset accounts in a single batch request.
+// Parameters:
+//   - c: The SafeguardClient instance for making API requests
+//   - assetAccounts: A slice of AssetAccount objects to create
+//
+// Returns:
+//   - []AssetAccount: A slice of the newly created asset accounts
+//   - error: An error if any of the creations fail, nil otherwise
+func CreateAssetAccounts(c *client.SafeguardClient, assetAccounts []AssetAccount) ([]AssetAccount, error) {
+	batchCreatedAccounts, err := batchCreateAssetAccounts(c, assetAccounts)
 	if err != nil {
-		return AssetAccount{}, err
+		return []AssetAccount{}, err
 	}
 
-	createdAssetAccount.client = c
-	return createdAssetAccount, nil
+	var createdAssetAccounts []AssetAccount
+	for i := range batchCreatedAccounts {
+		batchCreatedAccounts[i].Response.client = c
+		createdAssetAccounts = append(createdAssetAccounts, batchCreatedAccounts[i].Response)
+	}
+
+	return createdAssetAccounts, nil
 }
 
 // Create creates a new instance of this asset account in Safeguard.
@@ -472,4 +504,147 @@ func UpdatePasswordProfile(c *client.SafeguardClient, assetAccount AssetAccount,
 //   - error: An error if the update fails, nil otherwise
 func (a AssetAccount) UpdatePasswordProfile(passwordPolicy AccountPasswordRule) (AssetAccount, error) {
 	return UpdatePasswordProfile(a.client, a, passwordPolicy)
+}
+
+// DisableAssetAccount disables an asset account in Safeguard.
+// Parameters:
+//   - c: The SafeguardClient instance for making API requests
+//   - assetAccount: The AssetAccount to disable
+//
+// Returns:
+//   - AssetAccount: The updated asset account reflecting the disabled state
+//   - error: An error if the disable operation fails, nil otherwise
+func DisableAssetAccount(c *client.SafeguardClient, assetAccount AssetAccount) (AssetAccount, error) {
+	query := fmt.Sprintf("AssetAccounts/%d/Disable", assetAccount.Id)
+
+	response, err := c.PostRequest(query, nil)
+	if err != nil {
+		return AssetAccount{}, err
+	}
+	var updatedAssetAccount AssetAccount
+	err = json.Unmarshal(response, &updatedAssetAccount)
+	if err != nil {
+		return AssetAccount{}, err
+	}
+	updatedAssetAccount.client = c
+	return updatedAssetAccount, nil
+}
+
+// Disable disables this asset account in Safeguard.
+// It uses the DisableAssetAccount function with the current client.
+//
+// Returns:
+//   - AssetAccount: The updated asset account reflecting the disabled state
+//   - error: An error if the disable operation fails, nil otherwise
+func (a AssetAccount) Disable() (AssetAccount, error) {
+	return DisableAssetAccount(a.client, a)
+}
+
+// EnableAssetAccount enables a previously disabled asset account in Safeguard.
+// Parameters:
+//   - c: The SafeguardClient instance for making API requests
+//   - assetAccount: The AssetAccount to enable
+//
+// Returns:
+//   - AssetAccount: The updated asset account reflecting the enabled state
+//   - error: An error if the enable operation fails, nil otherwise
+func EnableAssetAccount(c *client.SafeguardClient, assetAccount AssetAccount) (AssetAccount, error) {
+	query := fmt.Sprintf("AssetAccounts/%d/Enable", assetAccount.Id)
+
+	response, err := c.PostRequest(query, nil)
+	if err != nil {
+		return AssetAccount{}, err
+	}
+	var updatedAssetAccount AssetAccount
+	err = json.Unmarshal(response, &updatedAssetAccount)
+	if err != nil {
+		return AssetAccount{}, err
+	}
+	updatedAssetAccount.client = c
+	return updatedAssetAccount, nil
+}
+
+// Enable enables this asset account in Safeguard.
+// It uses the EnableAssetAccount function with the current client.
+//
+// Returns:
+//   - AssetAccount: The updated asset account reflecting the enabled state
+//   - error: An error if the enable operation fails, nil otherwise
+func (a AssetAccount) Enable() (AssetAccount, error) {
+	return EnableAssetAccount(a.client, a)
+}
+
+// batchCreateAssetAccounts handles the batch creation of multiple asset accounts.
+// Parameters:
+//   - c: The SafeguardClient instance for making API requests
+//   - accessRequests: A slice of AssetAccount objects to create in batch
+//
+// Returns:
+//   - []AssetAccountBatchResponse: A slice of responses for each account creation attempt
+//   - error: An error if the batch request fails or if any individual creation fails
+func batchCreateAssetAccounts(c *client.SafeguardClient, accessRequests []AssetAccount) ([]AssetAccountBatchResponse, error) {
+	requestBody, err := json.Marshal(accessRequests)
+	if err != nil {
+		return []AssetAccountBatchResponse{}, err
+	}
+	response, err := c.PostRequest("AssetAccounts/BatchCreate", bytes.NewReader(requestBody))
+	if err != nil {
+		return []AssetAccountBatchResponse{}, err
+	}
+
+	var createdAssetAccounts []AssetAccountBatchResponse
+	if err := json.Unmarshal(response, &createdAssetAccounts); err != nil {
+		return []AssetAccountBatchResponse{}, err
+	}
+
+	var collectedErrors error
+	for i := range createdAssetAccounts {
+
+		// Add Client to each AssetAccount
+		createdAssetAccounts[i].Response.client = c
+
+		if err := createdAssetAccounts[i].hasError(); err != nil {
+			collectedErrors = fmt.Errorf("%v\n%v", collectedErrors, err)
+		}
+	}
+
+	if collectedErrors != nil {
+		return createdAssetAccounts, collectedErrors
+	}
+
+	return createdAssetAccounts, nil
+}
+
+// SuspendAssetAccount suspends an asset account in Safeguard.
+// Parameters:
+//   - c: The SafeguardClient instance for making API requests
+//   - a: The AssetAccount to suspend
+//
+// Returns:
+//   - PasswordActivityLog: Log details of the suspend activity
+//   - error: An error if the suspend operation fails, nil otherwise
+func SuspendAssetAccount(c client.SafeguardClient, a AssetAccount) (PasswordActivityLog, error) {
+	query := fmt.Sprintf("AssetAccounts/%d/SuspendAccount", a.Id)
+
+	response, err := c.PostRequest(query, nil)
+	if err != nil {
+		return PasswordActivityLog{}, err
+	}
+
+	var log PasswordActivityLog
+	if err := json.Unmarshal(response, &log); err != nil {
+		return PasswordActivityLog{}, err
+	}
+	log.client = a.client
+	return log, nil
+}
+
+// Suspend suspends this asset account in Safeguard.
+// It uses the SuspendAssetAccount function with the current client.
+//
+// Returns:
+//   - PasswordActivityLog: Log details of the suspend activity
+//   - error: An error if the suspend operation fails, nil otherwise
+func (a AssetAccount) Suspend() (PasswordActivityLog, error) {
+	return SuspendAssetAccount(*a.client, a)
 }
