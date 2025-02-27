@@ -2,7 +2,7 @@ module github.com/sthayduk/safeguard-go/tests
 
 go 1.24.0
 
-replace github.com/sthayduk/safeguard-go => ../src
+replace github.com/sthayduk/safeguard-go => ../pkg
 
 require github.com/sthayduk/safeguard-go v0.0.0-00010101000000-000000000000
 

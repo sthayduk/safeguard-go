@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	sg "github.com/sthayduk/safeguard-go"
+	. "github.com/sthayduk/safeguard-go"
 	"github.com/sthayduk/safeguard-go/examples/common"
 )
 
@@ -15,15 +15,15 @@ func main() {
 	}
 
 	// Get user with ID 76 ("Stefan Hayduk")
-	user, err := sg.GetUser(sgc, 76, nil)
+	user, err := GetUser(sgc, 76, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Get both policy accounts at once (133: "da-andresen", 134: "sa-andresen")
-	accounts := make([]sg.PolicyAccount, 0, 2)
+	accounts := make([]PolicyAccount, 0, 2)
 	for _, id := range []int{133, 134} {
-		account, err := sg.GetPolicyAccount(sgc, id, nil)
+		account, err := GetPolicyAccount(sgc, id, nil)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -31,7 +31,7 @@ func main() {
 	}
 
 	// Unlink all accounts at once
-	unlinkedAccounts, err := sg.RemoveLinkedAccounts(sgc, user, accounts)
+	unlinkedAccounts, err := RemoveLinkedAccounts(sgc, user, accounts)
 	if err != nil {
 		log.Fatal(err)
 	}

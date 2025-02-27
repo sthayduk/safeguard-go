@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	sg "github.com/sthayduk/safeguard-go"
+	. "github.com/sthayduk/safeguard-go"
 
 	"github.com/fatih/color"
 	"github.com/sthayduk/safeguard-go/client"
@@ -37,7 +37,7 @@ func main() {
 
 	// Get the Active Directory
 	logger.Printf("Getting Active Directory with ID: %d", adId)
-	ad, err := sg.GetAsset(sgc, adId, client.Fields{"Id", "Name"})
+	ad, err := GetAsset(sgc, adId, client.Fields{"Id", "Name"})
 	if err != nil {
 		logger.Fatalf("Failed to get Active Directory: %v", err)
 	}
@@ -55,7 +55,7 @@ func main() {
 		logger.Printf("Found user: %s", user.Name)
 	}
 
-	createdUsers, err := sg.CreateAssetAccounts(sgc, users)
+	createdUsers, err := CreateAssetAccounts(sgc, users)
 	if err != nil {
 		logger.Fatalf("Failed to create asset accounts: %s", err)
 	}
@@ -100,20 +100,20 @@ func main() {
 
 }
 
-func updateAndCheckPassword(wg *sync.WaitGroup, sgc *client.SafeguardClient, logger *log.Logger, createdUser sg.AssetAccount) {
+func updateAndCheckPassword(wg *sync.WaitGroup, sgc *client.SafeguardClient, logger *log.Logger, createdUser AssetAccount) {
 	// Initialize colored output
 	info := color.New(color.FgCyan).SprintFunc()
 
 	// Update Password Profile
 	logger.Println("Updating password profile...")
-	assetPartition, err := sg.GetAssetPartition(sgc, 1, client.Fields{"Id", "Name"})
+	assetPartition, err := GetAssetPartition(sgc, 1, client.Fields{"Id", "Name"})
 	if err != nil {
 		logger.Fatalf("Failed to get asset partition: %v", err)
 	}
 
 	filter := client.Filter{}
 	filter.AddFilter("Name", "eq", "ITdesign Profile Suspend")
-	passwordProfile, err := sg.GetPasswordRules(sgc, assetPartition, filter)
+	passwordProfile, err := GetPasswordRules(sgc, assetPartition, filter)
 	if err != nil {
 		logger.Fatalf("Failed to get password profile: %v", err)
 	}

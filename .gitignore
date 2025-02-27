@@ -45,4 +45,4 @@ go.work.sum
 *.json
 
 # Ignore file which is only for development
-pkg/getAccessToken.go
+examples/getAccessToken.go

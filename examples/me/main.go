@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	sg "github.com/sthayduk/safeguard-go"
+	. "github.com/sthayduk/safeguard-go"
 	"github.com/sthayduk/safeguard-go/client"
 	"github.com/sthayduk/safeguard-go/examples/common"
 )
@@ -21,7 +21,7 @@ func main() {
 	filter.AddField("EmailAddress")
 	filter.AddField("AdminRoles")
 
-	me, err := sg.GetMe(sgc, filter)
+	me, err := GetMe(sgc, filter)
 	if err != nil {
 		fmt.Printf("Error getting current user: %s\n", err)
 	} else {
@@ -39,7 +39,7 @@ func main() {
 	assetFilter.AddField("Platform.DisplayName")
 	assetFilter.AddOrderBy("Name")
 
-	assets, err := sg.GetMeAccessRequestAssets(sgc, assetFilter)
+	assets, err := GetMeAccessRequestAssets(sgc, assetFilter)
 	if err != nil {
 		fmt.Printf("Error getting accessible assets: %s\n", err)
 	} else {
@@ -56,7 +56,7 @@ func main() {
 		if len(assets) > 0 {
 			fmt.Println("\nExample 3: Getting a specific asset by ID")
 			assetId := fmt.Sprintf("%d", assets[0].Id)
-			asset, err := sg.GetMeAccessRequestAsset(sgc, assetId)
+			asset, err := GetMeAccessRequestAsset(sgc, assetId)
 			if err != nil {
 				fmt.Printf("Error getting asset by ID: %s\n", err)
 			} else {
@@ -73,7 +73,7 @@ func main() {
 	// Example 4: Get actionable requests with detailed information
 	fmt.Println("Example 4: Getting actionable requests with details")
 	requestFilter := client.Filter{}
-	actionableRequests, err := sg.GetMeActionableRequestsDetailed(sgc, requestFilter)
+	actionableRequests, err := GetMeActionableRequestsDetailed(sgc, requestFilter)
 	if err != nil {
 		fmt.Printf("Error getting actionable requests: %s\n", err)
 	} else {
@@ -99,7 +99,7 @@ func main() {
 		}
 
 		// Example: Filter requests by state
-		checkedOutRequests := actionableRequests.FilterRequestsByState(sg.StatePasswordCheckedOut)
+		checkedOutRequests := actionableRequests.FilterRequestsByState(StatePasswordCheckedOut)
 		fmt.Printf("\nChecked Out Requests: %d\n", len(checkedOutRequests))
 		for i, req := range checkedOutRequests {
 			fmt.Printf("- %s: %s (%s)\n",
@@ -111,8 +111,8 @@ func main() {
 		}
 
 		// Show Admin role requests if available
-		if actionableRequests.HasRole(sg.AdminRole) {
-			adminRequests := actionableRequests.GetRequestsForRole(sg.AdminRole)
+		if actionableRequests.HasRole(AdminRole) {
+			adminRequests := actionableRequests.GetRequestsForRole(AdminRole)
 			fmt.Printf("\nAdmin Role Requests: %d\n", len(adminRequests))
 			// ... rest of admin requests display
 		}
@@ -121,7 +121,7 @@ func main() {
 
 	// Example 5: Get actionable requests by role
 	fmt.Println("Example 5: Getting actionable requests by role (Admin)")
-	approverRequests, err := sg.GetMeActionableRequestsByRole(sgc, sg.AdminRole, requestFilter)
+	approverRequests, err := GetMeActionableRequestsByRole(sgc, AdminRole, requestFilter)
 	if err != nil {
 		fmt.Printf("Error getting approver requests: %s\n", err)
 	} else {

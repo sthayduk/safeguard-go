@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	sg "github.com/sthayduk/safeguard-go"
+	. "github.com/sthayduk/safeguard-go"
 	"github.com/sthayduk/safeguard-go/client"
 	"github.com/sthayduk/safeguard-go/examples/common"
 )
@@ -16,7 +16,7 @@ func main() {
 		panic(err)
 	}
 
-	assetAccount, err := sg.GetAssetAccount(sgc, 249, client.Fields{})
+	assetAccount, err := GetAssetAccount(sgc, 249, client.Fields{})
 	if err != nil {
 		panic(err)
 	}

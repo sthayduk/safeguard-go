@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	sg "github.com/sthayduk/safeguard-go"
+	. "github.com/sthayduk/safeguard-go"
 	"github.com/sthayduk/safeguard-go/client"
 	"github.com/sthayduk/safeguard-go/examples/common"
 )
@@ -14,7 +14,7 @@ func main() {
 		panic(err)
 	}
 
-	partitions, err := sg.GetAssetPartitions(sgc, client.Filter{})
+	partitions, err := GetAssetPartitions(sgc, client.Filter{})
 	if err != nil {
 		panic(err)
 	}

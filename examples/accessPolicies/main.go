@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	sg "github.com/sthayduk/safeguard-go"
+	. "github.com/sthayduk/safeguard-go"
 	"github.com/sthayduk/safeguard-go/client"
 	"github.com/sthayduk/safeguard-go/examples/common"
 )
@@ -39,7 +39,7 @@ func main() {
 
 func listAccessPolicies(sgc *client.SafeguardClient) {
 	filter := client.Filter{}
-	policies, err := sg.GetAccessPolicies(sgc, filter)
+	policies, err := GetAccessPolicies(sgc, filter)
 	if err != nil {
 		log.Printf("Failed to get access policies: %v", err)
 		return
@@ -53,7 +53,7 @@ func listAccessPolicies(sgc *client.SafeguardClient) {
 
 func getSpecificPolicy(sgc *client.SafeguardClient, policyID int) {
 	fields := client.Fields{}
-	policy, err := sg.GetAccessPolicy(sgc, policyID, fields)
+	policy, err := GetAccessPolicy(sgc, policyID, fields)
 	if err != nil {
 		log.Printf("Failed to get access policy %d: %v", policyID, err)
 		return
@@ -69,7 +69,7 @@ func getSpecificPolicy(sgc *client.SafeguardClient, policyID int) {
 
 func workWithReasonCodes(sgc *client.SafeguardClient, policyID int) {
 	fields := client.Fields{}
-	policy, err := sg.GetAccessPolicy(sgc, policyID, fields)
+	policy, err := GetAccessPolicy(sgc, policyID, fields)
 	if err != nil {
 		log.Printf("Failed to get access policy %d: %v", policyID, err)
 		return
@@ -90,7 +90,7 @@ func workWithReasonCodes(sgc *client.SafeguardClient, policyID int) {
 
 func deletePolicy(sgc *client.SafeguardClient, policyID int) {
 	fields := client.Fields{}
-	policy, err := sg.GetAccessPolicy(sgc, policyID, fields)
+	policy, err := GetAccessPolicy(sgc, policyID, fields)
 	if err != nil {
 		log.Printf("Failed to get access policy %d: %v", policyID, err)
 		return
@@ -106,7 +106,7 @@ func deletePolicy(sgc *client.SafeguardClient, policyID int) {
 
 func dumpAllReasonCodes(sgc *client.SafeguardClient) {
 	filter := client.Filter{}
-	policies, err := sg.GetAccessPolicies(sgc, filter)
+	policies, err := GetAccessPolicies(sgc, filter)
 	if err != nil {
 		log.Printf("Failed to get access policies: %v", err)
 		return

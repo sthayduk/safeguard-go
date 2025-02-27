@@ -1,6 +1,8 @@
 package tests
 
 import (
+	. "github.com/sthayduk/safeguard-go"
+
 	"testing"
 	"time"
 )
