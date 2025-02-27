@@ -14,12 +14,12 @@ import (
 	"strings"
 )
 
-// OauthConnect initiates the OAuth2.0 authorization code flow to obtain an access token.
+// LoginWithOauth initiates the OAuth2.0 authorization code flow to obtain an access token.
 // It generates a code challenge and starts an HTTPS listener to receive the authorization code.
 // The user is prompted to log in using their browser, and upon successful login, the authorization code
 // is exchanged for an access token.
 // Returns an error if the authentication or token exchange process fails.
-func (c *SafeguardClient) OauthConnect() error {
+func (c *SafeguardClient) LoginWithOauth() error {
 	if c.AccessToken == nil {
 		c.AccessToken = &TokenResponse{}
 	}

@@ -16,7 +16,7 @@ func InitClient() (*client.SafeguardClient, error) {
 
 	if accessToken == "" {
 		sgc = client.New(applianceUrl, apiVersion, false)
-		err := sgc.OauthConnect()
+		err := sgc.LoginWithOauth()
 		if err != nil {
 			return nil, err
 		}

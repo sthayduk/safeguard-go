@@ -37,6 +37,7 @@ go.work.sum
 *.cer
 *.pem
 *.key
+*.pfx
 
 # Ingnore temporary files
 *.tmp
