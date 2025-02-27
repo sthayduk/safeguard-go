@@ -3,17 +3,15 @@ package client
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"log"
 	"net/http"
 	"os"
-
-	"github.com/sirupsen/logrus"
 )
 
-var log *logrus.Logger // Declare global log variable
+var logger *log.Logger // Declare global logger variable
 
 func init() {
-	log = logrus.New()
-	log.SetLevel(logrus.InfoLevel) // Default log level
+	logger = log.New(os.Stdout, "", log.LstdFlags)
 }
 
 const (
@@ -48,9 +46,9 @@ type TokenResponse struct {
 // Returns a pointer to a SafeguardClient instance.
 func New(applianceUrl string, apiVersion string, debug bool) *SafeguardClient {
 	if debug {
-		log.SetLevel(logrus.DebugLevel)
+		logger.SetFlags(log.LstdFlags | log.Lshortfile)
 	} else {
-		log.SetLevel(logrus.InfoLevel)
+		logger.SetFlags(log.LstdFlags)
 	}
 
 	c := SafeguardClient{
@@ -69,19 +67,19 @@ func New(applianceUrl string, apiVersion string, debug bool) *SafeguardClient {
 func createTLSClient() *http.Client {
 	caCert, err := os.ReadFile("server.crt")
 	if err != nil {
-		log.Fatalf("Error loading CA certificate: %v", err)
+		logger.Fatalf("Error loading CA certificate: %v", err)
 	}
 	rootCert, err := os.ReadFile("pam.cer")
 	if err != nil {
-		log.Fatalf("Error loading root certificate: %v", err)
+		logger.Fatalf("Error loading root certificate: %v", err)
 	}
 
 	caCertPool := x509.NewCertPool()
 	if !caCertPool.AppendCertsFromPEM(caCert) {
-		log.Fatalf("Error adding CA certificate to pool")
+		logger.Fatalf("Error adding CA certificate to pool")
 	}
 	if !caCertPool.AppendCertsFromPEM(rootCert) {
-		log.Fatalf("Error adding root certificate to pool")
+		logger.Fatalf("Error adding root certificate to pool")
 	}
 
 	return &http.Client{

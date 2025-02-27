@@ -13,7 +13,7 @@ func (c *SafeguardClient) SaveAccessTokenToEnv() error {
 	envVar := "SAFEGUARD_ACCESS_TOKEN"
 	err := os.Setenv(envVar, c.AccessToken.AccessToken)
 	if err != nil {
-		log.Fatalf("Error saving access token to environment variable: %v", err)
+		logger.Fatalf("Error saving access token to environment variable: %v", err)
 		return err
 	}
 
@@ -29,8 +29,8 @@ func (c *SafeguardClient) ValidateAccessToken() error {
 		return fmt.Errorf("access token is empty")
 	}
 
-	log.Debugf("Token length: %d", len(c.AccessToken.AccessToken))
-	log.Debugf("Token format check - starts with 'ey': %v", strings.HasPrefix(c.AccessToken.AccessToken, "ey"))
+	logger.Printf("Token length: %d", len(c.AccessToken.AccessToken))
+	logger.Printf("Token format check - starts with 'ey': %v", strings.HasPrefix(c.AccessToken.AccessToken, "ey"))
 
 	err := c.testAccessToken()
 	if err != nil {

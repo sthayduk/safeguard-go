@@ -29,7 +29,7 @@ func (c *SafeguardClient) GetRootUrl() string {
 // Returns the response body as a byte slice and an error if the request fails.
 func (c *SafeguardClient) GetRequest(path string) ([]byte, error) {
 	url := fmt.Sprintf("%s/%s", c.GetRootUrl(), path)
-	log.Debugf("Making request to: %s", url)
+	logger.Printf("Making request to: %s", url)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
@@ -52,7 +52,7 @@ func (c *SafeguardClient) GetRequest(path string) ([]byte, error) {
 //   - An error if the request fails or an error occurs during the request.
 func (c *SafeguardClient) PostRequest(path string, body io.Reader) ([]byte, error) {
 	url := fmt.Sprintf("%s/%s", c.GetRootUrl(), path)
-	log.Debugf("Making request to: %s", url)
+	logger.Printf("Making request to: %s", url)
 
 	req, err := http.NewRequest(http.MethodPost, url, body)
 	if err != nil {
@@ -73,7 +73,7 @@ func (c *SafeguardClient) PostRequest(path string, body io.Reader) ([]byte, erro
 //   - An error if the request creation or sending fails.
 func (c *SafeguardClient) PutRequest(path string, body io.Reader) ([]byte, error) {
 	url := fmt.Sprintf("%s/%s", c.GetRootUrl(), path)
-	log.Debugf("Making request to: %s", url)
+	logger.Printf("Making request to: %s", url)
 
 	req, err := http.NewRequest(http.MethodPut, url, body)
 	if err != nil {
@@ -93,7 +93,7 @@ func (c *SafeguardClient) PutRequest(path string, body io.Reader) ([]byte, error
 //   - error: An error if the request could not be created or the HTTP request failed.
 func (c *SafeguardClient) DeleteRequest(path string) ([]byte, error) {
 	url := fmt.Sprintf("%s/%s", c.GetRootUrl(), path)
-	log.Debugf("Making request to: %s", url)
+	logger.Printf("Making request to: %s", url)
 
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
 	if err != nil {
@@ -105,7 +105,7 @@ func (c *SafeguardClient) DeleteRequest(path string) ([]byte, error) {
 
 func (c *SafeguardClient) sendHttpRequest(req *http.Request) ([]byte, error) {
 	c.setHeaders(req)
-	log.Debugf("Request headers: %+v", req.Header)
+	logger.Printf("Request headers: %+v", req.Header)
 
 	resp, err := c.HttpClient.Do(req)
 	if err != nil {
@@ -119,9 +119,9 @@ func (c *SafeguardClient) sendHttpRequest(req *http.Request) ([]byte, error) {
 	}
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusAccepted && resp.StatusCode != http.StatusCreated {
-		log.Debugf("Response Status: %s", resp.Status)
-		log.Debugf("Response headers: %+v", resp.Header)
-		log.Debugf("Response body: %s", string(body))
+		logger.Printf("Response Status: %s", resp.Status)
+		logger.Printf("Response headers: %+v", resp.Header)
+		logger.Printf("Response body: %s", string(body))
 		return nil, fmt.Errorf("error during %s request to %s: HTTP %d - %s", req.Method, req.URL, resp.StatusCode, string(body))
 	}
 

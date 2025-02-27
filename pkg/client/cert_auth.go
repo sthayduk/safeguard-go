@@ -76,7 +76,7 @@ func (c *SafeguardClient) getRSTSTokenWithCert(client *http.Client, authProvider
 		return "", fmt.Errorf("failed to marshal request body: %v", err)
 	}
 
-	log.Debugf("RSTS request body: %s", string(bodyBytes))
+	logger.Printf("RSTS request body: %s", string(bodyBytes))
 
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/RSTS/oauth2/token", c.ApplicanceURL), bytes.NewBuffer(bodyBytes))
 	if err != nil {
@@ -84,7 +84,7 @@ func (c *SafeguardClient) getRSTSTokenWithCert(client *http.Client, authProvider
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	log.Debugf("RSTS request URL: %s", req.URL.String())
+	logger.Printf("RSTS request URL: %s", req.URL.String())
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -93,7 +93,7 @@ func (c *SafeguardClient) getRSTSTokenWithCert(client *http.Client, authProvider
 	defer resp.Body.Close()
 
 	body, _ := io.ReadAll(resp.Body)
-	log.Debugf("RSTS response: %s", string(body))
+	logger.Printf("RSTS response: %s", string(body))
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("RSTS token request failed: %s", string(body))
 	}

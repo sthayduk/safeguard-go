@@ -59,7 +59,7 @@ func generateCodeChallenge() (string, string) {
 	verifier := make([]byte, 32)
 	_, err := rand.Read(verifier)
 	if err != nil {
-		log.Fatalf("Error generating Code Verifier: %v", err)
+		logger.Fatalf("Error generating Code Verifier: %v", err)
 	}
 	codeVerifier := base64.RawURLEncoding.EncodeToString(verifier)
 
@@ -72,7 +72,7 @@ func generateCodeChallenge() (string, string) {
 func startHTTPSListener(authCodeChan chan string, errorChan chan error) *http.Server {
 	cert, err := tls.LoadX509KeyPair("server.crt", "server.key")
 	if err != nil {
-		log.Fatalf("Error loading certificate: %v", err)
+		logger.Fatalf("Error loading certificate: %v", err)
 	}
 
 	server := &http.Server{
@@ -83,7 +83,7 @@ func startHTTPSListener(authCodeChan chan string, errorChan chan error) *http.Se
 	}
 
 	http.HandleFunc("/callback", func(w http.ResponseWriter, r *http.Request) {
-		log.Println("Received callback request")
+		logger.Println("Received callback request")
 		if err := r.URL.Query().Get("error"); err != "" {
 			errorDesc := r.URL.Query().Get("error_description")
 			errorChan <- fmt.Errorf("%s: %s", err, errorDesc)
@@ -102,7 +102,7 @@ func startHTTPSListener(authCodeChan chan string, errorChan chan error) *http.Se
 	})
 
 	go func() {
-		log.Printf("Starting HTTPS server on port %d", redirectPort)
+		logger.Printf("Starting HTTPS server on port %d", redirectPort)
 		if err := server.ListenAndServeTLS("", ""); err != nil && err != http.ErrServerClosed {
 			errorChan <- fmt.Errorf("HTTPS server error: %v", err)
 		}
@@ -140,8 +140,8 @@ func (c *SafeguardClient) exchangeToken(authCode, codeVerifier string) (*TokenRe
 		return nil, err
 	}
 
-	log.Debugf("rSTS Token Response: %s", string(body))
-	log.Debugf("rSTS Token: %s", rStsToken.AccessToken)
+	logger.Printf("rSTS Token Response: %s", string(body))
+	logger.Printf("rSTS Token: %s", rStsToken.AccessToken)
 
 	tokenReq := struct {
 		StsAccessToken string `json:"StsAccessToken"`
@@ -176,8 +176,8 @@ func (c *SafeguardClient) exchangeToken(authCode, codeVerifier string) (*TokenRe
 		return nil, err
 	}
 
-	log.Debugf("Safeguard Token Response: %s", string(body))
-	log.Debugf("Safeguard Token: %s", tokenResponse.UserToken)
+	logger.Printf("Safeguard Token Response: %s", string(body))
+	logger.Printf("Safeguard Token: %s", tokenResponse.UserToken)
 
 	tokenResponse.AccessToken = tokenResponse.UserToken
 
