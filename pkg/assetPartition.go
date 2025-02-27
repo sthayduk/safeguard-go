@@ -11,8 +11,6 @@ import (
 // AssetPartition represents a collection of assets and accounts along with management configuration.
 // The partition defines boundaries for asset management and access control within Safeguard.
 type AssetPartition struct {
-	client *client.SafeguardClient
-
 	Id                       int             `json:"Id"`
 	Name                     string          `json:"Name"`
 	Description              string          `json:"Description"`
@@ -42,8 +40,6 @@ func (u AssetPartition) ToJson() (string, error) {
 // account passwords within an asset partition. It specifies character requirements, restrictions,
 // and other password complexity rules.
 type AccountPasswordRule struct {
-	client *client.SafeguardClient
-
 	Id                                      int       `json:"Id"`
 	IsSystemOwned                           bool      `json:"IsSystemOwned"`
 	AssetPartitionId                        int       `json:"AssetPartitionId"`
@@ -88,7 +84,7 @@ type AccountPasswordRule struct {
 //   - AssetAccount: The updated asset account with the applied password rule
 //   - error: An error if the assignment fails, nil otherwise
 func (r AccountPasswordRule) Assign(assetAccount AssetAccount) (AssetAccount, error) {
-	return UpdatePasswordProfile(r.client, assetAccount, r)
+	return UpdatePasswordProfile(assetAccount, r)
 }
 
 // ToJson converts the AccountPasswordRule struct to a JSON string representation.
@@ -111,7 +107,7 @@ func (r AccountPasswordRule) ToJson() (string, error) {
 // Returns:
 //   - []AssetPartition: A slice of asset partitions matching the filter criteria
 //   - error: An error if the request fails, nil otherwise
-func GetAssetPartitions(c *client.SafeguardClient, filter client.Filter) ([]AssetPartition, error) {
+func GetAssetPartitions(filter client.Filter) ([]AssetPartition, error) {
 	var AssetPartitions []AssetPartition
 
 	query := "AssetPartitions" + filter.ToQueryString()
@@ -122,9 +118,6 @@ func GetAssetPartitions(c *client.SafeguardClient, filter client.Filter) ([]Asse
 	}
 
 	json.Unmarshal(response, &AssetPartitions)
-	for i := range AssetPartitions {
-		AssetPartitions[i].client = c
-	}
 	return AssetPartitions, nil
 }
 
@@ -137,9 +130,8 @@ func GetAssetPartitions(c *client.SafeguardClient, filter client.Filter) ([]Asse
 // Returns:
 //   - AssetPartition: The requested asset partition object
 //   - error: An error if the request fails, nil otherwise
-func GetAssetPartition(c *client.SafeguardClient, id int, fields client.Fields) (AssetPartition, error) {
+func GetAssetPartition(id int, fields client.Fields) (AssetPartition, error) {
 	var AssetPartition AssetPartition
-	AssetPartition.client = c
 
 	query := fmt.Sprintf("AssetPartitions/%d", id)
 	if len(fields) > 0 {
@@ -161,7 +153,7 @@ func GetAssetPartition(c *client.SafeguardClient, id int, fields client.Fields) 
 //   - []AccountPasswordRule: A slice of password rules defined for this partition
 //   - error: An error if the request fails, nil otherwise
 func (a AssetPartition) GetPasswordRules() ([]AccountPasswordRule, error) {
-	return GetPasswordRules(a.client, a, client.Filter{})
+	return GetPasswordRules(a, client.Filter{})
 }
 
 // GetPasswordRules retrieves all password rules for a specific asset partition.
@@ -173,7 +165,7 @@ func (a AssetPartition) GetPasswordRules() ([]AccountPasswordRule, error) {
 // Returns:
 //   - []AccountPasswordRule: A slice of password rules matching the filter
 //   - error: An error if the request fails or no rules are found
-func GetPasswordRules(c *client.SafeguardClient, assetPartition AssetPartition, filter client.Filter) ([]AccountPasswordRule, error) {
+func GetPasswordRules(assetPartition AssetPartition, filter client.Filter) ([]AccountPasswordRule, error) {
 	var PasswordRules []AccountPasswordRule
 
 	query := fmt.Sprintf("AssetPartitions/%d/Profiles", assetPartition.Id) + filter.ToQueryString()
@@ -191,10 +183,6 @@ func GetPasswordRules(c *client.SafeguardClient, assetPartition AssetPartition, 
 		return PasswordRules, fmt.Errorf("no password rules found for asset partition %d", assetPartition.Id)
 	}
 
-	for i := range PasswordRules {
-		PasswordRules[i].client = c
-	}
-
 	return PasswordRules, nil
 }
 
@@ -205,7 +193,7 @@ func GetPasswordRules(c *client.SafeguardClient, assetPartition AssetPartition, 
 //
 // Returns:
 //   - error: An error if the deletion fails, nil otherwise
-func DeleteAssetPartition(c *client.SafeguardClient, id int) error {
+func DeleteAssetPartition(id int) error {
 	query := fmt.Sprintf("AssetPartitions/%d", id)
 
 	_, err := c.DeleteRequest(query)
@@ -222,5 +210,5 @@ func DeleteAssetPartition(c *client.SafeguardClient, id int) error {
 // Returns:
 //   - error: An error if the deletion fails, nil otherwise
 func (a AssetPartition) Delete() error {
-	return DeleteAssetPartition(a.client, a.Id)
+	return DeleteAssetPartition(a.Id)
 }

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/fatih/color"
+	safeguard "github.com/sthayduk/safeguard-go"
 	"github.com/sthayduk/safeguard-go/client"
 )
 
@@ -24,13 +25,13 @@ func main() {
 	var sgc *client.SafeguardClient
 
 	if accessToken == "" {
-		sgc = client.New(applianceUrl, apiVersion, true)
+		sgc = safeguard.SetupClient(applianceUrl, apiVersion, true)
 		err := sgc.LoginWithCertificate(pfxPath, pfxPassword, "rsts:sts:primaryproviderid:certificate")
 		if err != nil {
 			panic(err)
 		}
 	} else {
-		sgc = client.New(applianceUrl, apiVersion, true)
+		sgc = safeguard.SetupClient(applianceUrl, apiVersion, true)
 		sgc.AccessToken = &client.TokenResponse{
 			AccessToken: accessToken,
 		}

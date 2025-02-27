@@ -113,7 +113,7 @@ func (a AccountTaskData) ToJson() (string, error) {
 // Returns:
 //   - A slice of AccountTaskData containing the retrieved account task schedules.
 //   - An error if the request fails or the response cannot be unmarshaled.
-func GetAccountTaskSchedules(c *client.SafeguardClient, taskName AccountTaskNames, filter client.Filter) ([]AccountTaskData, error) {
+func GetAccountTaskSchedules(taskName AccountTaskNames, filter client.Filter) ([]AccountTaskData, error) {
 	var accountTaskSchedules []AccountTaskData
 
 	query := fmt.Sprintf("Reports/Tasks/AccountTaskSchedules/%s%s", taskName, filter.ToQueryString())

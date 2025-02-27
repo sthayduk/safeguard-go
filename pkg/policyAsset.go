@@ -62,8 +62,6 @@ func (a AssetPolicy) ToJson() (string, error) {
 // and UserFavorites. The asset must have AllowSessionRequests set to true in order to be
 // used in UserFavorites or to be able to request a session on the asset.
 type PolicyAsset struct {
-	client *client.SafeguardClient
-
 	Id                 int                     `json:"Id"`
 	Name               string                  `json:"Name"`
 	AssetType          AssetType               `json:"AssetType"`
@@ -125,7 +123,7 @@ type SessionAccessProperties struct {
 // Returns:
 //   - []PolicyAsset: A slice of PolicyAsset objects retrieved from the API.
 //   - error: An error object if the request fails or the response cannot be unmarshaled.
-func GetPolicyAssets(c *client.SafeguardClient, fields client.Filter) ([]PolicyAsset, error) {
+func GetPolicyAssets(fields client.Filter) ([]PolicyAsset, error) {
 	var policyAssets []PolicyAsset
 
 	query := "PolicyAssets" + fields.ToQueryString()
@@ -138,9 +136,7 @@ func GetPolicyAssets(c *client.SafeguardClient, fields client.Filter) ([]PolicyA
 	if err := json.Unmarshal(response, &policyAssets); err != nil {
 		return nil, err
 	}
-	for i := range policyAssets {
-		policyAssets[i].client = c
-	}
+
 	return policyAssets, nil
 }
 
@@ -156,9 +152,8 @@ func GetPolicyAssets(c *client.SafeguardClient, fields client.Filter) ([]PolicyA
 // Returns:
 //   - PolicyAsset: The retrieved PolicyAsset.
 //   - error: An error if any occurred during the request.
-func GetPolicyAsset(c *client.SafeguardClient, id int, fields client.Fields) (PolicyAsset, error) {
+func GetPolicyAsset(id int, fields client.Fields) (PolicyAsset, error) {
 	var policyAsset PolicyAsset
-	policyAsset.client = c
 
 	query := fmt.Sprintf("PolicyAssets/%d", id)
 	if len(fields) > 0 {
@@ -190,7 +185,7 @@ func (p PolicyAsset) GetAssetGroups(fields client.Filter) ([]AssetGroup, error) 
 
 	query := fmt.Sprintf("PolicyAssets/%d/AssetGroups", p.Id) + fields.ToQueryString()
 
-	response, err := p.client.GetRequest(query)
+	response, err := c.GetRequest(query)
 	if err != nil {
 		return nil, err
 	}
@@ -216,7 +211,7 @@ func (p PolicyAsset) GetDirectoryServiceEntries(fields client.Filter) ([]Directo
 
 	query := fmt.Sprintf("PolicyAssets/%d/DirectoryServiceEntries", p.Id) + fields.ToQueryString()
 
-	response, err := p.client.GetRequest(query)
+	response, err := c.GetRequest(query)
 	if err != nil {
 		return nil, err
 	}
@@ -242,7 +237,7 @@ func (p PolicyAsset) GetPolicies(fields client.Filter) ([]AssetPolicy, error) {
 
 	query := fmt.Sprintf("PolicyAssets/%d/Policies", p.Id) + fields.ToQueryString()
 
-	response, err := p.client.GetRequest(query)
+	response, err := c.GetRequest(query)
 	if err != nil {
 		return nil, err
 	}

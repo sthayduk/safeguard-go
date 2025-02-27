@@ -10,8 +10,6 @@ import (
 
 // Asset represents a Safeguard asset
 type Asset struct {
-	client *client.SafeguardClient
-
 	Id                           int                          `json:"Id,omitempty"`
 	Name                         string                       `json:"Name,omitempty"`
 	NetworkAddress               string                       `json:"NetworkAddress,omitempty"`
@@ -308,7 +306,7 @@ func (a Asset) ToJson() (string, error) {
 //   - An error if the request fails or if there is an issue unmarshalling the response.
 //
 // Each Asset object in the returned slice will have its client field set to the provided SafeguardClient instance.
-func GetAssets(c *client.SafeguardClient, fields client.Filter) ([]Asset, error) {
+func GetAssets(fields client.Filter) ([]Asset, error) {
 	var assets []Asset
 
 	query := "Assets" + fields.ToQueryString()
@@ -321,10 +319,6 @@ func GetAssets(c *client.SafeguardClient, fields client.Filter) ([]Asset, error)
 	err = json.Unmarshal(response, &assets)
 	if err != nil {
 		return nil, err
-	}
-
-	for i := range assets {
-		assets[i].client = c
 	}
 
 	return assets, nil
@@ -343,7 +337,7 @@ func GetAssets(c *client.SafeguardClient, fields client.Filter) ([]Asset, error)
 // Returns:
 //   - Asset: The retrieved Asset object.
 //   - error: An error object if the request or unmarshalling fails.
-func GetAsset(c *client.SafeguardClient, id int, fields client.Fields) (Asset, error) {
+func GetAsset(id int, fields client.Fields) (Asset, error) {
 	var asset Asset
 
 	query := fmt.Sprintf("Assets/%d", id)
@@ -361,7 +355,6 @@ func GetAsset(c *client.SafeguardClient, id int, fields client.Fields) (Asset, e
 		return asset, err
 	}
 
-	asset.client = c
 	return asset, nil
 }
 
@@ -376,7 +369,7 @@ func GetAsset(c *client.SafeguardClient, id int, fields client.Fields) (Asset, e
 // Returns:
 //   - A slice of AssetAccount objects representing the directory accounts.
 //   - An error if the request fails or the response cannot be unmarshaled.
-func GetAssetDirectoryAccounts(c *client.SafeguardClient, assetId int, filter client.Filter) ([]AssetAccount, error) {
+func GetAssetDirectoryAccounts(assetId int, filter client.Filter) ([]AssetAccount, error) {
 	var accounts []AssetAccount
 
 	query := fmt.Sprintf("Assets/%d/DirectoryAccounts%s", assetId, filter.ToQueryString())
@@ -389,10 +382,6 @@ func GetAssetDirectoryAccounts(c *client.SafeguardClient, assetId int, filter cl
 	err = json.Unmarshal(response, &accounts)
 	if err != nil {
 		return nil, err
-	}
-
-	for i := range accounts {
-		accounts[i].client = c
 	}
 
 	return accounts, nil
@@ -409,7 +398,7 @@ func GetAssetDirectoryAccounts(c *client.SafeguardClient, assetId int, filter cl
 //   - []AssetAccount: A slice of AssetAccount objects that match the filter criteria.
 //   - error: An error object if there is an issue retrieving the directory accounts.
 func (a Asset) GetDirectoryAccounts(filter client.Filter) ([]AssetAccount, error) {
-	return GetAssetDirectoryAccounts(a.client, a.Id, filter)
+	return GetAssetDirectoryAccounts(a.Id, filter)
 }
 
 // GetAssetDirectoryAssets retrieves a list of directory assets associated with a given asset ID.
@@ -423,7 +412,7 @@ func (a Asset) GetDirectoryAccounts(filter client.Filter) ([]AssetAccount, error
 // Returns:
 //   - A slice of Asset objects representing the directory assets.
 //   - An error if the request fails or the response cannot be unmarshaled.
-func GetAssetDirectoryAssets(c *client.SafeguardClient, assetId int, filter client.Filter) ([]Asset, error) {
+func GetAssetDirectoryAssets(assetId int, filter client.Filter) ([]Asset, error) {
 	var assets []Asset
 
 	query := fmt.Sprintf("Assets/%d/DirectoryAssets", assetId)
@@ -441,10 +430,6 @@ func GetAssetDirectoryAssets(c *client.SafeguardClient, assetId int, filter clie
 		return nil, err
 	}
 
-	for i := range assets {
-		assets[i].client = c
-	}
-
 	return assets, nil
 }
 
@@ -458,7 +443,7 @@ func GetAssetDirectoryAssets(c *client.SafeguardClient, assetId int, filter clie
 //   - []Asset: A slice of Asset objects that match the filter criteria.
 //   - error: An error object if an error occurs, otherwise nil.
 func (a Asset) GetDirectoryAssets(filter client.Filter) ([]Asset, error) {
-	return GetAssetDirectoryAssets(a.client, a.Id, filter)
+	return GetAssetDirectoryAssets(a.Id, filter)
 }
 
 // GetAssetDirectoryServiceEntries retrieves directory service entries for a specific asset
@@ -472,7 +457,7 @@ func (a Asset) GetDirectoryAssets(filter client.Filter) ([]Asset, error) {
 // Returns:
 //   - A slice of DirectoryServiceEntry objects retrieved from the API.
 //   - An error if the request fails or if there is an issue unmarshalling the response.
-func GetAssetDirectoryServiceEntries(c *client.SafeguardClient, assetId int, filter client.Filter) ([]DirectoryServiceEntry, error) {
+func GetAssetDirectoryServiceEntries(assetId int, filter client.Filter) ([]DirectoryServiceEntry, error) {
 	var entries []DirectoryServiceEntry
 
 	query := fmt.Sprintf("Assets/%d/DirectoryServiceEntries", assetId)
@@ -503,5 +488,5 @@ func GetAssetDirectoryServiceEntries(c *client.SafeguardClient, assetId int, fil
 //   - A slice of DirectoryServiceEntry objects retrieved from the API.
 //   - An error if the request fails or if there is an issue unmarshalling the response.
 func (a Asset) GetDirectoryServiceEntries(filter client.Filter) ([]DirectoryServiceEntry, error) {
-	return GetAssetDirectoryServiceEntries(a.client, a.Id, filter)
+	return GetAssetDirectoryServiceEntries(a.Id, filter)
 }

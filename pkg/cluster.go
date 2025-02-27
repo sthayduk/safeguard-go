@@ -10,8 +10,6 @@ import (
 
 // ClusterMember represents a node in the Safeguard cluster
 type ClusterMember struct {
-	client *client.SafeguardClient
-
 	Id                 string                 `json:"Id"`
 	Name               string                 `json:"Name"`
 	NetworkAddress     string                 `json:"NetworkAddress"`
@@ -113,7 +111,7 @@ const (
 // Returns:
 //   - A slice of ClusterMember containing the cluster members.
 //   - An error if the request fails or the response cannot be unmarshaled.
-func GetClusterMembers(c *client.SafeguardClient, filter client.Filter) ([]ClusterMember, error) {
+func GetClusterMembers(filter client.Filter) ([]ClusterMember, error) {
 	var clusterMembers []ClusterMember
 
 	query := "Cluster/Members" + filter.ToQueryString()
@@ -127,9 +125,6 @@ func GetClusterMembers(c *client.SafeguardClient, filter client.Filter) ([]Clust
 		return nil, err
 	}
 
-	for i := range clusterMembers {
-		clusterMembers[i].client = c
-	}
 	return clusterMembers, nil
 }
 
@@ -144,7 +139,7 @@ func GetClusterMembers(c *client.SafeguardClient, filter client.Filter) ([]Clust
 // Returns:
 //   - ClusterMember: The retrieved cluster member.
 //   - error: An error if the request or unmarshalling fails.
-func GetClusterMember(c *client.SafeguardClient, id string) (ClusterMember, error) {
+func GetClusterMember(id string) (ClusterMember, error) {
 	var clusterMember ClusterMember
 
 	query := fmt.Sprintf("Cluster/Members/%s", id)
@@ -158,7 +153,6 @@ func GetClusterMember(c *client.SafeguardClient, id string) (ClusterMember, erro
 		return ClusterMember{}, err
 	}
 
-	clusterMember.client = c
 	return clusterMember, nil
 }
 
@@ -171,11 +165,11 @@ func GetClusterMember(c *client.SafeguardClient, id string) (ClusterMember, erro
 // Returns:
 //   - ClusterMember: The cluster member that is the leader.
 //   - error: An error if no leader is found, more than one leader is found, or if there is an issue retrieving the cluster members.
-func GetClusterLeader(c *client.SafeguardClient) (ClusterMember, error) {
+func GetClusterLeader() (ClusterMember, error) {
 	filter := client.Filter{}
 	filter.AddFilter("IsLeader", "eq", "true")
 
-	clusterMembers, err := GetClusterMembers(c, filter)
+	clusterMembers, err := GetClusterMembers(filter)
 	if err != nil {
 		fmt.Println(err)
 		return ClusterMember{}, err
@@ -189,7 +183,6 @@ func GetClusterLeader(c *client.SafeguardClient) (ClusterMember, error) {
 		return ClusterMember{}, fmt.Errorf("invalid number of cluster leaders found")
 	}
 
-	clusterMembers[0].client = c
 	return clusterMembers[0], nil
 }
 
@@ -204,7 +197,7 @@ func GetClusterLeader(c *client.SafeguardClient) (ClusterMember, error) {
 // Returns:
 //   - A slice of ClusterMember structs containing the details of each cluster member.
 //   - An error if the request or unmarshalling fails.
-func ForceClusterHealthCheck(c *client.SafeguardClient) (ClusterMember, error) {
+func ForceClusterHealthCheck() (ClusterMember, error) {
 	var clusterMembers ClusterMember
 	query := "Cluster/Members/Self"
 
@@ -217,7 +210,6 @@ func ForceClusterHealthCheck(c *client.SafeguardClient) (ClusterMember, error) {
 		return ClusterMember{}, err
 	}
 
-	clusterMembers.client = c
 	return clusterMembers, nil
 }
 

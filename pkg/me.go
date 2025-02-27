@@ -168,7 +168,7 @@ const (
 // Returns:
 //   - User: The user information for the authenticated user
 //   - error: An error if the request fails, nil otherwise
-func GetMe(c *client.SafeguardClient, filter client.Filter) (User, error) {
+func GetMe(filter client.Filter) (User, error) {
 	query := "me" + filter.ToQueryString()
 
 	response, err := c.GetRequest(query)
@@ -192,7 +192,7 @@ func GetMe(c *client.SafeguardClient, filter client.Filter) (User, error) {
 // Returns:
 //   - []PolicyAsset: A slice of assets the user can request access to
 //   - error: An error if the request fails, nil otherwise
-func GetMeAccessRequestAssets(c *client.SafeguardClient, filter client.Filter) ([]PolicyAsset, error) {
+func GetMeAccessRequestAssets(filter client.Filter) ([]PolicyAsset, error) {
 	var assets []PolicyAsset
 
 	query := "me/AccessRequestAssets" + filter.ToQueryString()
@@ -206,10 +206,6 @@ func GetMeAccessRequestAssets(c *client.SafeguardClient, filter client.Filter) (
 		return []PolicyAsset{}, err
 	}
 
-	for i := range assets {
-		assets[i].client = c
-	}
-
 	return assets, nil
 }
 
@@ -221,7 +217,7 @@ func GetMeAccessRequestAssets(c *client.SafeguardClient, filter client.Filter) (
 // Returns:
 //   - PolicyAsset: The requested asset information
 //   - error: An error if the request fails, nil otherwise
-func GetMeAccessRequestAsset(c *client.SafeguardClient, assetId string) (PolicyAsset, error) {
+func GetMeAccessRequestAsset(assetId string) (PolicyAsset, error) {
 	query := "me/AccessRequestAssets/" + assetId
 
 	response, err := c.GetRequest(query)
@@ -234,7 +230,6 @@ func GetMeAccessRequestAsset(c *client.SafeguardClient, assetId string) (PolicyA
 		return PolicyAsset{}, err
 	}
 
-	asset.client = c
 	return asset, nil
 }
 
@@ -246,7 +241,7 @@ func GetMeAccessRequestAsset(c *client.SafeguardClient, assetId string) (PolicyA
 // Returns:
 //   - map[AccessRequestRole][]AccessRequest: Access requests grouped by role that the user can act on
 //   - error: An error if the request fails, nil otherwise
-func GetMeActionableRequests(c *client.SafeguardClient, filter client.Filter) (map[AccessRequestRole][]AccessRequest, error) {
+func GetMeActionableRequests(filter client.Filter) (map[AccessRequestRole][]AccessRequest, error) {
 	query := "me/ActionableRequests" + filter.ToQueryString()
 
 	response, err := c.GetRequest(query)
@@ -271,7 +266,7 @@ func GetMeActionableRequests(c *client.SafeguardClient, filter client.Filter) (m
 // Returns:
 //   - []AccessRequest: Access requests for the specified role that the user can act on
 //   - error: An error if the request fails, nil otherwise
-func GetMeActionableRequestsByRole(c *client.SafeguardClient, role AccessRequestRole, filter client.Filter) ([]AccessRequest, error) {
+func GetMeActionableRequestsByRole(role AccessRequestRole, filter client.Filter) ([]AccessRequest, error) {
 	query := "me/ActionableRequests/" + string(role) + filter.ToQueryString()
 
 	response, err := c.GetRequest(query)
@@ -304,8 +299,8 @@ type ActionableRequestsResult struct {
 // Returns:
 //   - ActionableRequestsResult: Processed access requests with additional helper information
 //   - error: An error if the request fails, nil otherwise
-func GetMeActionableRequestsDetailed(c *client.SafeguardClient, filter client.Filter) (ActionableRequestsResult, error) {
-	requests, err := GetMeActionableRequests(c, filter)
+func GetMeActionableRequestsDetailed(filter client.Filter) (ActionableRequestsResult, error) {
+	requests, err := GetMeActionableRequests(filter)
 	if err != nil {
 		return ActionableRequestsResult{}, err
 	}
@@ -377,7 +372,7 @@ func (r *ActionableRequestsResult) GetRequestsForRole(role AccessRequestRole) []
 // Returns:
 //   - A slice of AccountEntitlement objects.
 //   - An error if the request fails or the response cannot be unmarshaled.
-func GetMeAccountEntitlements(c *client.SafeguardClient, accessRequestType AccessRequestType, includeActiveRequests bool, filterByCredential bool, filter client.Filter) ([]AccountEntitlement, error) {
+func GetMeAccountEntitlements(accessRequestType AccessRequestType, includeActiveRequests bool, filterByCredential bool, filter client.Filter) ([]AccountEntitlement, error) {
 	var entitlements []AccountEntitlement
 
 	query := "me/AccountEntitlements" + filter.ToQueryString() +

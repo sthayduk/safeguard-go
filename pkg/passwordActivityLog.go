@@ -63,8 +63,6 @@ type CustomScriptParameter struct {
 // PasswordActivityLog represents a comprehensive log entry for password-related activities
 // including user actions, asset details, and request status
 type PasswordActivityLog struct {
-	client *client.SafeguardClient
-
 	Id                string                  `json:"Id"`
 	LogTime           time.Time               `json:"LogTime"`
 	UserId            int                     `json:"UserId"`
@@ -406,7 +404,7 @@ func (p PasswordActivityLog) getMatchingAccountTask(ctx context.Context) (Accoun
 		case <-ctx.Done():
 			return AccountTaskData{}, fmt.Errorf("timeout waiting for task to become available")
 		case <-ticker.C:
-			taskData, err := GetAccountTaskSchedules(p.client, AccountTaskNames(p.Name), filter)
+			taskData, err := GetAccountTaskSchedules(AccountTaskNames(p.Name), filter)
 			if err != nil {
 				continue
 			}

@@ -3,11 +3,12 @@ package common
 import (
 	"os"
 
+	safeguard "github.com/sthayduk/safeguard-go"
 	"github.com/sthayduk/safeguard-go/client"
 )
 
 // InitClient creates and initializes a SafeguardClient using environment variables
-func InitClient() (*client.SafeguardClient, error) {
+func InitClient() error {
 	accessToken := os.Getenv("SAFEGUARD_ACCESS_TOKEN")
 	applianceUrl := os.Getenv("SAFEGUARD_HOST_URL")
 	apiVersion := os.Getenv("SAFEGUARD_API_VERSION")
@@ -15,13 +16,13 @@ func InitClient() (*client.SafeguardClient, error) {
 	var sgc *client.SafeguardClient
 
 	if accessToken == "" {
-		sgc = client.New(applianceUrl, apiVersion, false)
+		sgc = safeguard.SetupClient(applianceUrl, apiVersion, true)
 		err := sgc.LoginWithOauth()
 		if err != nil {
-			return nil, err
+			return err
 		}
 	} else {
-		sgc = client.New(applianceUrl, apiVersion, false)
+		sgc = safeguard.SetupClient(applianceUrl, apiVersion, true)
 		sgc.AccessToken = &client.TokenResponse{
 			AccessToken: accessToken,
 		}
@@ -29,8 +30,8 @@ func InitClient() (*client.SafeguardClient, error) {
 
 	err := sgc.ValidateAccessToken()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return sgc, nil
+	return nil
 }

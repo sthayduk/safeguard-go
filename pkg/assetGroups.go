@@ -12,8 +12,6 @@ import (
 // AssetGroup represents a group of assets on the appliance for use in session policy.
 // Only assets that support session access are allowed.
 type AssetGroup struct {
-	client *client.SafeguardClient
-
 	Id                       int               `json:"Id"`
 	Name                     string            `json:"Name"`
 	Description              string            `json:"Description"`
@@ -70,7 +68,7 @@ func (a AssetGroup) ToJson() (string, error) {
 // Returns:
 //   - A slice of AssetGroup objects retrieved from the API.
 //   - An error if the request fails or the response cannot be unmarshaled.
-func GetAssetGroups(c *client.SafeguardClient, filter client.Filter) ([]AssetGroup, error) {
+func GetAssetGroups(filter client.Filter) ([]AssetGroup, error) {
 	var assetGroup []AssetGroup
 
 	query := "AssetGroups" + filter.ToQueryString()
@@ -81,10 +79,6 @@ func GetAssetGroups(c *client.SafeguardClient, filter client.Filter) ([]AssetGro
 	}
 
 	json.Unmarshal(response, &assetGroup)
-
-	for i := range assetGroup {
-		assetGroup[i].client = c
-	}
 
 	return assetGroup, nil
 }
@@ -101,7 +95,7 @@ func GetAssetGroups(c *client.SafeguardClient, filter client.Filter) ([]AssetGro
 // Returns:
 //   - AssetGroup: The retrieved AssetGroup.
 //   - error: An error if the request failed or the response could not be unmarshaled.
-func GetAssetGroup(c *client.SafeguardClient, id int, fields client.Fields) (AssetGroup, error) {
+func GetAssetGroup(id int, fields client.Fields) (AssetGroup, error) {
 	var assetGroup AssetGroup
 
 	query := fmt.Sprintf("AssetGroups/%d", id)
@@ -115,7 +109,6 @@ func GetAssetGroup(c *client.SafeguardClient, id int, fields client.Fields) (Ass
 	}
 	json.Unmarshal(response, &assetGroup)
 
-	assetGroup.client = c
 	return assetGroup, nil
 }
 
@@ -130,7 +123,7 @@ func GetAssetGroup(c *client.SafeguardClient, id int, fields client.Fields) (Ass
 // Returns:
 //   - AssetGroup: The updated AssetGroup object returned by the API.
 //   - error: An error object if an error occurred during the update process, otherwise nil.
-func UpdateAssetGroup(c *client.SafeguardClient, id int, assetGroup AssetGroup) (AssetGroup, error) {
+func UpdateAssetGroup(id int, assetGroup AssetGroup) (AssetGroup, error) {
 	query := fmt.Sprintf("AssetGroups/%d", id)
 
 	assetGroupJSON, err := assetGroup.ToJson()
@@ -158,7 +151,7 @@ func UpdateAssetGroup(c *client.SafeguardClient, id int, assetGroup AssetGroup) 
 //   - (AssetGroup): The updated AssetGroup instance.
 //   - (error): An error if the update operation fails.
 func (a AssetGroup) Update() (AssetGroup, error) {
-	return UpdateAssetGroup(a.client, a.Id, a)
+	return UpdateAssetGroup(a.Id, a)
 }
 
 // DeleteAssetGroup deletes an asset group identified by the given ID using the provided SafeguardClient.
@@ -169,7 +162,7 @@ func (a AssetGroup) Update() (AssetGroup, error) {
 //
 // Returns:
 //   - error: An error object if the delete request fails, otherwise nil.
-func DeleteAssetGroup(c *client.SafeguardClient, id int) error {
+func DeleteAssetGroup(id int) error {
 	query := fmt.Sprintf("AssetGroups/%d", id)
 
 	_, err := c.DeleteRequest(query)
@@ -184,5 +177,5 @@ func DeleteAssetGroup(c *client.SafeguardClient, id int) error {
 // It calls the DeleteAssetGroup function with the client and Id of the AssetGroup.
 // Returns an error if the deletion fails.
 func (a AssetGroup) Delete() error {
-	return DeleteAssetGroup(a.client, a.Id)
+	return DeleteAssetGroup(a.Id)
 }

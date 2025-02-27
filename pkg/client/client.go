@@ -3,15 +3,16 @@ package client
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 )
 
-var logger *log.Logger // Declare global logger variable
+var logger *slog.Logger // Declare global logger variable
+var sgclient *SafeguardClient
 
 func init() {
-	logger = log.New(os.Stdout, "", log.LstdFlags)
+	logger = slog.New(slog.NewTextHandler(os.Stdout, nil))
 }
 
 const (
@@ -45,10 +46,18 @@ type TokenResponse struct {
 // - debug: A boolean flag to enable debug logging.
 // Returns a pointer to a SafeguardClient instance.
 func New(applianceUrl string, apiVersion string, debug bool) *SafeguardClient {
+	var opts slog.HandlerOptions
 	if debug {
-		logger.SetFlags(log.LstdFlags | log.Lshortfile)
+		opts.Level = slog.LevelDebug
 	} else {
-		logger.SetFlags(log.LstdFlags)
+		opts.Level = slog.LevelInfo
+	}
+
+	logger = slog.New(slog.NewTextHandler(os.Stdout, &opts))
+	slog.SetDefault(logger)
+
+	if sgclient != nil {
+		return sgclient
 	}
 
 	c := SafeguardClient{
@@ -61,25 +70,30 @@ func New(applianceUrl string, apiVersion string, debug bool) *SafeguardClient {
 		tokenEndpoint: applianceUrl + "/service/core/v4/Token/LoginResponse",
 	}
 
+	sgclient = &c
 	return &c
 }
 
 func createTLSClient() *http.Client {
 	caCert, err := os.ReadFile("server.crt")
 	if err != nil {
-		logger.Fatalf("Error loading CA certificate: %v", err)
+		logger.Error("Error loading CA certificate", "error", err)
+		os.Exit(1)
 	}
 	rootCert, err := os.ReadFile("pam.cer")
 	if err != nil {
-		logger.Fatalf("Error loading root certificate: %v", err)
+		logger.Error("Error loading root certificate", "error", err)
+		os.Exit(1)
 	}
 
 	caCertPool := x509.NewCertPool()
 	if !caCertPool.AppendCertsFromPEM(caCert) {
-		logger.Fatalf("Error adding CA certificate to pool")
+		logger.Error("Error adding CA certificate to pool")
+		os.Exit(1)
 	}
 	if !caCertPool.AppendCertsFromPEM(rootCert) {
-		logger.Fatalf("Error adding root certificate to pool")
+		logger.Error("Error adding root certificate to pool")
+		os.Exit(1)
 	}
 
 	return &http.Client{

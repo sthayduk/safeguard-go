@@ -19,12 +19,12 @@ func openBrowser(url string) {
 	case "linux":
 		cmd = "xdg-open"
 	default:
-		logger.Printf("Platform %s is not supported", runtime.GOOS)
+		logger.Warn("Unsupported platform", "platform", runtime.GOOS)
 		return
 	}
 
 	args = append(args, url)
 	if err := exec.Command(cmd, args...).Start(); err != nil {
-		logger.Printf("Error opening browser: %v", err)
+		logger.Error("Error opening browser", "error", err)
 	}
 }

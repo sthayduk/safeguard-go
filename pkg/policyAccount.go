@@ -9,8 +9,6 @@ import (
 
 // PolicyAccount represents a Safeguard account with its associated policies and properties
 type PolicyAccount struct {
-	client *client.SafeguardClient
-
 	Id                          int               `json:"Id"`
 	Name                        string            `json:"Name"`
 	Description                 string            `json:"Description"`
@@ -98,7 +96,7 @@ func (p PolicyAccount) ToJson() (string, error) {
 // Returns:
 //   - A slice of PolicyAccount objects.
 //   - An error if the request fails or the response cannot be unmarshaled.
-func GetPolicyAccounts(c *client.SafeguardClient, fields client.Filter) ([]PolicyAccount, error) {
+func GetPolicyAccounts(fields client.Filter) ([]PolicyAccount, error) {
 	var policyAccounts []PolicyAccount
 
 	query := "PolicyAccounts" + fields.ToQueryString()
@@ -109,10 +107,6 @@ func GetPolicyAccounts(c *client.SafeguardClient, fields client.Filter) ([]Polic
 	}
 
 	json.Unmarshal(response, &policyAccounts)
-
-	for i := range policyAccounts {
-		policyAccounts[i].client = c
-	}
 
 	return policyAccounts, nil
 }
@@ -129,7 +123,7 @@ func GetPolicyAccounts(c *client.SafeguardClient, fields client.Filter) ([]Polic
 // Returns:
 //   - PolicyAccount: The retrieved PolicyAccount.
 //   - error: An error if the request fails or the response cannot be unmarshaled.
-func GetPolicyAccount(c *client.SafeguardClient, id int, fields client.Fields) (PolicyAccount, error) {
+func GetPolicyAccount(id int, fields client.Fields) (PolicyAccount, error) {
 	var policyAccount PolicyAccount
 
 	query := fmt.Sprintf("PolicyAccounts/%d", id)
@@ -142,7 +136,6 @@ func GetPolicyAccount(c *client.SafeguardClient, id int, fields client.Fields) (
 		return policyAccount, err
 	}
 	json.Unmarshal(response, &policyAccount)
-	policyAccount.client = c
 	return policyAccount, nil
 }
 
@@ -158,7 +151,7 @@ func GetPolicyAccount(c *client.SafeguardClient, id int, fields client.Fields) (
 //	[]PolicyAccount - A slice containing the linked PolicyAccount.
 //	error - An error if any issues occur during the linking process.
 func (p PolicyAccount) LinkToUser(user User) ([]PolicyAccount, error) {
-	return AddLinkedAccounts(p.client, user, []PolicyAccount{p})
+	return AddLinkedAccounts(user, []PolicyAccount{p})
 }
 
 // UnlinkFromUser removes the association between the given PolicyAccount and the specified User.
@@ -173,5 +166,5 @@ func (p PolicyAccount) LinkToUser(user User) ([]PolicyAccount, error) {
 //	[]PolicyAccount - A slice containing the PolicyAccount after unlinking.
 //	error - An error if the unlinking operation fails.
 func (p PolicyAccount) UnlinkFromUser(user User) ([]PolicyAccount, error) {
-	return RemoveLinkedAccounts(p.client, user, []PolicyAccount{p})
+	return RemoveLinkedAccounts(user, []PolicyAccount{p})
 }

@@ -77,7 +77,7 @@ func (u User) ToJson() (string, error) {
 // Returns:
 //   - []User: A slice of users matching the filter criteria
 //   - error: An error if the request fails, nil otherwise
-func GetUsers(c *client.SafeguardClient, fields client.Filter) ([]User, error) {
+func GetUsers(fields client.Filter) ([]User, error) {
 	var users []User
 
 	query := "users" + fields.ToQueryString()
@@ -106,7 +106,7 @@ func GetUsers(c *client.SafeguardClient, fields client.Filter) ([]User, error) {
 // Returns:
 //   - User: The requested user object
 //   - error: An error if the request fails, nil otherwise
-func GetUser(c *client.SafeguardClient, id int, fields client.Fields) (User, error) {
+func GetUser(id int, fields client.Fields) (User, error) {
 	var user User
 	user.client = c
 
@@ -135,7 +135,7 @@ func GetUser(c *client.SafeguardClient, id int, fields client.Fields) (User, err
 // Returns:
 //   - []PolicyAccount: A slice of linked policy accounts
 //   - error: An error if the request fails, nil otherwise
-func GetLinkedAccounts(c *client.SafeguardClient, id string) ([]PolicyAccount, error) {
+func GetLinkedAccounts(id string) ([]PolicyAccount, error) {
 	var linkedAccounts []PolicyAccount
 
 	query := fmt.Sprintf("users/%s/LinkedPolicyAccounts", id)
@@ -160,7 +160,7 @@ func GetLinkedAccounts(c *client.SafeguardClient, id string) ([]PolicyAccount, e
 //   - []PolicyAccount: A slice of linked policy accounts
 //   - error: An error if the request fails, nil otherwise
 func (u User) GetLinkedAccounts() ([]PolicyAccount, error) {
-	return GetLinkedAccounts(u.client, fmt.Sprintf("%d", u.Id))
+	return GetLinkedAccounts(fmt.Sprintf("%d", u.Id))
 }
 
 // GetUserRoles retrieves the roles assigned to a specific user.
@@ -171,7 +171,7 @@ func (u User) GetLinkedAccounts() ([]PolicyAccount, error) {
 // Returns:
 //   - []Role: A slice of assigned roles
 //   - error: An error if the request fails, nil otherwise
-func GetUserRoles(c *client.SafeguardClient, id string) ([]Role, error) {
+func GetUserRoles(id string) ([]Role, error) {
 	var roles []Role
 
 	query := fmt.Sprintf("users/%s/roles", id)
@@ -195,7 +195,7 @@ func GetUserRoles(c *client.SafeguardClient, id string) ([]Role, error) {
 //   - []Role: A slice of assigned roles
 //   - error: An error if the request fails, nil otherwise
 func (u User) GetRoles() ([]Role, error) {
-	return GetUserRoles(u.client, fmt.Sprintf("%d", u.Id))
+	return GetUserRoles(fmt.Sprintf("%d", u.Id))
 }
 
 // GetGroups retrieves the groups that a specific user belongs to.
@@ -206,7 +206,7 @@ func (u User) GetRoles() ([]Role, error) {
 // Returns:
 //   - []UserGroup: A slice of user groups
 //   - error: An error if the request fails, nil otherwise
-func GetGroups(c *client.SafeguardClient, id string) ([]UserGroup, error) {
+func GetGroups(id string) ([]UserGroup, error) {
 	var userGroups []UserGroup
 
 	query := fmt.Sprintf("users/%s/UserGroups", id)
@@ -230,7 +230,7 @@ func GetGroups(c *client.SafeguardClient, id string) ([]UserGroup, error) {
 //   - []UserGroup: A slice of user groups
 //   - error: An error if the request fails, nil otherwise
 func (u User) GetGroups() ([]UserGroup, error) {
-	return GetGroups(u.client, fmt.Sprintf("%d", u.Id))
+	return GetGroups(fmt.Sprintf("%d", u.Id))
 }
 
 // GetUserPreferences retrieves the preferences for a specific user by ID.
@@ -241,7 +241,7 @@ func (u User) GetGroups() ([]UserGroup, error) {
 // Returns:
 //   - []Preference: A slice of user preferences
 //   - error: An error if the request fails, nil otherwise
-func GetUserPreferences(c *client.SafeguardClient, id int) ([]Preference, error) {
+func GetUserPreferences(id int) ([]Preference, error) {
 	var userPreferences []Preference
 
 	query := fmt.Sprintf("users/%d/preferences", id)
@@ -262,7 +262,7 @@ func GetUserPreferences(c *client.SafeguardClient, id int) ([]Preference, error)
 //   - []Preference: A slice of user preferences
 //   - error: An error if the request fails, nil otherwise
 func (u User) GetPreferences() ([]Preference, error) {
-	return GetUserPreferences(u.client, u.Id)
+	return GetUserPreferences(u.Id)
 }
 
 // AddLinkedAccounts adds linked policy accounts to a user in Safeguard.
@@ -277,11 +277,11 @@ func (u User) GetPreferences() ([]Preference, error) {
 // Returns:
 //   - []PolicyAccount: A slice of PolicyAccount objects that were successfully linked to the user.
 //   - error: An error object if an error occurred during the operation, otherwise nil.
-func AddLinkedAccounts(c *client.SafeguardClient, user User, policyAccount []PolicyAccount) ([]PolicyAccount, error) {
+func AddLinkedAccounts(user User, policyAccount []PolicyAccount) ([]PolicyAccount, error) {
 	var linkedAccounts []PolicyAccount
 
 	query := fmt.Sprintf("users/%d/LinkedPolicyAccounts/Add", user.Id)
-	response, err := fetchAndPostPolicyAccount(c, policyAccount, query)
+	response, err := fetchAndPostPolicyAccount(policyAccount, query)
 	if err != nil {
 		return nil, err
 	}
@@ -300,7 +300,7 @@ func AddLinkedAccounts(c *client.SafeguardClient, user User, policyAccount []Pol
 //   - []PolicyAccount: A slice of PolicyAccount objects that were successfully linked
 //   - error: An error if the operation fails, nil otherwise
 func (u User) AddLinkedAccounts(policyAccount []PolicyAccount) ([]PolicyAccount, error) {
-	return AddLinkedAccounts(u.client, u, policyAccount)
+	return AddLinkedAccounts(u, policyAccount)
 }
 
 // RemoveLinkedAccounts removes linked policy accounts from a user in Safeguard.
@@ -315,11 +315,11 @@ func (u User) AddLinkedAccounts(policyAccount []PolicyAccount) ([]PolicyAccount,
 // Returns:
 //   - []PolicyAccount: A slice of PolicyAccount objects that were removed.
 //   - error: An error object if an error occurred, otherwise nil.
-func RemoveLinkedAccounts(c *client.SafeguardClient, user User, policyAccount []PolicyAccount) ([]PolicyAccount, error) {
+func RemoveLinkedAccounts(user User, policyAccount []PolicyAccount) ([]PolicyAccount, error) {
 	var linkedAccounts []PolicyAccount
 
 	query := fmt.Sprintf("users/%d/LinkedPolicyAccounts/Remove", user.Id)
-	response, err := fetchAndPostPolicyAccount(c, policyAccount, query)
+	response, err := fetchAndPostPolicyAccount(policyAccount, query)
 	if err != nil {
 		return nil, err
 	}
@@ -338,7 +338,7 @@ func RemoveLinkedAccounts(c *client.SafeguardClient, user User, policyAccount []
 //   - []PolicyAccount: A slice of PolicyAccount objects that were successfully removed
 //   - error: An error if the operation fails, nil otherwise
 func (u User) RemoveLinkedAccounts(policyAccount []PolicyAccount) ([]PolicyAccount, error) {
-	return RemoveLinkedAccounts(u.client, u, policyAccount)
+	return RemoveLinkedAccounts(u, policyAccount)
 }
 
 // fetchAndPostPolicyAccount sends a POST request to the Safeguard API with the given policy accounts and query.
@@ -353,7 +353,7 @@ func (u User) RemoveLinkedAccounts(policyAccount []PolicyAccount) ([]PolicyAccou
 // Returns:
 //   - []byte: The response from the API as a byte slice.
 //   - error: An error object if an error occurred during the operation, otherwise nil.
-func fetchAndPostPolicyAccount(c *client.SafeguardClient, policyAccount []PolicyAccount, query string) ([]byte, error) {
+func fetchAndPostPolicyAccount(policyAccount []PolicyAccount, query string) ([]byte, error) {
 	policyAccountJson, err := json.Marshal(policyAccount)
 	if err != nil {
 		return nil, err
@@ -375,7 +375,7 @@ func fetchAndPostPolicyAccount(c *client.SafeguardClient, policyAccount []Policy
 // Returns:
 //   - User: The created User object.
 //   - error: An error if any occurred during the user creation process.
-func CreateUser(c *client.SafeguardClient, user User) (User, error) {
+func CreateUser(user User) (User, error) {
 	var createdUser User
 
 	userJson, err := json.Marshal(user)
@@ -412,7 +412,7 @@ func (u User) SetAuthenticationProvider(authProvider AuthenticationProvider) (Us
 
 	u.PrimaryAuthenticationProvider = authProvider
 
-	updatedUser, err := updateUser(u.client, u)
+	updatedUser, err := updateUser(u)
 	if err != nil {
 		return updatedUser, err
 	}
@@ -430,7 +430,7 @@ func (u User) SetAuthenticationProvider(authProvider AuthenticationProvider) (Us
 // Returns:
 //   - User: The updated User object.
 //   - error: An error object if an error occurred during the update process, otherwise nil.
-func updateUser(c *client.SafeguardClient, user User) (User, error) {
+func updateUser(user User) (User, error) {
 	var updatedUser User
 
 	query := fmt.Sprintf("users/%d", user.Id)
@@ -460,7 +460,7 @@ func updateUser(c *client.SafeguardClient, user User) (User, error) {
 //
 // Returns:
 //   - error: An error if the deletion fails, nil otherwise
-func DeleteUser(c *client.SafeguardClient, id int) error {
+func DeleteUser(id int) error {
 
 	query := fmt.Sprintf("users/%d", id)
 
@@ -476,5 +476,5 @@ func DeleteUser(c *client.SafeguardClient, id int) error {
 // Returns:
 //   - error: An error if the deletion fails, nil otherwise
 func (u *User) Delete() error {
-	return DeleteUser(u.client, u.Id)
+	return DeleteUser(u.Id)
 }

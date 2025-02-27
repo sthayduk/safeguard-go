@@ -11,8 +11,6 @@ import (
 
 // UserGroup represents a group of users in Safeguard with associated properties and memberships
 type UserGroup struct {
-	client *client.SafeguardClient
-
 	Id                           int                          `json:"Id"`
 	Name                         string                       `json:"Name"`
 	Description                  string                       `json:"Description"`
@@ -128,7 +126,7 @@ func (u UserGroup) ToJson() (string, error) {
 // Returns:
 //   - []UserGroup: A slice of user groups matching the filter criteria
 //   - error: An error if the request fails or the response cannot be unmarshaled
-func GetUserGroups(c *client.SafeguardClient, fields client.Filter) ([]UserGroup, error) {
+func GetUserGroups(fields client.Filter) ([]UserGroup, error) {
 	var userGroups []UserGroup
 
 	query := "UserGroups" + fields.ToQueryString()
@@ -153,7 +151,7 @@ func GetUserGroups(c *client.SafeguardClient, fields client.Filter) ([]UserGroup
 // Returns:
 //   - UserGroup: The requested user group object
 //   - error: An error if the request fails, nil otherwise
-func GetUserGroup(c *client.SafeguardClient, id int, fields client.Fields) (UserGroup, error) {
+func GetUserGroup(id int, fields client.Fields) (UserGroup, error) {
 	var userGroup UserGroup
 
 	query := fmt.Sprintf("UserGroups/%d", id)

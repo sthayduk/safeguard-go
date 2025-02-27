@@ -32,8 +32,6 @@ type ActionableAccessRequests struct {
 
 // AccessRequest represents a request for access to an asset or account
 type AccessRequest struct {
-	client *client.SafeguardClient
-
 	Id                                         string                 `json:"Id,omitempty"`
 	AccessRequestType                          AccessRequestType      `json:"AccessRequestType,omitempty"`
 	AccountId                                  int                    `json:"AccountId,omitempty"`
@@ -255,7 +253,7 @@ type AccessRequestReviewBatchResponse struct {
 // Returns:
 //   - A slice of AccessRequest objects that match the filter criteria.
 //   - An error if the request fails or if there is an issue unmarshalling the response.
-func GetAccessRequests(c *client.SafeguardClient, filter client.Filter) ([]AccessRequest, error) {
+func GetAccessRequests(filter client.Filter) ([]AccessRequest, error) {
 
 	query := "AccessRequests" + filter.ToQueryString()
 
@@ -267,10 +265,6 @@ func GetAccessRequests(c *client.SafeguardClient, filter client.Filter) ([]Acces
 	var accessRequests []AccessRequest
 	if err := json.Unmarshal(response, &accessRequests); err != nil {
 		return []AccessRequest{}, err
-	}
-
-	for i := range accessRequests {
-		accessRequests[i].client = c
 	}
 
 	return accessRequests, err
@@ -288,7 +282,7 @@ func GetAccessRequests(c *client.SafeguardClient, filter client.Filter) ([]Acces
 // Returns:
 //   - AccessRequest: The retrieved access request object.
 //   - error: An error if any occurred during the request or unmarshalling the response.
-func GetAccessRequest(c *client.SafeguardClient, id string, fields client.Fields) (AccessRequest, error) {
+func GetAccessRequest(id string, fields client.Fields) (AccessRequest, error) {
 
 	query := "AccessRequests/" + id
 	if fields != nil {
@@ -305,7 +299,6 @@ func GetAccessRequest(c *client.SafeguardClient, id string, fields client.Fields
 		return AccessRequest{}, err
 	}
 
-	accessRequest.client = c
 	return accessRequest, err
 }
 
@@ -319,18 +312,18 @@ func GetAccessRequest(c *client.SafeguardClient, id string, fields client.Fields
 // Returns:
 //   - A slice of AccessRequestBatchResponse objects containing the responses for each access request.
 //   - An error if the batch creation of access requests fails.
-func NewAccessRequests(c *client.SafeguardClient, accountEntitlements []AccountEntitlement) ([]AccessRequestBatchResponse, error) {
+func NewAccessRequests(accountEntitlements []AccountEntitlement) ([]AccessRequestBatchResponse, error) {
 	var accessRequests []batchAccessRequest
 
 	// Reduce properties to the required on for the request
 	for i := range accountEntitlements {
 		accessRequestType := accountEntitlements[i].GetAccessRequestType()
 
-		accessRequest := constructAccessRequest(c, accessRequestType, accountEntitlements[i].Account.Id, accountEntitlements[i].Asset.Id, "", 59, "", "")
+		accessRequest := constructAccessRequest(accessRequestType, accountEntitlements[i].Account.Id, accountEntitlements[i].Asset.Id, "", 59, "", "")
 		accessRequests = append(accessRequests, accessRequest)
 	}
 
-	return batchCreateAccessRequest(c, accessRequests)
+	return batchCreateAccessRequest(accessRequests)
 }
 
 // constructAccessRequest creates a new batchAccessRequest with the provided parameters.
@@ -348,9 +341,8 @@ func NewAccessRequests(c *client.SafeguardClient, accountEntitlements []AccountE
 // Returns:
 //
 //	A batchAccessRequest instance populated with the provided parameters.
-func constructAccessRequest(c *client.SafeguardClient, accessRequestType AccessRequestType, accountId int, assetId int, requesterUsername string, requestedDurationMinutes int, reasonCode string, reasonComment string) batchAccessRequest {
+func constructAccessRequest(accessRequestType AccessRequestType, accountId int, assetId int, requesterUsername string, requestedDurationMinutes int, reasonCode string, reasonComment string) batchAccessRequest {
 	return batchAccessRequest{
-		client:                   c,
 		AccessRequestType:        accessRequestType,
 		AccountId:                accountId,
 		AssetId:                  assetId,
@@ -362,8 +354,6 @@ func constructAccessRequest(c *client.SafeguardClient, accessRequestType AccessR
 }
 
 type batchAccessRequest struct {
-	client *client.SafeguardClient
-
 	AccessRequestType        AccessRequestType `json:"AccessRequestType,omitempty"`
 	AccountId                int               `json:"AccountId,omitempty"`
 	AssetId                  int               `json:"AssetId,omitempty"`
@@ -391,7 +381,7 @@ type batchAccessRequest struct {
 //  3. Unmarshals the response into a slice of AccessRequestBatchResponse.
 //  4. Adds the client to each AccessRequest in the response.
 //  5. Collects any errors encountered during the process and returns them along with the responses.
-func batchCreateAccessRequest(c *client.SafeguardClient, accessRequests []batchAccessRequest) ([]AccessRequestBatchResponse, error) {
+func batchCreateAccessRequest(accessRequests []batchAccessRequest) ([]AccessRequestBatchResponse, error) {
 	requestBody, err := json.Marshal(accessRequests)
 	if err != nil {
 		return []AccessRequestBatchResponse{}, err
@@ -408,10 +398,6 @@ func batchCreateAccessRequest(c *client.SafeguardClient, accessRequests []batchA
 
 	var collectedErrors error
 	for i := range createdAccessRequests {
-
-		// Add Client to each AccessRequest
-		createdAccessRequests[i].Response.client = c
-
 		if err := createdAccessRequests[i].hasError(); err != nil {
 			collectedErrors = fmt.Errorf("%v\n%v", collectedErrors, err)
 		}
@@ -462,7 +448,7 @@ func (ar AccessRequest) Close() (AccessRequest, error) {
 // Returns:
 //   - AccessRequest: The canceled access request object.
 //   - error: An error object if the request fails or if there is an issue unmarshaling the response.
-func CancelAccessRequest(c *client.SafeguardClient, id string) (AccessRequest, error) {
+func CancelAccessRequest(id string) (AccessRequest, error) {
 
 	response, err := c.PostRequest("AccessRequests/"+id+"/Cancel", nil)
 	if err != nil {
@@ -480,7 +466,7 @@ func CancelAccessRequest(c *client.SafeguardClient, id string) (AccessRequest, e
 // Cancel cancels the current access request.
 // It returns the updated AccessRequest and an error if the cancellation fails.
 func (ar AccessRequest) Cancel() (AccessRequest, error) {
-	return CancelAccessRequest(ar.client, ar.Id)
+	return CancelAccessRequest(ar.Id)
 }
 
 // CheckInAccessRequest checks in an access request with the given ID using the provided SafeguardClient.
@@ -493,7 +479,7 @@ func (ar AccessRequest) Cancel() (AccessRequest, error) {
 // Returns:
 //   - AccessRequest: The checked-in access request object.
 //   - error: An error object if an error occurred during the request or unmarshalling.
-func CheckInAccessRequest(c *client.SafeguardClient, id string) (AccessRequest, error) {
+func CheckInAccessRequest(id string) (AccessRequest, error) {
 
 	response, err := c.PostRequest("AccessRequests/"+id+"/CheckIn", nil)
 	if err != nil {
@@ -511,7 +497,7 @@ func CheckInAccessRequest(c *client.SafeguardClient, id string) (AccessRequest, 
 // CheckIn checks in the current access request.
 // It returns the updated AccessRequest and an error if the operation fails.
 func (ar AccessRequest) CheckIn() (AccessRequest, error) {
-	return CheckInAccessRequest(ar.client, ar.Id)
+	return CheckInAccessRequest(ar.Id)
 }
 
 // CheckOutPassword checks out the password for the access request.
@@ -526,7 +512,7 @@ func (ar AccessRequest) CheckIn() (AccessRequest, error) {
 // Returns:
 //   - string: The checked-out password.
 //   - error: An error if the password checkout fails.
-func CheckOutPassword(ctx context.Context, c *client.SafeguardClient, accessRequest AccessRequest, shouldWaitForPending bool) (string, error) {
+func CheckOutPassword(ctx context.Context, accessRequest AccessRequest, shouldWaitForPending bool) (string, error) {
 	if accessRequest.IsInvalid() {
 		return "", fmt.Errorf("cannot check out password for access request in state: %s", accessRequest.State)
 	}
@@ -545,7 +531,7 @@ func CheckOutPassword(ctx context.Context, c *client.SafeguardClient, accessRequ
 			case <-ctx.Done():
 				return "", fmt.Errorf("password request timed out")
 			case <-ticker.C:
-				accessRequest, err := GetAccessRequest(c, accessRequest.Id, nil)
+				accessRequest, err := GetAccessRequest(accessRequest.Id, nil)
 				if err != nil {
 					return "", err
 				}
@@ -557,7 +543,7 @@ func CheckOutPassword(ctx context.Context, c *client.SafeguardClient, accessRequ
 		}
 	}
 
-	return getPasswordforAccessRequest(c, accessRequest)
+	return getPasswordforAccessRequest(accessRequest)
 }
 
 // IsPending checks if the access request is in a pending state.
@@ -652,7 +638,7 @@ func isAccessRequestValid(accessRequest AccessRequest) bool {
 // Returns:
 //   - string: The checked-out password.
 //   - error: An error if the password checkout fails.
-func getPasswordforAccessRequest(c *client.SafeguardClient, accessRequest AccessRequest) (string, error) {
+func getPasswordforAccessRequest(accessRequest AccessRequest) (string, error) {
 	query := fmt.Sprintf("AccessRequests/%s/CheckOutPassword", accessRequest.Id)
 
 	response, err := c.PostRequest(query, nil)
@@ -674,7 +660,7 @@ func getPasswordforAccessRequest(c *client.SafeguardClient, accessRequest Access
 //   - string: The checked-out password.
 //   - error: An error if the password checkout fails.
 func (ar AccessRequest) CheckOutPassword(ctx context.Context, waitForPending bool) (string, error) {
-	return CheckOutPassword(ctx, ar.client, ar, waitForPending)
+	return CheckOutPassword(ctx, ar, waitForPending)
 }
 
 // RefreshState refreshes the state of the current AccessRequest instance by
@@ -682,5 +668,5 @@ func (ar AccessRequest) CheckOutPassword(ctx context.Context, waitForPending boo
 // and ID. It returns an updated AccessRequest instance and an error if the
 // operation fails.
 func (ar AccessRequest) RefreshState() (AccessRequest, error) {
-	return GetAccessRequest(ar.client, ar.Id, nil)
+	return GetAccessRequest(ar.Id, nil)
 }

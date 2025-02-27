@@ -10,8 +10,6 @@ import (
 
 // IdentityProvider represents the structure for the given JSON array
 type IdentityProvider struct {
-	client *client.SafeguardClient
-
 	Id                       int                   `json:"Id,omitempty"`
 	TypeReferenceName        string                `json:"TypeReferenceName,omitempty"`
 	Name                     string                `json:"Name,omitempty"`
@@ -164,7 +162,7 @@ type GroupProperties struct {
 // Returns:
 //   - A slice of IdentityProvider structs.
 //   - An error if the request fails or the response cannot be unmarshaled.
-func GetIdentityProviders(c *client.SafeguardClient) ([]IdentityProvider, error) {
+func GetIdentityProviders() ([]IdentityProvider, error) {
 	var identityProviders []IdentityProvider
 
 	query := "IdentityProviders"
@@ -176,10 +174,6 @@ func GetIdentityProviders(c *client.SafeguardClient) ([]IdentityProvider, error)
 
 	if err := json.Unmarshal(response, &identityProviders); err != nil {
 		return []IdentityProvider{}, err
-	}
-
-	for i := range identityProviders {
-		identityProviders[i].client = c
 	}
 
 	return identityProviders, nil
@@ -194,9 +188,8 @@ func GetIdentityProviders(c *client.SafeguardClient) ([]IdentityProvider, error)
 // Returns:
 //   - IdentityProvider: The retrieved IdentityProvider object.
 //   - error: An error object if an error occurred during the request, otherwise nil.
-func GetIdentityProvider(c *client.SafeguardClient, id int) (IdentityProvider, error) {
+func GetIdentityProvider(id int) (IdentityProvider, error) {
 	var identityProvider IdentityProvider
-	identityProvider.client = c
 
 	query := fmt.Sprintf("IdentityProviders/%d", id)
 
@@ -222,7 +215,7 @@ func GetIdentityProvider(c *client.SafeguardClient, id int) (IdentityProvider, e
 // Returns:
 //   - A slice of User objects representing the directory users.
 //   - An error if the request fails or the response cannot be unmarshaled.
-func GetDirectoryUsers(c *client.SafeguardClient, identityProviderId int, filter client.Filter) ([]User, error) {
+func GetDirectoryUsers(identityProviderId int, filter client.Filter) ([]User, error) {
 	var directoryUsers []User
 
 	query := fmt.Sprintf("IdentityProviders/%d/DirectoryUsers%s", identityProviderId, filter.ToQueryString())
@@ -253,7 +246,7 @@ func GetDirectoryUsers(c *client.SafeguardClient, identityProviderId int, filter
 //   - []User: A slice of User objects that match the filter criteria.
 //   - error: An error object if there is any issue during the retrieval process.
 func (idp IdentityProvider) GetDirectoryUsers(filter client.Filter) ([]User, error) {
-	return GetDirectoryUsers(idp.client, idp.Id, filter)
+	return GetDirectoryUsers(idp.Id, filter)
 }
 
 // GetDirectoryGroups retrieves the directory groups associated with a specific identity provider.
@@ -267,7 +260,7 @@ func (idp IdentityProvider) GetDirectoryUsers(filter client.Filter) ([]User, err
 // Returns:
 //   - A slice of UserGroup containing the directory groups.
 //   - An error if the request fails or the response cannot be unmarshaled.
-func GetDirectoryGroups(c *client.SafeguardClient, id int, filter client.Filter) ([]UserGroup, error) {
+func GetDirectoryGroups(id int, filter client.Filter) ([]UserGroup, error) {
 	var directoryGroups []UserGroup
 
 	query := fmt.Sprintf("IdentityProviders/%d/DirectoryGroups%s", id, filter.ToQueryString())
@@ -279,10 +272,6 @@ func GetDirectoryGroups(c *client.SafeguardClient, id int, filter client.Filter)
 
 	if err := json.Unmarshal(response, &directoryGroups); err != nil {
 		return []UserGroup{}, err
-	}
-
-	for i := range directoryGroups {
-		directoryGroups[i].client = c
 	}
 
 	return directoryGroups, nil
@@ -299,5 +288,5 @@ func GetDirectoryGroups(c *client.SafeguardClient, id int, filter client.Filter)
 //   - []UserGroup: A slice of UserGroup objects that match the filtering criteria.
 //   - error: An error object if any issues occur during the retrieval process.
 func (idp IdentityProvider) GetDirectoryGroups(filter client.Filter) ([]UserGroup, error) {
-	return GetDirectoryGroups(idp.client, idp.Id, filter)
+	return GetDirectoryGroups(idp.Id, filter)
 }

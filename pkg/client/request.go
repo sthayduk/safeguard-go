@@ -6,20 +6,8 @@ import (
 	"net/http"
 )
 
-func NewSafeguardClient(httpClient *http.Client, applicanceURL, apiVersion string) *SafeguardClient {
-	headers := http.Header{}
-	headers.Set("Accept", "application/json")
-
-	return &SafeguardClient{
-		HttpClient:     httpClient,
-		ApplicanceURL:  applicanceURL,
-		ApiVersion:     apiVersion,
-		DefaultHeaders: headers,
-	}
-}
-
-// GetRootUrl constructs and returns the root URL for the Safeguard API.
-func (c *SafeguardClient) GetRootUrl() string {
+// getRootUrl constructs and returns the root URL for the Safeguard API.
+func (c *SafeguardClient) getRootUrl() string {
 	return fmt.Sprintf("%s/service/core/%s", c.ApplicanceURL, c.ApiVersion)
 }
 
@@ -28,8 +16,8 @@ func (c *SafeguardClient) GetRootUrl() string {
 // - path: The API endpoint path.
 // Returns the response body as a byte slice and an error if the request fails.
 func (c *SafeguardClient) GetRequest(path string) ([]byte, error) {
-	url := fmt.Sprintf("%s/%s", c.GetRootUrl(), path)
-	logger.Printf("Making request to: %s", url)
+	url := fmt.Sprintf("%s/%s", c.getRootUrl(), path)
+	logger.Info("Making request", "url", url)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
@@ -51,8 +39,8 @@ func (c *SafeguardClient) GetRequest(path string) ([]byte, error) {
 //   - A byte slice containing the response body.
 //   - An error if the request fails or an error occurs during the request.
 func (c *SafeguardClient) PostRequest(path string, body io.Reader) ([]byte, error) {
-	url := fmt.Sprintf("%s/%s", c.GetRootUrl(), path)
-	logger.Printf("Making request to: %s", url)
+	url := fmt.Sprintf("%s/%s", c.getRootUrl(), path)
+	logger.Info("Making request", "url", url, "method", "POST")
 
 	req, err := http.NewRequest(http.MethodPost, url, body)
 	if err != nil {
@@ -72,8 +60,8 @@ func (c *SafeguardClient) PostRequest(path string, body io.Reader) ([]byte, erro
 //   - A byte slice containing the response body.
 //   - An error if the request creation or sending fails.
 func (c *SafeguardClient) PutRequest(path string, body io.Reader) ([]byte, error) {
-	url := fmt.Sprintf("%s/%s", c.GetRootUrl(), path)
-	logger.Printf("Making request to: %s", url)
+	url := fmt.Sprintf("%s/%s", c.getRootUrl(), path)
+	logger.Info("Making request", "url", url, "method", "PUT")
 
 	req, err := http.NewRequest(http.MethodPut, url, body)
 	if err != nil {
@@ -92,8 +80,8 @@ func (c *SafeguardClient) PutRequest(path string, body io.Reader) ([]byte, error
 //   - []byte: The response body from the DELETE request.
 //   - error: An error if the request could not be created or the HTTP request failed.
 func (c *SafeguardClient) DeleteRequest(path string) ([]byte, error) {
-	url := fmt.Sprintf("%s/%s", c.GetRootUrl(), path)
-	logger.Printf("Making request to: %s", url)
+	url := fmt.Sprintf("%s/%s", c.getRootUrl(), path)
+	logger.Info("Making request", "url", url, "method", "DELETE")
 
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
 	if err != nil {
@@ -105,7 +93,7 @@ func (c *SafeguardClient) DeleteRequest(path string) ([]byte, error) {
 
 func (c *SafeguardClient) sendHttpRequest(req *http.Request) ([]byte, error) {
 	c.setHeaders(req)
-	logger.Printf("Request headers: %+v", req.Header)
+	logger.Debug("Request headers", "headers", req.Header)
 
 	resp, err := c.HttpClient.Do(req)
 	if err != nil {
@@ -119,9 +107,16 @@ func (c *SafeguardClient) sendHttpRequest(req *http.Request) ([]byte, error) {
 	}
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusAccepted && resp.StatusCode != http.StatusCreated {
-		logger.Printf("Response Status: %s", resp.Status)
-		logger.Printf("Response headers: %+v", resp.Header)
-		logger.Printf("Response body: %s", string(body))
+		logger.Warn("Request failed",
+			"status", resp.Status,
+			"method", req.Method,
+			"url", req.URL,
+			"statusCode", resp.StatusCode,
+		)
+		logger.Debug("Response details",
+			"headers", resp.Header,
+			"body", string(body),
+		)
 		return nil, fmt.Errorf("error during %s request to %s: HTTP %d - %s", req.Method, req.URL, resp.StatusCode, string(body))
 	}
 

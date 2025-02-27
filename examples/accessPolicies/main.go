@@ -4,42 +4,42 @@ import (
 	"fmt"
 	"log"
 
-	. "github.com/sthayduk/safeguard-go"
+	safeguard "github.com/sthayduk/safeguard-go"
 	"github.com/sthayduk/safeguard-go/client"
 	"github.com/sthayduk/safeguard-go/examples/common"
 )
 
 func main() {
 	// Initialize the Safeguard client
-	sgc, err := common.InitClient()
+	err := common.InitClient()
 	if err != nil {
 		log.Fatalf("Failed to initialize client: %v", err)
 	}
 
 	// Example 1: List all access policies
 	fmt.Println("\n=== Example 1: Listing all access policies ===")
-	listAccessPolicies(sgc)
+	listAccessPolicies()
 
 	// Example 2: Get a specific access policy
 	fmt.Println("\n=== Example 2: Get specific access policy ===")
-	getSpecificPolicy(sgc, 7) // Replace 1 with an actual policy ID
+	getSpecificPolicy(7) // Replace 1 with an actual policy ID
 
 	// Example 3: Working with reason codes
 	fmt.Println("\n=== Example 3: Working with reason codes ===")
-	workWithReasonCodes(sgc, 7) // Replace 1 with an actual policy ID
+	workWithReasonCodes(7) // Replace 1 with an actual policy ID
 
 	// Example 4: Delete an access policy
 	fmt.Println("\n=== Example 4: Delete access policy ===")
-	//deletePolicy(sgc, 1) // Replace 1 with an actual policy ID
+	//deletePolicy(1) // Replace 1 with an actual policy ID
 
 	// Example: Dump reason codes for all access policies
 	fmt.Println("\n=== Dumping reason codes for all access policies ===")
-	dumpAllReasonCodes(sgc)
+	dumpAllReasonCodes()
 }
 
-func listAccessPolicies(sgc *client.SafeguardClient) {
+func listAccessPolicies() {
 	filter := client.Filter{}
-	policies, err := GetAccessPolicies(sgc, filter)
+	policies, err := safeguard.GetAccessPolicies(filter)
 	if err != nil {
 		log.Printf("Failed to get access policies: %v", err)
 		return
@@ -51,9 +51,9 @@ func listAccessPolicies(sgc *client.SafeguardClient) {
 	}
 }
 
-func getSpecificPolicy(sgc *client.SafeguardClient, policyID int) {
+func getSpecificPolicy(policyID int) {
 	fields := client.Fields{}
-	policy, err := GetAccessPolicy(sgc, policyID, fields)
+	policy, err := safeguard.GetAccessPolicy(policyID, fields)
 	if err != nil {
 		log.Printf("Failed to get access policy %d: %v", policyID, err)
 		return
@@ -67,9 +67,9 @@ func getSpecificPolicy(sgc *client.SafeguardClient, policyID int) {
 	fmt.Printf("- Asset Count: %d\n", policy.AssetCount)
 }
 
-func workWithReasonCodes(sgc *client.SafeguardClient, policyID int) {
+func workWithReasonCodes(policyID int) {
 	fields := client.Fields{}
-	policy, err := GetAccessPolicy(sgc, policyID, fields)
+	policy, err := safeguard.GetAccessPolicy(policyID, fields)
 	if err != nil {
 		log.Printf("Failed to get access policy %d: %v", policyID, err)
 		return
@@ -88,9 +88,9 @@ func workWithReasonCodes(sgc *client.SafeguardClient, policyID int) {
 	}
 }
 
-func deletePolicy(sgc *client.SafeguardClient, policyID int) {
+func deletePolicy(policyID int) {
 	fields := client.Fields{}
-	policy, err := GetAccessPolicy(sgc, policyID, fields)
+	policy, err := safeguard.GetAccessPolicy(policyID, fields)
 	if err != nil {
 		log.Printf("Failed to get access policy %d: %v", policyID, err)
 		return
@@ -104,9 +104,9 @@ func deletePolicy(sgc *client.SafeguardClient, policyID int) {
 	fmt.Printf("Successfully deleted policy %s\n", policy.Name)
 }
 
-func dumpAllReasonCodes(sgc *client.SafeguardClient) {
+func dumpAllReasonCodes() {
 	filter := client.Filter{}
-	policies, err := GetAccessPolicies(sgc, filter)
+	policies, err := safeguard.GetAccessPolicies(filter)
 	if err != nil {
 		log.Printf("Failed to get access policies: %v", err)
 		return

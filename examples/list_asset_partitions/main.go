@@ -3,18 +3,18 @@ package main
 import (
 	"fmt"
 
-	. "github.com/sthayduk/safeguard-go"
+	safeguard "github.com/sthayduk/safeguard-go"
 	"github.com/sthayduk/safeguard-go/client"
 	"github.com/sthayduk/safeguard-go/examples/common"
 )
 
 func main() {
-	sgc, err := common.InitClient()
+	err := common.InitClient()
 	if err != nil {
 		panic(err)
 	}
 
-	partitions, err := GetAssetPartitions(sgc, client.Filter{})
+	partitions, err := safeguard.GetAssetPartitions(client.Filter{})
 	if err != nil {
 		panic(err)
 	}

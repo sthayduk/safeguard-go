@@ -70,8 +70,6 @@ type ReasonCode struct {
 
 // AccessPolicy represents security configuration governing the access to assets and accounts
 type AccessPolicy struct {
-	client *client.SafeguardClient
-
 	Id                          int                         `json:"Id"`
 	Name                        string                      `json:"Name"`
 	Description                 string                      `json:"Description,omitempty"`
@@ -236,7 +234,7 @@ type ReviewerProperties struct {
 // Returns:
 //   - A slice of AccessPolicy objects.
 //   - An error if the request fails or the response cannot be unmarshaled.
-func GetAccessPolicies(c *client.SafeguardClient, filter client.Filter) ([]AccessPolicy, error) {
+func GetAccessPolicies(filter client.Filter) ([]AccessPolicy, error) {
 	var accessPolicies []AccessPolicy
 
 	query := "AccessPolicies" + filter.ToQueryString()
@@ -248,10 +246,6 @@ func GetAccessPolicies(c *client.SafeguardClient, filter client.Filter) ([]Acces
 
 	if err := json.Unmarshal(response, &accessPolicies); err != nil {
 		return nil, err
-	}
-
-	for i := range accessPolicies {
-		accessPolicies[i].client = c
 	}
 
 	return accessPolicies, nil
@@ -269,7 +263,7 @@ func GetAccessPolicies(c *client.SafeguardClient, filter client.Filter) ([]Acces
 // Returns:
 //   - AccessPolicy: The retrieved access policy.
 //   - error: An error if any occurred during the request or unmarshalling process.
-func GetAccessPolicy(c *client.SafeguardClient, id int, fields client.Fields) (AccessPolicy, error) {
+func GetAccessPolicy(id int, fields client.Fields) (AccessPolicy, error) {
 	var accessPolicy AccessPolicy
 
 	query := fmt.Sprintf("AccessPolicies/%d", id)
@@ -286,7 +280,6 @@ func GetAccessPolicy(c *client.SafeguardClient, id int, fields client.Fields) (A
 		return accessPolicy, err
 	}
 
-	accessPolicy.client = c
 	return accessPolicy, nil
 }
 
@@ -300,7 +293,7 @@ func GetAccessPolicy(c *client.SafeguardClient, id int, fields client.Fields) (A
 //
 // Returns:
 //   - error: An error object if the DELETE request fails, otherwise nil.
-func DeleteAccessPolicy(c *client.SafeguardClient, id int) error {
+func DeleteAccessPolicy(id int) error {
 	query := fmt.Sprintf("AccessPolicies/%d", id)
 
 	_, err := c.DeleteRequest(query)
@@ -315,5 +308,5 @@ func DeleteAccessPolicy(c *client.SafeguardClient, id int) error {
 // It calls the DeleteAccessPolicy function with the client and policy ID.
 // Returns an error if the deletion fails.
 func (a AccessPolicy) Delete() error {
-	return DeleteAccessPolicy(a.client, a.Id)
+	return DeleteAccessPolicy(a.Id)
 }

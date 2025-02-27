@@ -35,7 +35,7 @@ func (c *SafeguardClient) LoginWithPassword(username, password string) error {
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	logger.Printf("Making RSTS login request to: %s", req.URL.String())
+	logger.Info("Making RSTS login request", "url", req.URL.String())
 	resp, err := c.HttpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("RSTS login request failed: %v", err)
@@ -52,7 +52,7 @@ func (c *SafeguardClient) LoginWithPassword(username, password string) error {
 		return fmt.Errorf("error decoding RSTS response: %v", err)
 	}
 
-	logger.Printf("RSTS Login Response: %s", string(body))
+	logger.Debug("RSTS Login Response", "body", string(body))
 
 	// Exchange RSTS token for Safeguard token
 	tokenReq := struct {
@@ -66,7 +66,7 @@ func (c *SafeguardClient) LoginWithPassword(username, password string) error {
 		return fmt.Errorf("error marshaling token request: %v", err)
 	}
 
-	req, err = http.NewRequest("POST", fmt.Sprintf("%s/Token/LoginResponse", c.GetRootUrl()), bytes.NewBuffer(tokenData))
+	req, err = http.NewRequest("POST", fmt.Sprintf("%s/Token/LoginResponse", c.getRootUrl()), bytes.NewBuffer(tokenData))
 	if err != nil {
 		return fmt.Errorf("error creating token request: %v", err)
 	}
@@ -88,7 +88,7 @@ func (c *SafeguardClient) LoginWithPassword(username, password string) error {
 		return fmt.Errorf("error decoding token response: %v", err)
 	}
 
-	logger.Printf("Token Response: %s", string(body))
+	logger.Debug("Token Response", "body", string(body))
 	c.AccessToken = &tokenResponse
 	c.AccessToken.AccessToken = tokenResponse.UserToken
 	fmt.Println("✅ Login successful")

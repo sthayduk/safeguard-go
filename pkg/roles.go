@@ -10,8 +10,6 @@ import (
 
 // Role represents roles in Safeguard made up of members, security scopes, and permissions
 type Role struct {
-	client *client.SafeguardClient
-
 	Id                          int                         `json:"Id"`
 	Name                        string                      `json:"Name"`
 	Priority                    int                         `json:"Priority"`
@@ -78,7 +76,7 @@ type HourlyRestrictionProperties struct {
 // Returns:
 //   - []Role: A slice of roles matching the filter criteria
 //   - error: An error if the request fails, nil otherwise
-func GetRoles(c *client.SafeguardClient, fields client.Filter) ([]Role, error) {
+func GetRoles(fields client.Filter) ([]Role, error) {
 	var userRoles []Role
 
 	query := "Roles" + fields.ToQueryString()
@@ -92,10 +90,6 @@ func GetRoles(c *client.SafeguardClient, fields client.Filter) ([]Role, error) {
 		return nil, err
 	}
 
-	for i := range userRoles {
-		userRoles[i].client = c
-	}
-
 	return userRoles, nil
 }
 
@@ -107,8 +101,8 @@ func GetRoles(c *client.SafeguardClient, fields client.Filter) ([]Role, error) {
 // Returns:
 //   - []Role: A slice of roles matching the filter criteria
 //   - error: An error if the request fails, nil otherwise
-func GetEntitlements(c *client.SafeguardClient, fields client.Filter) ([]Role, error) {
-	return GetRoles(c, fields)
+func GetEntitlements(fields client.Filter) ([]Role, error) {
+	return GetRoles(fields)
 }
 
 // GetRole retrieves details for a specific role by ID.
@@ -120,7 +114,7 @@ func GetEntitlements(c *client.SafeguardClient, fields client.Filter) ([]Role, e
 // Returns:
 //   - Role: The requested role object
 //   - error: An error if the request fails, nil otherwise
-func GetRole(c *client.SafeguardClient, id int, fields client.Fields) (Role, error) {
+func GetRole(id int, fields client.Fields) (Role, error) {
 	var userRole Role
 
 	query := fmt.Sprintf("Roles/%d", id)
@@ -136,7 +130,6 @@ func GetRole(c *client.SafeguardClient, id int, fields client.Fields) (Role, err
 		return userRole, err
 	}
 
-	userRole.client = c
 	return userRole, nil
 }
 
@@ -149,8 +142,8 @@ func GetRole(c *client.SafeguardClient, id int, fields client.Fields) (Role, err
 // Returns:
 //   - Role: The requested role object
 //   - error: An error if the request fails, nil otherwise
-func GetEntitlement(c *client.SafeguardClient, id int, fields client.Fields) (Role, error) {
-	return GetRole(c, id, fields)
+func GetEntitlement(id int, fields client.Fields) (Role, error) {
+	return GetRole(id, fields)
 }
 
 // GetRoleMembers retrieves the list of members belonging to a specific role.
@@ -162,7 +155,7 @@ func GetEntitlement(c *client.SafeguardClient, id int, fields client.Fields) (Ro
 // Returns:
 //   - []ManagedByUser: A slice of users who are members of the role
 //   - error: An error if the request fails, nil otherwise
-func GetRoleMembers(c *client.SafeguardClient, id int, filter client.Filter) ([]ManagedByUser, error) {
+func GetRoleMembers(id int, filter client.Filter) ([]ManagedByUser, error) {
 	var members []ManagedByUser
 
 	query := fmt.Sprintf("Roles/%d/Members%s", id, filter.ToQueryString())
@@ -186,7 +179,7 @@ func GetRoleMembers(c *client.SafeguardClient, id int, filter client.Filter) ([]
 //   - []ManagedByUser: A slice of users who are members of the role
 //   - error: An error if the request fails, nil otherwise
 func (r Role) GetMembers(filter client.Filter) ([]ManagedByUser, error) {
-	return GetRoleMembers(r.client, r.Id, filter)
+	return GetRoleMembers(r.Id, filter)
 }
 
 // GetRolePolicies retrieves the list of access policies associated with a specific role.
@@ -198,7 +191,7 @@ func (r Role) GetMembers(filter client.Filter) ([]ManagedByUser, error) {
 // Returns:
 //   - []AccessPolicy: A slice of access policies associated with the role
 //   - error: An error if the request fails, nil otherwise
-func GetRolePolicies(c *client.SafeguardClient, id int, filter client.Filter) ([]AccessPolicy, error) {
+func GetRolePolicies(id int, filter client.Filter) ([]AccessPolicy, error) {
 	var policies []AccessPolicy
 
 	query := fmt.Sprintf("Roles/%d/Policies%s", id, filter.ToQueryString())
@@ -212,10 +205,6 @@ func GetRolePolicies(c *client.SafeguardClient, id int, filter client.Filter) ([
 		return nil, err
 	}
 
-	for i := range policies {
-		policies[i].client = c
-	}
-
 	return policies, nil
 }
 
@@ -227,5 +216,5 @@ func GetRolePolicies(c *client.SafeguardClient, id int, filter client.Filter) ([
 //   - []AccessPolicy: A slice of access policies associated with the role
 //   - error: An error if the request fails, nil otherwise
 func (r Role) GetPolicies(filter client.Filter) ([]AccessPolicy, error) {
-	return GetRolePolicies(r.client, r.Id, filter)
+	return GetRolePolicies(r.Id, filter)
 }

@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"log"
 
-	. "github.com/sthayduk/safeguard-go"
+	safeguard "github.com/sthayduk/safeguard-go"
 	"github.com/sthayduk/safeguard-go/client"
 	"github.com/sthayduk/safeguard-go/examples/common"
 )
 
 func main() {
-	sgc, err := common.InitClient()
+	err := common.InitClient()
 	if err != nil {
 		panic(err)
 	}
@@ -21,7 +21,7 @@ func main() {
 		Fields:  []string{"Id", "Name", "AssetType", "AssetPartitionName"},
 	}
 
-	policyAssets, err := GetPolicyAssets(sgc, filter)
+	policyAssets, err := safeguard.GetPolicyAssets(filter)
 	if err != nil {
 		log.Fatalf("Failed to get policy assets: %v", err)
 	}
@@ -34,7 +34,7 @@ func main() {
 	// Example 2: Get a specific policy asset by ID
 	if len(policyAssets) > 0 {
 		fields := client.Fields{"Id", "Name", "NetworkAddress", "Platform"}
-		policyAsset, err := GetPolicyAsset(sgc, policyAssets[3].Id, fields)
+		policyAsset, err := safeguard.GetPolicyAsset(policyAssets[3].Id, fields)
 		if err != nil {
 			log.Fatalf("Failed to get policy asset: %v", err)
 		}

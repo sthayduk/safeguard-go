@@ -5,18 +5,18 @@ import (
 	"fmt"
 	"time"
 
-	. "github.com/sthayduk/safeguard-go"
+	safeguard "github.com/sthayduk/safeguard-go"
 	"github.com/sthayduk/safeguard-go/client"
 	"github.com/sthayduk/safeguard-go/examples/common"
 )
 
 func main() {
-	sgc, err := common.InitClient()
+	err := common.InitClient()
 	if err != nil {
 		panic(err)
 	}
 
-	assetAccount, err := GetAssetAccount(sgc, 18, client.Fields{})
+	assetAccount, err := safeguard.GetAssetAccount(18, client.Fields{})
 	if err != nil {
 		panic(err)
 	}
@@ -27,7 +27,7 @@ func main() {
 	}
 
 	// Check the task state
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
 	defer cancel()
 	state, err := checkPasswordTask.CheckTaskState(ctx)
 	if err != nil {

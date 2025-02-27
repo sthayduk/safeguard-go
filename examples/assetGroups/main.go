@@ -3,19 +3,19 @@ package main
 import (
 	"fmt"
 
-	. "github.com/sthayduk/safeguard-go"
+	safeguard "github.com/sthayduk/safeguard-go"
 	"github.com/sthayduk/safeguard-go/client"
 	"github.com/sthayduk/safeguard-go/examples/common"
 )
 
 func main() {
-	sgc, err := common.InitClient()
+	err := common.InitClient()
 	if err != nil {
 		panic(err)
 	}
 
 	// Get all asset groups
-	assetGroups, err := GetAssetGroups(sgc, client.Filter{})
+	assetGroups, err := safeguard.GetAssetGroups(client.Filter{})
 	if err != nil {
 		panic(err)
 	}
@@ -29,7 +29,7 @@ func main() {
 	// Get a specific asset group with additional fields
 	if len(assetGroups) > 0 {
 		fields := client.Fields{"Name", "Description", "CreatedDate"}
-		assetGroup, err := GetAssetGroup(sgc, assetGroups[0].Id, fields)
+		assetGroup, err := safeguard.GetAssetGroup(assetGroups[0].Id, fields)
 		if err != nil {
 			panic(err)
 		}

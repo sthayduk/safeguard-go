@@ -3,8 +3,6 @@ package pkg
 import (
 	"encoding/json"
 	"fmt"
-
-	"github.com/sthayduk/safeguard-go/client"
 )
 
 type TypeReferenceName string
@@ -22,8 +20,6 @@ const (
 )
 
 type AuthenticationProvider struct {
-	client *client.SafeguardClient
-
 	Id                 int    `json:"Id,omitempty"`
 	Name               string `json:"Name,omitempty"`
 	TypeReferenceName  string `json:"TypeReferenceName,omitempty"`
@@ -53,7 +49,7 @@ func (a AuthenticationProvider) ToJson() (string, error) {
 // Returns:
 //   - A slice of AuthenticationProvider structs.
 //   - An error if the request fails or the response cannot be unmarshaled.
-func GetAuthenticationProviders(c *client.SafeguardClient) ([]AuthenticationProvider, error) {
+func GetAuthenticationProviders() ([]AuthenticationProvider, error) {
 	var authProviders []AuthenticationProvider
 
 	query := "AuthenticationProviders"
@@ -65,10 +61,6 @@ func GetAuthenticationProviders(c *client.SafeguardClient) ([]AuthenticationProv
 
 	if err := json.Unmarshal(response, &authProviders); err != nil {
 		return []AuthenticationProvider{}, err
-	}
-
-	for i := range authProviders {
-		authProviders[i].client = c
 	}
 
 	return authProviders, nil
@@ -83,9 +75,8 @@ func GetAuthenticationProviders(c *client.SafeguardClient) ([]AuthenticationProv
 // Returns:
 //   - AuthenticationProvider: The retrieved authentication provider.
 //   - error: An error object if an error occurred during the request, otherwise nil.
-func GetAuthenticationProvider(c *client.SafeguardClient, id int) (AuthenticationProvider, error) {
+func GetAuthenticationProvider(id int) (AuthenticationProvider, error) {
 	var authProvider AuthenticationProvider
-	authProvider.client = c
 
 	query := fmt.Sprintf("AuthenticationProviders/%d", id)
 
@@ -108,7 +99,7 @@ func GetAuthenticationProvider(c *client.SafeguardClient, id int) (Authenticatio
 //
 // Returns:
 //   - error: An error object if the request fails, otherwise nil.
-func ClearDefaultAuthProvider(c *client.SafeguardClient) error {
+func ClearDefaultAuthProvider() error {
 	query := "AuthenticationProviders/ClearDefault"
 
 	_, err := c.PostRequest(query, nil)
@@ -128,7 +119,7 @@ func ClearDefaultAuthProvider(c *client.SafeguardClient) error {
 // Returns:
 //   - AuthenticationProvider: The updated authentication provider object.
 //   - error: An error object if an error occurred, otherwise nil.
-func ForceAsDefaultAuthProvider(c *client.SafeguardClient, id int) (AuthenticationProvider, error) {
+func ForceAsDefaultAuthProvider(id int) (AuthenticationProvider, error) {
 	var authProvider AuthenticationProvider
 	query := fmt.Sprintf("AuthenticationProviders/%d/ForceAsDefault", id)
 
@@ -142,12 +133,11 @@ func ForceAsDefaultAuthProvider(c *client.SafeguardClient, id int) (Authenticati
 		return AuthenticationProvider{}, err
 	}
 
-	authProvider.client = c
 	return authProvider, nil
 }
 
 // ForceAsDefault sets the current AuthenticationProvider instance as the default authentication provider.
 // It returns the updated AuthenticationProvider instance and an error if the operation fails.
 func (a AuthenticationProvider) ForceAsDefault() (AuthenticationProvider, error) {
-	return ForceAsDefaultAuthProvider(a.client, a.Id)
+	return ForceAsDefaultAuthProvider(a.Id)
 }

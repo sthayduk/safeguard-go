@@ -59,7 +59,8 @@ func generateCodeChallenge() (string, string) {
 	verifier := make([]byte, 32)
 	_, err := rand.Read(verifier)
 	if err != nil {
-		logger.Fatalf("Error generating Code Verifier: %v", err)
+		logger.Error("Error generating Code Verifier", "error", err)
+		panic(fmt.Sprintf("Error generating Code Verifier: %v", err))
 	}
 	codeVerifier := base64.RawURLEncoding.EncodeToString(verifier)
 
@@ -72,7 +73,8 @@ func generateCodeChallenge() (string, string) {
 func startHTTPSListener(authCodeChan chan string, errorChan chan error) *http.Server {
 	cert, err := tls.LoadX509KeyPair("server.crt", "server.key")
 	if err != nil {
-		logger.Fatalf("Error loading certificate: %v", err)
+		logger.Error("Error loading certificate", "error", err)
+		panic(fmt.Sprintf("Error loading certificate: %v", err))
 	}
 
 	server := &http.Server{
@@ -83,7 +85,7 @@ func startHTTPSListener(authCodeChan chan string, errorChan chan error) *http.Se
 	}
 
 	http.HandleFunc("/callback", func(w http.ResponseWriter, r *http.Request) {
-		logger.Println("Received callback request")
+		logger.Info("Received callback request")
 		if err := r.URL.Query().Get("error"); err != "" {
 			errorDesc := r.URL.Query().Get("error_description")
 			errorChan <- fmt.Errorf("%s: %s", err, errorDesc)
@@ -102,7 +104,7 @@ func startHTTPSListener(authCodeChan chan string, errorChan chan error) *http.Se
 	})
 
 	go func() {
-		logger.Printf("Starting HTTPS server on port %d", redirectPort)
+		logger.Info("Starting HTTPS server", "port", redirectPort)
 		if err := server.ListenAndServeTLS("", ""); err != nil && err != http.ErrServerClosed {
 			errorChan <- fmt.Errorf("HTTPS server error: %v", err)
 		}
@@ -140,8 +142,8 @@ func (c *SafeguardClient) exchangeToken(authCode, codeVerifier string) (*TokenRe
 		return nil, err
 	}
 
-	logger.Printf("rSTS Token Response: %s", string(body))
-	logger.Printf("rSTS Token: %s", rStsToken.AccessToken)
+	logger.Debug("rSTS Token Response", "body", string(body))
+	logger.Debug("rSTS Token", "token", rStsToken.AccessToken)
 
 	tokenReq := struct {
 		StsAccessToken string `json:"StsAccessToken"`
@@ -176,8 +178,8 @@ func (c *SafeguardClient) exchangeToken(authCode, codeVerifier string) (*TokenRe
 		return nil, err
 	}
 
-	logger.Printf("Safeguard Token Response: %s", string(body))
-	logger.Printf("Safeguard Token: %s", tokenResponse.UserToken)
+	logger.Debug("Safeguard Token Response", "body", string(body))
+	logger.Debug("Safeguard Token", "token", tokenResponse.UserToken)
 
 	tokenResponse.AccessToken = tokenResponse.UserToken
 

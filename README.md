@@ -120,7 +120,7 @@ if err != nil {
 }
 
 // Or login with OAuth
-err := sgc.OauthConnect()
+err := sgc.LoginWithOauth()
 if err != nil {
     panic(err)
 }
@@ -135,10 +135,10 @@ import (
 )
 
 // Get all users
-users, err := GetUsers(sgc, client.Filter{})
+users, err := GetUsers(client.Filter{})
 
 // Get a specific user
-user, err := GetUser(sgc, userId, client.Fields{"Name", "Description"})
+user, err := GetUser(userId, client.Fields{"Name", "Description"})
 
 // Get user's linked accounts
 accounts, err := user.GetLinkedAccounts()
@@ -160,7 +160,7 @@ err = user.Delete()
 providers, err := GetIdentityProviders(sgc)
 
 // Get specific provider
-provider, err := GetIdentityProvider(sgc, providerId)
+provider, err := GetIdentityProvider(providerId)
 
 // Get directory users from provider
 users, err := provider.GetDirectoryUsers(client.Filter{})
@@ -173,10 +173,10 @@ groups, err := provider.GetDirectoryGroups(client.Filter{})
 
 ```go
 // Get all asset accounts
-accounts, err := GetAssetAccounts(sgc, client.Filter{})
+accounts, err := GetAssetAccounts(client.Filter{})
 
 // Get specific account
-account, err := GetAssetAccount(sgc, accountId, client.Fields{})
+account, err := GetAssetAccount(accountId, client.Fields{})
 
 // Check password
 log, err := account.CheckPassword()
@@ -189,13 +189,13 @@ log, err := account.ChangePassword()
 
 ```go
 // Get current user's actionable requests
-requests, err := GetMeActionableRequests(sgc, client.Filter{})
+requests, err := GetMeActionableRequests(client.Filter{})
 
 // Get requests for specific role
-requests, err := GetMeActionableRequestsByRole(sgc, ApproverRole, client.Filter{})
+requests, err := GetMeActionableRequestsByRole(ApproverRole, client.Filter{})
 
 // Get detailed actionable requests with helper methods
-result, err := GetMeActionableRequestsDetailed(sgc, client.Filter{})
+result, err := GetMeActionableRequestsDetailed(client.Filter{})
 
 // Get pending requests
 pending := result.GetPendingRequests()
@@ -204,14 +204,14 @@ pending := result.GetPendingRequests()
 available := result.FilterRequestsByState(StateRequestAvailable)
 
 // Get account entitlements
-entitlements, err := GetMeAccountEntitlements(sgc, 
+entitlements, err := GetMeAccountEntitlements(
     PasswordEntitlement,
     true,  // includeActiveRequests
     false, // filterByCredential
     client.Filter{})
 
 // Get accessible assets
-assets, err := GetMeAccessRequestAssets(sgc, client.Filter{})
+assets, err := GetMeAccessRequestAssets(client.Filter{})
 ```
 
 ## Query Parameters
@@ -228,8 +228,8 @@ filter.AddFilter("Name", "like", "admin")
 fields := client.Fields{"Name", "Description", "CreatedDate"}
 
 // Use in API calls
-users, err := GetUsers(sgc, filter)
-user, err := GetUser(sgc, userId, fields)
+users, err := GetUsers(filter)
+user, err := GetUser(userId, fields)
 ```
 
 ## Contributing
