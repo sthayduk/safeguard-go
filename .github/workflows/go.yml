@@ -29,5 +29,5 @@ jobs:
       run: go build -v ./...
 
     - name: Test
-      working-directory: ./tests
+      working-directory: ./pkg
       run: go test -v ./...
