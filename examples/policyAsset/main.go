@@ -5,7 +5,6 @@ import (
 	"log"
 
 	safeguard "github.com/sthayduk/safeguard-go"
-	"github.com/sthayduk/safeguard-go/client"
 	"github.com/sthayduk/safeguard-go/examples/common"
 )
 
@@ -16,7 +15,7 @@ func main() {
 	}
 
 	// Example 1: Get all policy assets
-	filter := client.Filter{
+	filter := safeguard.Filter{
 		Orderby: []string{"Name"},
 		Fields:  []string{"Id", "Name", "AssetType", "AssetPartitionName"},
 	}
@@ -33,7 +32,7 @@ func main() {
 
 	// Example 2: Get a specific policy asset by ID
 	if len(policyAssets) > 0 {
-		fields := client.Fields{"Id", "Name", "NetworkAddress", "Platform"}
+		fields := safeguard.Fields{"Id", "Name", "NetworkAddress", "Platform"}
 		policyAsset, err := safeguard.GetPolicyAsset(policyAssets[3].Id, fields)
 		if err != nil {
 			log.Fatalf("Failed to get policy asset: %v", err)
@@ -53,7 +52,7 @@ func main() {
 		fmt.Printf("\n=== Policy Asset JSON ===\n%s\n", jsonStr)
 
 		// Example 4: Get asset groups for the policy asset
-		assetGroupFilter := client.Filter{
+		assetGroupFilter := safeguard.Filter{
 			Fields: []string{"Id", "Name", "Description"},
 		}
 		assetGroups, err := policyAsset.GetAssetGroups(assetGroupFilter)
@@ -67,7 +66,7 @@ func main() {
 		}
 
 		// Example 5: Get directory service entries
-		dseFilter := client.Filter{
+		dseFilter := safeguard.Filter{
 			Fields: []string{"Name", "DirectoryProperties"},
 		}
 		entries, err := policyAsset.GetDirectoryServiceEntries(dseFilter)
@@ -81,7 +80,7 @@ func main() {
 		}
 
 		// Example 6: Get policies for the asset
-		policiesFilter := client.Filter{
+		policiesFilter := safeguard.Filter{
 			Fields: []string{"PolicyId", "PolicyName"},
 		}
 		policies, err := policyAsset.GetPolicies(policiesFilter)

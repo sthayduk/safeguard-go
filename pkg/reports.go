@@ -3,8 +3,6 @@ package pkg
 import (
 	"encoding/json"
 	"fmt"
-
-	"github.com/sthayduk/safeguard-go/client"
 )
 
 // AccountTaskNames defines the supported task names for account tasks
@@ -118,7 +116,7 @@ func (a AccountTaskData) ToJson() (string, error) {
 //
 // Example:
 //
-//	filter := client.Filter{}
+//	filter := Filter{}
 //	filter.AddFilter("Disabled", "eq", "false")
 //	schedules, err := GetAccountTaskSchedules(CheckPassword, filter)
 //
@@ -129,7 +127,7 @@ func (a AccountTaskData) ToJson() (string, error) {
 // Returns:
 //   - []AccountTaskData: A slice of task schedules matching the filter criteria
 //   - error: An error if the request or response parsing fails, nil otherwise
-func GetAccountTaskSchedules(taskName AccountTaskNames, filter client.Filter) ([]AccountTaskData, error) {
+func GetAccountTaskSchedules(taskName AccountTaskNames, filter Filter) ([]AccountTaskData, error) {
 	var accountTaskSchedules []AccountTaskData
 
 	query := fmt.Sprintf("Reports/Tasks/AccountTaskSchedules/%s%s", taskName, filter.ToQueryString())

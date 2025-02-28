@@ -3,8 +3,6 @@ package pkg
 import (
 	"encoding/json"
 	"fmt"
-
-	"github.com/sthayduk/safeguard-go/client"
 )
 
 // AssetPolicy represents a policy that an asset belongs to plus how that membership was granted
@@ -148,7 +146,7 @@ type SessionAccessProperties struct {
 //
 // Example:
 //
-//	filter := client.Filter{}
+//	filter := Filter{}
 //	filter.AddFilter("Disabled", "eq", "false")
 //	filter.AddFilter("PlatformId", "eq", "1")
 //	assets, err := GetPolicyAssets(filter)
@@ -159,7 +157,7 @@ type SessionAccessProperties struct {
 // Returns:
 //   - []PolicyAsset: A slice of PolicyAsset objects matching the filter criteria
 //   - error: An error if the request or response parsing fails, nil otherwise
-func GetPolicyAssets(fields client.Filter) ([]PolicyAsset, error) {
+func GetPolicyAssets(fields Filter) ([]PolicyAsset, error) {
 	var policyAssets []PolicyAsset
 
 	query := "PolicyAssets" + fields.ToQueryString()
@@ -183,7 +181,7 @@ func GetPolicyAssets(fields client.Filter) ([]PolicyAsset, error) {
 //
 // Example:
 //
-//	fields := client.Fields{}
+//	fields := Fields{}
 //	fields.Add("Platform", "SessionAccess")
 //	asset, err := GetPolicyAsset(123, fields)
 //
@@ -194,7 +192,7 @@ func GetPolicyAssets(fields client.Filter) ([]PolicyAsset, error) {
 // Returns:
 //   - PolicyAsset: The requested policy asset with all specified related objects
 //   - error: An error if the asset is not found or request fails, nil otherwise
-func GetPolicyAsset(id int, fields client.Fields) (PolicyAsset, error) {
+func GetPolicyAsset(id int, fields Fields) (PolicyAsset, error) {
 	var policyAsset PolicyAsset
 
 	query := fmt.Sprintf("PolicyAssets/%d", id)
@@ -219,7 +217,7 @@ func GetPolicyAsset(id int, fields client.Fields) (PolicyAsset, error) {
 //
 // Example:
 //
-//	filter := client.Filter{}
+//	filter := Filter{}
 //	filter.AddFilter("Disabled", "eq", "false")
 //	groups, err := asset.GetAssetGroups(filter)
 //
@@ -229,7 +227,7 @@ func GetPolicyAsset(id int, fields client.Fields) (PolicyAsset, error) {
 // Returns:
 //   - []AssetGroup: A slice of AssetGroup objects this asset belongs to
 //   - error: An error if the request or response parsing fails, nil otherwise
-func (p PolicyAsset) GetAssetGroups(fields client.Filter) ([]AssetGroup, error) {
+func (p PolicyAsset) GetAssetGroups(fields Filter) ([]AssetGroup, error) {
 	var assetGroups []AssetGroup
 
 	query := fmt.Sprintf("PolicyAssets/%d/AssetGroups", p.Id) + fields.ToQueryString()
@@ -252,7 +250,7 @@ func (p PolicyAsset) GetAssetGroups(fields client.Filter) ([]AssetGroup, error) 
 //
 // Example:
 //
-//	filter := client.Filter{}
+//	filter := Filter{}
 //	entries, err := directoryAsset.GetDirectoryServiceEntries(filter)
 //
 // Parameters:
@@ -261,7 +259,7 @@ func (p PolicyAsset) GetAssetGroups(fields client.Filter) ([]AssetGroup, error) 
 // Returns:
 //   - []DirectoryServiceEntry: A slice of directory entries from this asset
 //   - error: An error if the request or response parsing fails, nil otherwise
-func (p PolicyAsset) GetDirectoryServiceEntries(fields client.Filter) ([]DirectoryServiceEntry, error) {
+func (p PolicyAsset) GetDirectoryServiceEntries(fields Filter) ([]DirectoryServiceEntry, error) {
 	var directoryServiceEntries []DirectoryServiceEntry
 
 	query := fmt.Sprintf("PolicyAssets/%d/DirectoryServiceEntries", p.Id) + fields.ToQueryString()
@@ -284,7 +282,7 @@ func (p PolicyAsset) GetDirectoryServiceEntries(fields client.Filter) ([]Directo
 //
 // Example:
 //
-//	filter := client.Filter{}
+//	filter := Filter{}
 //	policies, err := asset.GetPolicies(filter)
 //
 // Parameters:
@@ -293,7 +291,7 @@ func (p PolicyAsset) GetDirectoryServiceEntries(fields client.Filter) ([]Directo
 // Returns:
 //   - []AssetPolicy: A slice of policies granting access to this asset
 //   - error: An error if the request or response parsing fails, nil otherwise
-func (p PolicyAsset) GetPolicies(fields client.Filter) ([]AssetPolicy, error) {
+func (p PolicyAsset) GetPolicies(fields Filter) ([]AssetPolicy, error) {
 	var policies []AssetPolicy
 
 	query := fmt.Sprintf("PolicyAssets/%d/Policies", p.Id) + fields.ToQueryString()

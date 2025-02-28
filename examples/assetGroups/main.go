@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	safeguard "github.com/sthayduk/safeguard-go"
-	"github.com/sthayduk/safeguard-go/client"
 	"github.com/sthayduk/safeguard-go/examples/common"
 )
 
@@ -15,7 +14,7 @@ func main() {
 	}
 
 	// Get all asset groups
-	assetGroups, err := safeguard.GetAssetGroups(client.Filter{})
+	assetGroups, err := safeguard.GetAssetGroups(safeguard.Filter{})
 	if err != nil {
 		panic(err)
 	}
@@ -28,7 +27,7 @@ func main() {
 
 	// Get a specific asset group with additional fields
 	if len(assetGroups) > 0 {
-		fields := client.Fields{"Name", "Description", "CreatedDate"}
+		fields := safeguard.Fields{"Name", "Description", "CreatedDate"}
 		assetGroup, err := safeguard.GetAssetGroup(assetGroups[0].Id, fields)
 		if err != nil {
 			panic(err)

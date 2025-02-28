@@ -6,7 +6,6 @@ import (
 	"os"
 
 	safeguard "github.com/sthayduk/safeguard-go"
-	"github.com/sthayduk/safeguard-go/client"
 	"github.com/sthayduk/safeguard-go/examples/common"
 )
 
@@ -34,7 +33,7 @@ func main() {
 
 	// Search for the user
 	logger.Printf("Searching for user: %s", username)
-	filter := client.Filter{}
+	filter := safeguard.Filter{}
 	filter.AddFilter("Name", "eq", username)
 	users, err := idp.GetDirectoryUsers(filter)
 	if err != nil {

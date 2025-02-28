@@ -9,7 +9,6 @@ import (
 
 	"github.com/fatih/color"
 	safeguard "github.com/sthayduk/safeguard-go"
-	"github.com/sthayduk/safeguard-go/client"
 	"github.com/sthayduk/safeguard-go/examples/common"
 )
 
@@ -35,7 +34,7 @@ func main() {
 	// Retrieve asset account
 	assetAccountId := 17
 	logger.Printf("Retrieving asset account with ID: %d...", assetAccountId)
-	assetAccount, err := safeguard.GetAssetAccount(assetAccountId, client.Fields{})
+	assetAccount, err := safeguard.GetAssetAccount(assetAccountId, safeguard.Fields{})
 	if err != nil {
 		logger.Fatalf("%s Failed to retrieve asset account: %v", warning("ERROR:"), err)
 	}

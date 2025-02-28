@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
-
-	"github.com/sthayduk/safeguard-go/client"
 )
 
 // UserGroup represents a group of users in Safeguard with associated properties and memberships
@@ -138,7 +136,7 @@ func (u UserGroup) ToJson() (string, error) {
 //
 // Example:
 //
-//	fields := client.Filter{}
+//	fields := Filter{}
 //	fields.AddFilter("IsReadOnly", "eq", "false")
 //	fields.AddFilter("Name", "contains", "admin")
 //	groups, err := GetUserGroups(fields)
@@ -149,7 +147,7 @@ func (u UserGroup) ToJson() (string, error) {
 // Returns:
 //   - []UserGroup: A slice of UserGroup objects matching the filter criteria
 //   - error: An error if the request fails or response parsing fails, nil otherwise
-func GetUserGroups(fields client.Filter) ([]UserGroup, error) {
+func GetUserGroups(fields Filter) ([]UserGroup, error) {
 	var userGroups []UserGroup
 
 	query := "UserGroups" + fields.ToQueryString()
@@ -172,7 +170,7 @@ func GetUserGroups(fields client.Filter) ([]UserGroup, error) {
 //
 // Example:
 //
-//	fields := client.Fields{}
+//	fields := Fields{}
 //	fields.Add("Members", "DirectoryProperties")
 //	group, err := GetUserGroup(123, fields)
 //
@@ -183,7 +181,7 @@ func GetUserGroups(fields client.Filter) ([]UserGroup, error) {
 // Returns:
 //   - UserGroup: The requested user group with all specified related objects
 //   - error: An error if the group is not found or request fails, nil otherwise
-func GetUserGroup(id int, fields client.Fields) (UserGroup, error) {
+func GetUserGroup(id int, fields Fields) (UserGroup, error) {
 	var userGroup UserGroup
 
 	query := fmt.Sprintf("UserGroups/%d", id)

@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
-
-	"github.com/sthayduk/safeguard-go/client"
 )
 
 // IdentityProvider represents the structure for the given JSON array
@@ -217,7 +215,7 @@ func GetIdentityProvider(id int) (IdentityProvider, error) {
 // Returns:
 //   - []User: A slice of directory users matching the filter criteria
 //   - error: An error if the directory cannot be queried or the request fails
-func GetDirectoryUsers(identityProviderId int, filter client.Filter) ([]User, error) {
+func GetDirectoryUsers(identityProviderId int, filter Filter) ([]User, error) {
 	var directoryUsers []User
 
 	query := fmt.Sprintf("IdentityProviders/%d/DirectoryUsers%s", identityProviderId, filter.ToQueryString())
@@ -249,7 +247,7 @@ func GetDirectoryUsers(identityProviderId int, filter client.Filter) ([]User, er
 // Returns:
 //   - []User: A slice of directory users matching the filter criteria
 //   - error: An error if the directory cannot be queried or the request fails
-func (idp IdentityProvider) GetDirectoryUsers(filter client.Filter) ([]User, error) {
+func (idp IdentityProvider) GetDirectoryUsers(filter Filter) ([]User, error) {
 	return GetDirectoryUsers(idp.Id, filter)
 }
 
@@ -265,7 +263,7 @@ func (idp IdentityProvider) GetDirectoryUsers(filter client.Filter) ([]User, err
 // Returns:
 //   - []UserGroup: A slice of directory groups matching the filter criteria
 //   - error: An error if the directory cannot be queried or the request fails
-func GetDirectoryGroups(id int, filter client.Filter) ([]UserGroup, error) {
+func GetDirectoryGroups(id int, filter Filter) ([]UserGroup, error) {
 	var directoryGroups []UserGroup
 
 	query := fmt.Sprintf("IdentityProviders/%d/DirectoryGroups%s", id, filter.ToQueryString())
@@ -293,6 +291,6 @@ func GetDirectoryGroups(id int, filter client.Filter) ([]UserGroup, error) {
 // Returns:
 //   - []UserGroup: A slice of directory groups matching the filter criteria
 //   - error: An error if the directory cannot be queried or the request fails
-func (idp IdentityProvider) GetDirectoryGroups(filter client.Filter) ([]UserGroup, error) {
+func (idp IdentityProvider) GetDirectoryGroups(filter Filter) ([]UserGroup, error) {
 	return GetDirectoryGroups(idp.Id, filter)
 }

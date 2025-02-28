@@ -6,7 +6,6 @@ import (
 	"time"
 
 	safeguard "github.com/sthayduk/safeguard-go"
-	"github.com/sthayduk/safeguard-go/client"
 	"github.com/sthayduk/safeguard-go/examples/common"
 )
 
@@ -19,7 +18,7 @@ func main() {
 	// Example 1: Get information about the current user
 	fmt.Println("Example 1: Getting current user information")
 
-	me, err := safeguard.GetMe(client.Filter{})
+	me, err := safeguard.GetMe(safeguard.Filter{})
 	if err != nil {
 		fmt.Printf("Error getting current user: %s\n", err)
 	}
@@ -29,7 +28,7 @@ func main() {
 
 	// Example 2: Get all Entitlements
 	fmt.Println("Example 2: Getting all entitlements")
-	entitlements, err := safeguard.GetMeAccountEntitlements(safeguard.AccessRequestTypePassword, false, false, client.Filter{})
+	entitlements, err := safeguard.GetMeAccountEntitlements(safeguard.AccessRequestTypePassword, false, false, safeguard.Filter{})
 	if err != nil {
 		fmt.Printf("Error getting entitlements: %s\n", err)
 		panic(err)

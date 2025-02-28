@@ -6,8 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
-
-	"github.com/sthayduk/safeguard-go/client"
 )
 
 // AccessRequestRole represents the role of a user in an access request
@@ -252,7 +250,7 @@ type AccessRequestReviewBatchResponse struct {
 // Returns:
 //   - []AccessRequest: Matching access requests
 //   - error: API or unmarshalling errors
-func GetAccessRequests(filter client.Filter) ([]AccessRequest, error) {
+func GetAccessRequests(filter Filter) ([]AccessRequest, error) {
 
 	query := "AccessRequests" + filter.ToQueryString()
 
@@ -278,7 +276,7 @@ func GetAccessRequests(filter client.Filter) ([]AccessRequest, error) {
 // Returns:
 //   - AccessRequest: The retrieved access request.
 //   - error: An error if the request fails or unmarshalling fails.
-func GetAccessRequest(id string, fields client.Fields) (AccessRequest, error) {
+func GetAccessRequest(id string, fields Fields) (AccessRequest, error) {
 
 	query := "AccessRequests/" + id
 	if fields != nil {

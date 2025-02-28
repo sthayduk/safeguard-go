@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
-
-	"github.com/sthayduk/safeguard-go/client"
 )
 
 // Asset represents a Safeguard asset
@@ -305,7 +303,7 @@ func (a Asset) ToJson() (string, error) {
 // Returns:
 //   - ([]Asset): Slice of matching assets
 //   - (error): An error if the API request fails
-func GetAssets(fields client.Filter) ([]Asset, error) {
+func GetAssets(fields Filter) ([]Asset, error) {
 	var assets []Asset
 
 	query := "Assets" + fields.ToQueryString()
@@ -332,7 +330,7 @@ func GetAssets(fields client.Filter) ([]Asset, error) {
 // Returns:
 //   - (Asset): The requested asset
 //   - (error): An error if the API request fails
-func GetAsset(id int, fields client.Fields) (Asset, error) {
+func GetAsset(id int, fields Fields) (Asset, error) {
 	var asset Asset
 
 	query := fmt.Sprintf("Assets/%d", id)
@@ -362,7 +360,7 @@ func GetAsset(id int, fields client.Fields) (Asset, error) {
 // Returns:
 //   - ([]AssetAccount): Slice of matching directory accounts
 //   - (error): An error if the API request fails
-func GetAssetDirectoryAccounts(assetId int, filter client.Filter) ([]AssetAccount, error) {
+func GetAssetDirectoryAccounts(assetId int, filter Filter) ([]AssetAccount, error) {
 	var accounts []AssetAccount
 
 	query := fmt.Sprintf("Assets/%d/DirectoryAccounts%s", assetId, filter.ToQueryString())
@@ -388,7 +386,7 @@ func GetAssetDirectoryAccounts(assetId int, filter client.Filter) ([]AssetAccoun
 // Returns:
 //   - ([]AssetAccount): Slice of matching directory accounts
 //   - (error): An error if the API request fails
-func (a Asset) GetDirectoryAccounts(filter client.Filter) ([]AssetAccount, error) {
+func (a Asset) GetDirectoryAccounts(filter Filter) ([]AssetAccount, error) {
 	return GetAssetDirectoryAccounts(a.Id, filter)
 }
 
@@ -401,7 +399,7 @@ func (a Asset) GetDirectoryAccounts(filter client.Filter) ([]AssetAccount, error
 // Returns:
 //   - ([]Asset): Slice of matching directory assets
 //   - (error): An error if the API request fails
-func GetAssetDirectoryAssets(assetId int, filter client.Filter) ([]Asset, error) {
+func GetAssetDirectoryAssets(assetId int, filter Filter) ([]Asset, error) {
 	var assets []Asset
 
 	query := fmt.Sprintf("Assets/%d/DirectoryAssets", assetId)
@@ -430,7 +428,7 @@ func GetAssetDirectoryAssets(assetId int, filter client.Filter) ([]Asset, error)
 // Returns:
 //   - ([]Asset): Slice of matching directory assets
 //   - (error): An error if the API request fails
-func (a Asset) GetDirectoryAssets(filter client.Filter) ([]Asset, error) {
+func (a Asset) GetDirectoryAssets(filter Filter) ([]Asset, error) {
 	return GetAssetDirectoryAssets(a.Id, filter)
 }
 
@@ -443,7 +441,7 @@ func (a Asset) GetDirectoryAssets(filter client.Filter) ([]Asset, error) {
 // Returns:
 //   - ([]DirectoryServiceEntry): Slice of matching directory service entries
 //   - (error): An error if the API request fails
-func GetAssetDirectoryServiceEntries(assetId int, filter client.Filter) ([]DirectoryServiceEntry, error) {
+func GetAssetDirectoryServiceEntries(assetId int, filter Filter) ([]DirectoryServiceEntry, error) {
 	var entries []DirectoryServiceEntry
 
 	query := fmt.Sprintf("Assets/%d/DirectoryServiceEntries", assetId)
@@ -472,6 +470,6 @@ func GetAssetDirectoryServiceEntries(assetId int, filter client.Filter) ([]Direc
 // Returns:
 //   - ([]DirectoryServiceEntry): Slice of matching directory service entries
 //   - (error): An error if the API request fails
-func (a Asset) GetDirectoryServiceEntries(filter client.Filter) ([]DirectoryServiceEntry, error) {
+func (a Asset) GetDirectoryServiceEntries(filter Filter) ([]DirectoryServiceEntry, error) {
 	return GetAssetDirectoryServiceEntries(a.Id, filter)
 }

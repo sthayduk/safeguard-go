@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/sthayduk/safeguard-go/client"
 )
 
 // UserLogProperties represents the user properties in a log entry including permissions,
@@ -421,7 +420,7 @@ func (p PasswordActivityLog) getMatchingAccountTask(ctx context.Context) (Accoun
 		return AccountTaskData{}, fmt.Errorf("invalid task ID format: %v", err)
 	}
 
-	filter := client.Filter{}
+	filter := Filter{}
 	filter.AddFilter("Id", "eq", fmt.Sprintf("%d", p.AccountId))
 
 	ticker := time.NewTicker(500 * time.Millisecond)

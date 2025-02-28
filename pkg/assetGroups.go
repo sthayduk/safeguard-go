@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
-
-	"github.com/sthayduk/safeguard-go/client"
 )
 
 // AssetGroup represents a group of assets on the appliance for use in session policy.
@@ -70,7 +68,7 @@ func (a AssetGroup) ToJson() (string, error) {
 // Returns:
 //   - ([]AssetGroup): Slice of matching asset groups
 //   - (error): An error if the API request fails
-func GetAssetGroups(filter client.Filter) ([]AssetGroup, error) {
+func GetAssetGroups(filter Filter) ([]AssetGroup, error) {
 	var assetGroup []AssetGroup
 
 	query := "AssetGroups" + filter.ToQueryString()
@@ -94,7 +92,7 @@ func GetAssetGroups(filter client.Filter) ([]AssetGroup, error) {
 // Returns:
 //   - (AssetGroup): The requested asset group
 //   - (error): An error if the API request fails
-func GetAssetGroup(id int, fields client.Fields) (AssetGroup, error) {
+func GetAssetGroup(id int, fields Fields) (AssetGroup, error) {
 	var assetGroup AssetGroup
 
 	query := fmt.Sprintf("AssetGroups/%d", id)

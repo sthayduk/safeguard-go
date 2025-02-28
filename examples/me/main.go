@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	safeguard "github.com/sthayduk/safeguard-go"
-	"github.com/sthayduk/safeguard-go/client"
 	"github.com/sthayduk/safeguard-go/examples/common"
 )
 
@@ -16,7 +15,7 @@ func main() {
 
 	// Example 1: Get information about the current user
 	fmt.Println("Example 1: Getting current user information")
-	filter := client.Filter{}
+	filter := safeguard.Filter{}
 	filter.AddField("Name")
 	filter.AddField("EmailAddress")
 	filter.AddField("AdminRoles")
@@ -33,7 +32,7 @@ func main() {
 
 	// Example 2: Get assets available for access requests
 	fmt.Println("Example 2: Getting accessible assets")
-	assetFilter := client.Filter{}
+	assetFilter := safeguard.Filter{}
 	assetFilter.AddField("Name")
 	assetFilter.AddField("NetworkAddress")
 	assetFilter.AddField("Platform.DisplayName")
@@ -72,7 +71,7 @@ func main() {
 
 	// Example 4: Get actionable requests with detailed information
 	fmt.Println("Example 4: Getting actionable requests with details")
-	requestFilter := client.Filter{}
+	requestFilter := safeguard.Filter{}
 	actionableRequests, err := safeguard.GetMeActionableRequestsDetailed(requestFilter)
 	if err != nil {
 		fmt.Printf("Error getting actionable requests: %s\n", err)

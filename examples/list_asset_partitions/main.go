@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	safeguard "github.com/sthayduk/safeguard-go"
-	"github.com/sthayduk/safeguard-go/client"
 	"github.com/sthayduk/safeguard-go/examples/common"
 )
 
@@ -14,7 +13,7 @@ func main() {
 		panic(err)
 	}
 
-	partitions, err := safeguard.GetAssetPartitions(client.Filter{})
+	partitions, err := safeguard.GetAssetPartitions(safeguard.Filter{})
 	if err != nil {
 		panic(err)
 	}

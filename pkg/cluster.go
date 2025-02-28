@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
-
-	"github.com/sthayduk/safeguard-go/client"
 )
 
 // ClusterMember represents a node in the Safeguard cluster
@@ -110,7 +108,7 @@ const (
 // Returns:
 //   - []ClusterMember: A slice of cluster members matching the filter criteria
 //   - error: An error if the API request fails or the response cannot be parsed
-func GetClusterMembers(filter client.Filter) ([]ClusterMember, error) {
+func GetClusterMembers(filter Filter) ([]ClusterMember, error) {
 	var clusterMembers []ClusterMember
 
 	query := "Cluster/Members" + filter.ToQueryString()
@@ -161,7 +159,7 @@ func GetClusterMember(id string) (*ClusterMember, error) {
 //   - *ClusterMember: The cluster member that is currently the leader, or nil if no leader is found
 //   - error: An error if no leader is found, multiple leaders are detected, or the request fails
 func GetClusterLeader() (*ClusterMember, error) {
-	filter := client.Filter{}
+	filter := Filter{}
 	filter.AddFilter("IsLeader", "eq", "true")
 
 	clusterMembers, err := GetClusterMembers(filter)

@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
-
-	"github.com/sthayduk/safeguard-go/client"
 )
 
 // AssetPartition represents a collection of assets and accounts along with management configuration.
@@ -111,7 +109,7 @@ func (r AccountPasswordRule) ToJson() (string, error) {
 // Returns:
 //   - ([]AssetPartition): Slice of matching asset partitions
 //   - (error): An error if the API request fails
-func GetAssetPartitions(filter client.Filter) ([]AssetPartition, error) {
+func GetAssetPartitions(filter Filter) ([]AssetPartition, error) {
 	var AssetPartitions []AssetPartition
 
 	query := "AssetPartitions" + filter.ToQueryString()
@@ -134,7 +132,7 @@ func GetAssetPartitions(filter client.Filter) ([]AssetPartition, error) {
 // Returns:
 //   - (AssetPartition): The requested asset partition
 //   - (error): An error if the API request fails
-func GetAssetPartition(id int, fields client.Fields) (AssetPartition, error) {
+func GetAssetPartition(id int, fields Fields) (AssetPartition, error) {
 	var AssetPartition AssetPartition
 
 	query := fmt.Sprintf("AssetPartitions/%d", id)
@@ -156,7 +154,7 @@ func GetAssetPartition(id int, fields client.Fields) (AssetPartition, error) {
 //   - ([]AccountPasswordRule): Slice of password rules for this partition
 //   - (error): An error if the API request fails
 func (a AssetPartition) GetPasswordRules() ([]AccountPasswordRule, error) {
-	return GetPasswordRules(a, client.Filter{})
+	return GetPasswordRules(a, Filter{})
 }
 
 // GetPasswordRules retrieves password rules for the specified asset partition.
@@ -168,7 +166,7 @@ func (a AssetPartition) GetPasswordRules() ([]AccountPasswordRule, error) {
 // Returns:
 //   - ([]AccountPasswordRule): Slice of matching password rules
 //   - (error): An error if the API request fails or no rules are found
-func GetPasswordRules(assetPartition AssetPartition, filter client.Filter) ([]AccountPasswordRule, error) {
+func GetPasswordRules(assetPartition AssetPartition, filter Filter) ([]AccountPasswordRule, error) {
 	var PasswordRules []AccountPasswordRule
 
 	query := fmt.Sprintf("AssetPartitions/%d/Profiles", assetPartition.Id) + filter.ToQueryString()

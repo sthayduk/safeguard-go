@@ -3,8 +3,6 @@ package pkg
 import (
 	"encoding/json"
 	"fmt"
-
-	"github.com/sthayduk/safeguard-go/client"
 )
 
 // PolicyAccount represents a Safeguard account with its associated policies and properties
@@ -112,7 +110,7 @@ func (p PolicyAccount) ToJson() (string, error) {
 //
 // Example:
 //
-//	fields := client.Filter{}
+//	fields := Filter{}
 //	fields.AddFilter("Disabled", "eq", "false")
 //	fields.AddFilter("PlatformId", "eq", "1")
 //	accounts, err := GetPolicyAccounts(fields)
@@ -123,7 +121,7 @@ func (p PolicyAccount) ToJson() (string, error) {
 // Returns:
 //   - []PolicyAccount: A slice of PolicyAccount objects matching the filter criteria
 //   - error: An error if the request fails or response parsing fails, nil otherwise
-func GetPolicyAccounts(fields client.Filter) ([]PolicyAccount, error) {
+func GetPolicyAccounts(fields Filter) ([]PolicyAccount, error) {
 	var policyAccounts []PolicyAccount
 
 	query := "PolicyAccounts" + fields.ToQueryString()
@@ -145,7 +143,7 @@ func GetPolicyAccounts(fields client.Filter) ([]PolicyAccount, error) {
 //
 // Example:
 //
-//	fields := client.Fields{}
+//	fields := Fields{}
 //	fields.Add("Asset", "Platform", "Owner")
 //	account, err := GetPolicyAccount(123, fields)
 //
@@ -156,7 +154,7 @@ func GetPolicyAccounts(fields client.Filter) ([]PolicyAccount, error) {
 // Returns:
 //   - PolicyAccount: The requested policy account with all specified related objects
 //   - error: An error if the account is not found or request fails, nil otherwise
-func GetPolicyAccount(id int, fields client.Fields) (PolicyAccount, error) {
+func GetPolicyAccount(id int, fields Fields) (PolicyAccount, error) {
 	var policyAccount PolicyAccount
 
 	query := fmt.Sprintf("PolicyAccounts/%d", id)

@@ -5,7 +5,6 @@ import (
 	"log"
 
 	safeguard "github.com/sthayduk/safeguard-go"
-	"github.com/sthayduk/safeguard-go/client"
 	"github.com/sthayduk/safeguard-go/examples/common"
 )
 
@@ -38,7 +37,7 @@ func main() {
 }
 
 func listAccessPolicies() {
-	filter := client.Filter{}
+	filter := safeguard.Filter{}
 	policies, err := safeguard.GetAccessPolicies(filter)
 	if err != nil {
 		log.Printf("Failed to get access policies: %v", err)
@@ -52,7 +51,7 @@ func listAccessPolicies() {
 }
 
 func getSpecificPolicy(policyID int) {
-	fields := client.Fields{}
+	fields := safeguard.Fields{}
 	policy, err := safeguard.GetAccessPolicy(policyID, fields)
 	if err != nil {
 		log.Printf("Failed to get access policy %d: %v", policyID, err)
@@ -68,7 +67,7 @@ func getSpecificPolicy(policyID int) {
 }
 
 func workWithReasonCodes(policyID int) {
-	fields := client.Fields{}
+	fields := safeguard.Fields{}
 	policy, err := safeguard.GetAccessPolicy(policyID, fields)
 	if err != nil {
 		log.Printf("Failed to get access policy %d: %v", policyID, err)
@@ -89,7 +88,7 @@ func workWithReasonCodes(policyID int) {
 }
 
 func deletePolicy(policyID int) {
-	fields := client.Fields{}
+	fields := safeguard.Fields{}
 	policy, err := safeguard.GetAccessPolicy(policyID, fields)
 	if err != nil {
 		log.Printf("Failed to get access policy %d: %v", policyID, err)
@@ -105,7 +104,7 @@ func deletePolicy(policyID int) {
 }
 
 func dumpAllReasonCodes() {
-	filter := client.Filter{}
+	filter := safeguard.Filter{}
 	policies, err := safeguard.GetAccessPolicies(filter)
 	if err != nil {
 		log.Printf("Failed to get access policies: %v", err)

@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
-
-	"github.com/sthayduk/safeguard-go/client"
 )
 
 // Role represents roles in Safeguard made up of members, security scopes, and permissions
@@ -84,7 +82,7 @@ type HourlyRestrictionProperties struct {
 //
 // Example:
 //
-//	filter := client.Filter{}
+//	filter := Filter{}
 //	filter.AddFilter("IsExpired", "eq", "false")
 //	roles, err := GetRoles(filter)
 //
@@ -94,7 +92,7 @@ type HourlyRestrictionProperties struct {
 // Returns:
 //   - []Role: A slice of roles matching the filter criteria
 //   - error: An error if the request fails, nil otherwise
-func GetRoles(fields client.Filter) ([]Role, error) {
+func GetRoles(fields Filter) ([]Role, error) {
 	var userRoles []Role
 
 	query := "Roles" + fields.ToQueryString()
@@ -118,7 +116,7 @@ func GetRoles(fields client.Filter) ([]Role, error) {
 //
 // Example:
 //
-//	filter := client.Filter{}
+//	filter := Filter{}
 //	entitlements, err := GetEntitlements(filter)
 //
 // Parameters:
@@ -127,7 +125,7 @@ func GetRoles(fields client.Filter) ([]Role, error) {
 // Returns:
 //   - []Role: A slice of roles matching the filter criteria
 //   - error: An error if the request fails, nil otherwise
-func GetEntitlements(fields client.Filter) ([]Role, error) {
+func GetEntitlements(fields Filter) ([]Role, error) {
 	return GetRoles(fields)
 }
 
@@ -138,7 +136,7 @@ func GetEntitlements(fields client.Filter) ([]Role, error) {
 //
 // Example:
 //
-//	fields := client.Fields{}
+//	fields := Fields{}
 //	fields.Add("Members", "Policies")
 //	role, err := GetRole(123, fields)
 //
@@ -149,7 +147,7 @@ func GetEntitlements(fields client.Filter) ([]Role, error) {
 // Returns:
 //   - Role: The requested role with all specified related objects
 //   - error: An error if the role is not found or request fails, nil otherwise
-func GetRole(id int, fields client.Fields) (Role, error) {
+func GetRole(id int, fields Fields) (Role, error) {
 	var userRole Role
 
 	query := fmt.Sprintf("Roles/%d", id)
@@ -175,7 +173,7 @@ func GetRole(id int, fields client.Fields) (Role, error) {
 //
 // Example:
 //
-//	fields := client.Fields{}
+//	fields := Fields{}
 //	entitlement, err := GetEntitlement(123, fields)
 //
 // Parameters:
@@ -185,7 +183,7 @@ func GetRole(id int, fields client.Fields) (Role, error) {
 // Returns:
 //   - Role: The requested role with all specified related objects
 //   - error: An error if the role is not found or request fails, nil otherwise
-func GetEntitlement(id int, fields client.Fields) (Role, error) {
+func GetEntitlement(id int, fields Fields) (Role, error) {
 	return GetRole(id, fields)
 }
 
@@ -196,7 +194,7 @@ func GetEntitlement(id int, fields client.Fields) (Role, error) {
 //
 // Example:
 //
-//	filter := client.Filter{}
+//	filter := Filter{}
 //	filter.AddFilter("PrincipalKind", "eq", "User")
 //	members, err := GetRoleMembers(123, filter)
 //
@@ -207,7 +205,7 @@ func GetEntitlement(id int, fields client.Fields) (Role, error) {
 // Returns:
 //   - []ManagedByUser: A slice of users who are members of the role
 //   - error: An error if the request fails, nil otherwise
-func GetRoleMembers(id int, filter client.Filter) ([]ManagedByUser, error) {
+func GetRoleMembers(id int, filter Filter) ([]ManagedByUser, error) {
 	var members []ManagedByUser
 
 	query := fmt.Sprintf("Roles/%d/Members%s", id, filter.ToQueryString())
@@ -230,7 +228,7 @@ func GetRoleMembers(id int, filter client.Filter) ([]ManagedByUser, error) {
 //
 // Example:
 //
-//	filter := client.Filter{}
+//	filter := Filter{}
 //	members, err := role.GetMembers(filter)
 //
 // Parameters:
@@ -239,7 +237,7 @@ func GetRoleMembers(id int, filter client.Filter) ([]ManagedByUser, error) {
 // Returns:
 //   - []ManagedByUser: A slice of users who are members of the role
 //   - error: An error if the request fails, nil otherwise
-func (r Role) GetMembers(filter client.Filter) ([]ManagedByUser, error) {
+func (r Role) GetMembers(filter Filter) ([]ManagedByUser, error) {
 	return GetRoleMembers(r.Id, filter)
 }
 
@@ -250,7 +248,7 @@ func (r Role) GetMembers(filter client.Filter) ([]ManagedByUser, error) {
 //
 // Example:
 //
-//	filter := client.Filter{}
+//	filter := Filter{}
 //	filter.AddFilter("IsExpired", "eq", "false")
 //	policies, err := GetRolePolicies(123, filter)
 //
@@ -261,7 +259,7 @@ func (r Role) GetMembers(filter client.Filter) ([]ManagedByUser, error) {
 // Returns:
 //   - []AccessPolicy: A slice of access policies associated with the role
 //   - error: An error if the request fails, nil otherwise
-func GetRolePolicies(id int, filter client.Filter) ([]AccessPolicy, error) {
+func GetRolePolicies(id int, filter Filter) ([]AccessPolicy, error) {
 	var policies []AccessPolicy
 
 	query := fmt.Sprintf("Roles/%d/Policies%s", id, filter.ToQueryString())
@@ -285,7 +283,7 @@ func GetRolePolicies(id int, filter client.Filter) ([]AccessPolicy, error) {
 //
 // Example:
 //
-//	filter := client.Filter{}
+//	filter := Filter{}
 //	policies, err := role.GetPolicies(filter)
 //
 // Parameters:
@@ -294,6 +292,6 @@ func GetRolePolicies(id int, filter client.Filter) ([]AccessPolicy, error) {
 // Returns:
 //   - []AccessPolicy: A slice of access policies associated with the role
 //   - error: An error if the request fails, nil otherwise
-func (r Role) GetPolicies(filter client.Filter) ([]AccessPolicy, error) {
+func (r Role) GetPolicies(filter Filter) ([]AccessPolicy, error) {
 	return GetRolePolicies(r.Id, filter)
 }

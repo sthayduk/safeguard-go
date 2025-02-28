@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	safeguard "github.com/sthayduk/safeguard-go"
-	"github.com/sthayduk/safeguard-go/client"
 	"github.com/sthayduk/safeguard-go/examples/common"
 )
 
@@ -15,7 +14,7 @@ func main() {
 	}
 
 	// Example: GetClusterMembers
-	filter := client.Filter{}
+	filter := safeguard.Filter{}
 	clusterMembers, err := safeguard.GetClusterMembers(filter)
 	if err != nil {
 		fmt.Printf("Error getting cluster members: %v\n", err)

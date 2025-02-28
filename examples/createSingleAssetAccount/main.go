@@ -10,7 +10,6 @@ import (
 	safeguard "github.com/sthayduk/safeguard-go"
 
 	"github.com/fatih/color"
-	"github.com/sthayduk/safeguard-go/client"
 	"github.com/sthayduk/safeguard-go/examples/common"
 )
 
@@ -36,14 +35,14 @@ func main() {
 
 	// Get the Active Directory
 	logger.Printf("Getting Active Directory with ID: %d", adId)
-	ad, err := safeguard.GetAsset(adId, client.Fields{"Id", "Name"})
+	ad, err := safeguard.GetAsset(adId, safeguard.Fields{"Id", "Name"})
 	if err != nil {
 		logger.Fatalf("Failed to get Active Directory: %v", err)
 	}
 
 	// Search for the user
 	logger.Printf("Searching for user: %s", samAccountName)
-	filter := client.Filter{}
+	filter := safeguard.Filter{}
 	filter.AddFilter("Name", "eq", samAccountName)
 	users, err := ad.GetDirectoryAccounts(filter)
 	if err != nil {
@@ -90,12 +89,12 @@ func main() {
 
 	// Update Password Profile
 	logger.Println("Updating password profile...")
-	assetPartition, err := safeguard.GetAssetPartition(1, client.Fields{"Id", "Name"})
+	assetPartition, err := safeguard.GetAssetPartition(1, safeguard.Fields{"Id", "Name"})
 	if err != nil {
 		logger.Fatalf("Failed to get asset partition: %v", err)
 	}
 
-	filter = client.Filter{}
+	filter = safeguard.Filter{}
 	filter.AddFilter("Name", "eq", "ITdesign Profile Suspend")
 	passwordProfile, err := safeguard.GetPasswordRules(assetPartition, filter)
 	if err != nil {

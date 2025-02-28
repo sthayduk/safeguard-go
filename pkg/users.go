@@ -88,7 +88,7 @@ func (u User) ToJson() (string, error) {
 //
 // Example:
 //
-//	filter := client.Filter{}
+//	filter := Filter{}
 //	filter.AddFilter("Disabled", "eq", "false")
 //	users, err := GetUsers(filter)
 //
@@ -98,7 +98,7 @@ func (u User) ToJson() (string, error) {
 // Returns:
 //   - []User: A slice of users matching the filter criteria
 //   - error: An error if the request fails, nil otherwise
-func GetUsers(fields client.Filter) ([]User, error) {
+func GetUsers(fields Filter) ([]User, error) {
 	var users []User
 
 	query := "users" + fields.ToQueryString()
@@ -125,7 +125,7 @@ func GetUsers(fields client.Filter) ([]User, error) {
 //
 // Example:
 //
-//	fields := client.Fields{}
+//	fields := Fields{}
 //	fields.Add("LinkedAccounts", "Preferences")
 //	user, err := GetUser(123, fields)
 //
@@ -136,7 +136,7 @@ func GetUsers(fields client.Filter) ([]User, error) {
 // Returns:
 //   - User: The requested user with all specified related objects
 //   - error: An error if the user is not found or request fails, nil otherwise
-func GetUser(id int, fields client.Fields) (User, error) {
+func GetUser(id int, fields Fields) (User, error) {
 	var user User
 	user.client = c
 

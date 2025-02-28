@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"strconv"
 	"time"
-
-	"github.com/sthayduk/safeguard-go/client"
 )
 
 // AccountEntitlement represents the full account entitlement structure
@@ -22,8 +20,8 @@ func (m AccountEntitlement) GetAccountId() int {
 }
 
 // GetFilter returns a filter object configured with the account ID
-func (m AccountEntitlement) GetFilter() client.Filter {
-	var filter client.Filter
+func (m AccountEntitlement) GetFilter() Filter {
+	var filter Filter
 	filter.AddFilter("AccountId", "eq", strconv.Itoa(m.GetAccountId()))
 	return filter
 }
@@ -165,7 +163,7 @@ const (
 // Returns:
 //   - User: The user information for the authenticated user
 //   - error: An error if the request fails or the response cannot be parsed
-func GetMe(filter client.Filter) (User, error) {
+func GetMe(filter Filter) (User, error) {
 	query := "me" + filter.ToQueryString()
 
 	response, err := c.GetRequest(query)
@@ -189,7 +187,7 @@ func GetMe(filter client.Filter) (User, error) {
 // Returns:
 //   - []PolicyAsset: A slice of assets the user can request access to
 //   - error: An error if the request fails or the response cannot be parsed
-func GetMeAccessRequestAssets(filter client.Filter) ([]PolicyAsset, error) {
+func GetMeAccessRequestAssets(filter Filter) ([]PolicyAsset, error) {
 	var assets []PolicyAsset
 
 	query := "me/AccessRequestAssets" + filter.ToQueryString()
@@ -238,7 +236,7 @@ func GetMeAccessRequestAsset(assetId string) (PolicyAsset, error) {
 // Returns:
 //   - map[AccessRequestRole][]AccessRequest: Access requests grouped by role
 //   - error: An error if the request fails or the response cannot be parsed
-func GetMeActionableRequests(filter client.Filter) (map[AccessRequestRole][]AccessRequest, error) {
+func GetMeActionableRequests(filter Filter) (map[AccessRequestRole][]AccessRequest, error) {
 	query := "me/ActionableRequests" + filter.ToQueryString()
 
 	response, err := c.GetRequest(query)
@@ -263,7 +261,7 @@ func GetMeActionableRequests(filter client.Filter) (map[AccessRequestRole][]Acce
 // Returns:
 //   - []AccessRequest: Access requests for the specified role
 //   - error: An error if the request fails or the response cannot be parsed
-func GetMeActionableRequestsByRole(role AccessRequestRole, filter client.Filter) ([]AccessRequest, error) {
+func GetMeActionableRequestsByRole(role AccessRequestRole, filter Filter) ([]AccessRequest, error) {
 	query := "me/ActionableRequests/" + string(role) + filter.ToQueryString()
 
 	response, err := c.GetRequest(query)
@@ -298,7 +296,7 @@ type ActionableRequestsResult struct {
 // Returns:
 //   - ActionableRequestsResult: Processed access requests with additional metadata
 //   - error: An error if the request fails or the response cannot be parsed
-func GetMeActionableRequestsDetailed(filter client.Filter) (ActionableRequestsResult, error) {
+func GetMeActionableRequestsDetailed(filter Filter) (ActionableRequestsResult, error) {
 	requests, err := GetMeActionableRequests(filter)
 	if err != nil {
 		return ActionableRequestsResult{}, err
@@ -392,7 +390,7 @@ func (r *ActionableRequestsResult) GetRequestsForRole(role AccessRequestRole) []
 // Returns:
 //   - []AccountEntitlement: A slice of account entitlements for the user
 //   - error: An error if the request fails or the response cannot be parsed
-func GetMeAccountEntitlements(accessRequestType AccessRequestType, includeActiveRequests bool, filterByCredential bool, filter client.Filter) ([]AccountEntitlement, error) {
+func GetMeAccountEntitlements(accessRequestType AccessRequestType, includeActiveRequests bool, filterByCredential bool, filter Filter) ([]AccountEntitlement, error) {
 	var entitlements []AccountEntitlement
 
 	query := "me/AccountEntitlements" + filter.ToQueryString() +

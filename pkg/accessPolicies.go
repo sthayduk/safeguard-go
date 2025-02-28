@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
-
-	"github.com/sthayduk/safeguard-go/client"
 )
 
 // SessionAccessAccountType represents the type of session access account
@@ -233,7 +231,7 @@ type ReviewerProperties struct {
 // Returns:
 //   - A slice of AccessPolicy objects.
 //   - An error if the request fails or the response cannot be unmarshaled.
-func GetAccessPolicies(filter client.Filter) ([]AccessPolicy, error) {
+func GetAccessPolicies(filter Filter) ([]AccessPolicy, error) {
 	var accessPolicies []AccessPolicy
 
 	query := "AccessPolicies" + filter.ToQueryString()
@@ -260,7 +258,7 @@ func GetAccessPolicies(filter client.Filter) ([]AccessPolicy, error) {
 // Returns:
 //   - AccessPolicy: The retrieved access policy.
 //   - error: An error if any occurred during the request or unmarshalling process.
-func GetAccessPolicy(id int, fields client.Fields) (AccessPolicy, error) {
+func GetAccessPolicy(id int, fields Fields) (AccessPolicy, error) {
 	var accessPolicy AccessPolicy
 
 	query := fmt.Sprintf("AccessPolicies/%d", id)

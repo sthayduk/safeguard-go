@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
-
-	"github.com/sthayduk/safeguard-go/client"
 )
 
 // ManagedByUser represents the user or identity that manages an asset account,
@@ -259,7 +257,7 @@ func (ab AssetAccountBatchResponse) hasError() error {
 // Returns:
 //   - []AssetAccount: Matching accounts
 //   - error: API or unmarshalling errors
-func GetAssetAccounts(filter client.Filter) ([]AssetAccount, error) {
+func GetAssetAccounts(filter Filter) ([]AssetAccount, error) {
 	var users []AssetAccount
 
 	query := "AssetAccounts" + filter.ToQueryString()
@@ -285,7 +283,7 @@ func GetAssetAccounts(filter client.Filter) ([]AssetAccount, error) {
 // Returns:
 //   - AssetAccount: The requested asset account
 //   - error: An error if the request fails, nil otherwise
-func GetAssetAccount(id int, fields client.Fields) (AssetAccount, error) {
+func GetAssetAccount(id int, fields Fields) (AssetAccount, error) {
 	var user AssetAccount
 
 	query := fmt.Sprintf("AssetAccounts/%d", id)
