@@ -58,8 +58,20 @@ type User struct {
 }
 
 // ToJson converts a User object to its JSON string representation.
+//
+// This method serializes all fields of the User object into a JSON-formatted string.
+// Empty or zero-valued fields are included in the output.
+//
+// Example:
+//
+//	user := User{
+//	    Name: "John Smith",
+//	    EmailAddress: "john.smith@example.com"
+//	}
+//	json, err := user.ToJson()
+//
 // Returns:
-//   - string: The JSON string representation of the user
+//   - string: JSON representation of the user
 //   - error: An error if marshaling fails, nil otherwise
 func (u User) ToJson() (string, error) {
 	userJSON, err := json.Marshal(u)
@@ -70,9 +82,18 @@ func (u User) ToJson() (string, error) {
 }
 
 // GetUsers retrieves a list of users from Safeguard.
+//
+// This method returns all users matching the specified filter criteria. Common filters
+// include Name, EmailAddress, and Disabled.
+//
+// Example:
+//
+//	filter := client.Filter{}
+//	filter.AddFilter("Disabled", "eq", "false")
+//	users, err := GetUsers(filter)
+//
 // Parameters:
-//   - c: The SafeguardClient instance for making API requests
-//   - fields: Filter criteria for the request
+//   - fields: Filter object containing field comparisons and ordering preferences
 //
 // Returns:
 //   - []User: A slice of users matching the filter criteria
@@ -97,15 +118,24 @@ func GetUsers(fields client.Filter) ([]User, error) {
 	return users, nil
 }
 
-// GetUser retrieves details for a specific user by their ID.
+// GetUser retrieves details for a specific user by ID.
+//
+// This method returns detailed information about a single user, optionally including
+// related objects specified in the fields parameter.
+//
+// Example:
+//
+//	fields := client.Fields{}
+//	fields.Add("LinkedAccounts", "Preferences")
+//	user, err := GetUser(123, fields)
+//
 // Parameters:
-//   - c: The SafeguardClient instance for making API requests
-//   - id: The numeric ID of the user to retrieve
-//   - fields: Specific fields to include in the response
+//   - id: The unique identifier of the user to retrieve
+//   - fields: Optional Fields object specifying which related objects to include
 //
 // Returns:
-//   - User: The requested user object
-//   - error: An error if the request fails, nil otherwise
+//   - User: The requested user with all specified related objects
+//   - error: An error if the user is not found or request fails, nil otherwise
 func GetUser(id int, fields client.Fields) (User, error) {
 	var user User
 	user.client = c
@@ -128,9 +158,15 @@ func GetUser(id int, fields client.Fields) (User, error) {
 }
 
 // GetLinkedAccounts retrieves the policy accounts linked to a specific user ID.
+//
+// This method returns all policy accounts that are linked to the specified user.
+//
+// Example:
+//
+//	accounts, err := GetLinkedAccounts("123")
+//
 // Parameters:
-//   - c: The SafeguardClient instance for making API requests
-//   - id: The numeric ID of the user to get linked accounts for
+//   - id: The string identifier of the user
 //
 // Returns:
 //   - []PolicyAccount: A slice of linked policy accounts
@@ -153,8 +189,13 @@ func GetLinkedAccounts(id string) ([]PolicyAccount, error) {
 }
 
 // GetLinkedAccounts retrieves the policy accounts linked to this user.
-// Parameters:
-//   - c: The SafeguardClient instance for making API requests
+//
+// This method is a convenience wrapper around GetLinkedAccounts that uses the
+// current user's ID.
+//
+// Example:
+//
+//	accounts, err := user.GetLinkedAccounts()
 //
 // Returns:
 //   - []PolicyAccount: A slice of linked policy accounts
@@ -164,9 +205,15 @@ func (u User) GetLinkedAccounts() ([]PolicyAccount, error) {
 }
 
 // GetUserRoles retrieves the roles assigned to a specific user.
+//
+// This method returns all roles that have been assigned to the specified user.
+//
+// Example:
+//
+//	roles, err := GetUserRoles("123")
+//
 // Parameters:
-//   - c: The SafeguardClient instance for making API requests
-//   - id: The ID of the user
+//   - id: The string identifier of the user
 //
 // Returns:
 //   - []Role: A slice of assigned roles
@@ -188,8 +235,13 @@ func GetUserRoles(id string) ([]Role, error) {
 }
 
 // GetRoles retrieves the roles assigned to this user.
-// Parameters:
-//   - c: The SafeguardClient instance for making API requests
+//
+// This method is a convenience wrapper around GetUserRoles that uses the
+// current user's ID.
+//
+// Example:
+//
+//	roles, err := user.GetRoles()
 //
 // Returns:
 //   - []Role: A slice of assigned roles
@@ -199,9 +251,15 @@ func (u User) GetRoles() ([]Role, error) {
 }
 
 // GetGroups retrieves the groups that a specific user belongs to.
+//
+// This method returns all user groups that the specified user is a member of.
+//
+// Example:
+//
+//	groups, err := GetGroups("123")
+//
 // Parameters:
-//   - c: The SafeguardClient instance for making API requests
-//   - id: The ID of the user
+//   - id: The string identifier of the user
 //
 // Returns:
 //   - []UserGroup: A slice of user groups
@@ -223,8 +281,13 @@ func GetGroups(id string) ([]UserGroup, error) {
 }
 
 // GetGroups retrieves the groups that this user belongs to.
-// Parameters:
-//   - c: The SafeguardClient instance for making API requests
+//
+// This method is a convenience wrapper around GetGroups that uses the
+// current user's ID.
+//
+// Example:
+//
+//	groups, err := user.GetGroups()
 //
 // Returns:
 //   - []UserGroup: A slice of user groups
@@ -233,10 +296,16 @@ func (u User) GetGroups() ([]UserGroup, error) {
 	return GetGroups(fmt.Sprintf("%d", u.Id))
 }
 
-// GetUserPreferences retrieves the preferences for a specific user by ID.
+// GetUserPreferences retrieves the preferences for a specific user.
+//
+// This method returns all preferences associated with the specified user ID.
+//
+// Example:
+//
+//	prefs, err := GetUserPreferences(123)
+//
 // Parameters:
-//   - c: The SafeguardClient instance for making API requests
-//   - id: The numeric ID of the user whose preferences to retrieve
+//   - id: The unique identifier of the user
 //
 // Returns:
 //   - []Preference: A slice of user preferences
@@ -257,7 +326,15 @@ func GetUserPreferences(id int) ([]Preference, error) {
 	return userPreferences, nil
 }
 
-// GetPreferences retrieves the preferences for the current user instance.
+// GetPreferences retrieves the preferences for this user.
+//
+// This method is a convenience wrapper around GetUserPreferences that uses the
+// current user's ID.
+//
+// Example:
+//
+//	prefs, err := user.GetPreferences()
+//
 // Returns:
 //   - []Preference: A slice of user preferences
 //   - error: An error if the request fails, nil otherwise
@@ -265,18 +342,22 @@ func (u User) GetPreferences() ([]Preference, error) {
 	return GetUserPreferences(u.Id)
 }
 
-// AddLinkedAccounts adds linked policy accounts to a user in Safeguard.
-// It takes a SafeguardClient, a User, and a slice of PolicyAccount as parameters.
-// It returns a slice of PolicyAccount representing the linked accounts and an error if any occurred.
+// AddLinkedAccounts adds policy accounts to a user's linked accounts.
+//
+// This method associates the specified policy accounts with the given user.
+//
+// Example:
+//
+//	accounts := []PolicyAccount{{Id: 123}, {Id: 456}}
+//	linked, err := AddLinkedAccounts(user, accounts)
 //
 // Parameters:
-//   - c: A pointer to a SafeguardClient used to make API requests.
-//   - user: A User object representing the user to whom the policy accounts will be linked.
-//   - policyAccount: A slice of PolicyAccount objects to be linked to the user.
+//   - user: The user to link accounts to
+//   - policyAccount: A slice of policy accounts to link
 //
 // Returns:
-//   - []PolicyAccount: A slice of PolicyAccount objects that were successfully linked to the user.
-//   - error: An error object if an error occurred during the operation, otherwise nil.
+//   - []PolicyAccount: The linked policy accounts
+//   - error: An error if the operation fails, nil otherwise
 func AddLinkedAccounts(user User, policyAccount []PolicyAccount) ([]PolicyAccount, error) {
 	var linkedAccounts []PolicyAccount
 
@@ -292,29 +373,43 @@ func AddLinkedAccounts(user User, policyAccount []PolicyAccount) ([]PolicyAccoun
 	return linkedAccounts, nil
 }
 
-// AddLinkedAccounts adds linked policy accounts to the current user instance.
+// AddLinkedAccounts adds policy accounts to this user's linked accounts.
+//
+// This method is a convenience wrapper around AddLinkedAccounts that uses the
+// current user instance.
+//
+// Example:
+//
+//	accounts := []PolicyAccount{{Id: 123}}
+//	linked, err := user.AddLinkedAccounts(accounts)
+//
 // Parameters:
-//   - policyAccount: A slice of PolicyAccount objects to be linked to the user
+//   - policyAccount: A slice of policy accounts to link
 //
 // Returns:
-//   - []PolicyAccount: A slice of PolicyAccount objects that were successfully linked
+//   - []PolicyAccount: The linked policy accounts
 //   - error: An error if the operation fails, nil otherwise
 func (u User) AddLinkedAccounts(policyAccount []PolicyAccount) ([]PolicyAccount, error) {
 	return AddLinkedAccounts(u, policyAccount)
 }
 
-// RemoveLinkedAccounts removes linked policy accounts from a user in Safeguard.
-// It takes a SafeguardClient, a User, and a slice of PolicyAccount as parameters.
-// It returns a slice of PolicyAccount representing the linked accounts that were removed, and an error if any occurred.
+// RemoveLinkedAccounts removes policy accounts from a user's linked accounts.
+//
+// This method removes the association between the specified policy accounts
+// and the given user.
+//
+// Example:
+//
+//	accounts := []PolicyAccount{{Id: 123}}
+//	removed, err := RemoveLinkedAccounts(user, accounts)
 //
 // Parameters:
-//   - c: A pointer to a SafeguardClient used to make API requests.
-//   - user: A User object representing the user from whom linked accounts will be removed.
-//   - policyAccount: A slice of PolicyAccount objects representing the accounts to be removed.
+//   - user: The user to remove links from
+//   - policyAccount: A slice of policy accounts to unlink
 //
 // Returns:
-//   - []PolicyAccount: A slice of PolicyAccount objects that were removed.
-//   - error: An error object if an error occurred, otherwise nil.
+//   - []PolicyAccount: The unlinked policy accounts
+//   - error: An error if the operation fails, nil otherwise
 func RemoveLinkedAccounts(user User, policyAccount []PolicyAccount) ([]PolicyAccount, error) {
 	var linkedAccounts []PolicyAccount
 
@@ -330,12 +425,21 @@ func RemoveLinkedAccounts(user User, policyAccount []PolicyAccount) ([]PolicyAcc
 	return linkedAccounts, nil
 }
 
-// RemoveLinkedAccounts removes linked policy accounts from the current user instance.
+// RemoveLinkedAccounts removes policy accounts from this user's linked accounts.
+//
+// This method is a convenience wrapper around RemoveLinkedAccounts that uses the
+// current user instance.
+//
+// Example:
+//
+//	accounts := []PolicyAccount{{Id: 123}}
+//	removed, err := user.RemoveLinkedAccounts(accounts)
+//
 // Parameters:
-//   - policyAccount: A slice of PolicyAccount objects to be removed from the user
+//   - policyAccount: A slice of policy accounts to unlink
 //
 // Returns:
-//   - []PolicyAccount: A slice of PolicyAccount objects that were successfully removed
+//   - []PolicyAccount: The unlinked policy accounts
 //   - error: An error if the operation fails, nil otherwise
 func (u User) RemoveLinkedAccounts(policyAccount []PolicyAccount) ([]PolicyAccount, error) {
 	return RemoveLinkedAccounts(u, policyAccount)
@@ -362,19 +466,25 @@ func fetchAndPostPolicyAccount(policyAccount []PolicyAccount, query string) ([]b
 	return c.PostRequest(query, bytes.NewReader(policyAccountJson))
 }
 
-// CreateUser creates a new user in the Safeguard system.
-// It takes a SafeguardClient, a User object, an IdentityProvider, and an AuthenticationProvider as parameters.
-// It returns the created User object and an error if any occurred during the process.
+// CreateUser creates a new user in Safeguard.
+//
+// This method creates a new user with the provided user details and returns
+// the created user object.
+//
+// Example:
+//
+//	newUser := User{
+//	    Name: "john.smith",
+//	    EmailAddress: "john.smith@example.com"
+//	}
+//	created, err := CreateUser(newUser)
 //
 // Parameters:
-//   - c: A pointer to the SafeguardClient used to make the request.
-//   - user: The User object containing the details of the user to be created.
-//   - identityProvider: The IdentityProvider associated with the user.
-//   - authProvider: The AuthenticationProvider associated with the user.
+//   - user: The user object containing the new user's details
 //
 // Returns:
-//   - User: The created User object.
-//   - error: An error if any occurred during the user creation process.
+//   - User: The created user object
+//   - error: An error if the creation fails, nil otherwise
 func CreateUser(user User) (User, error) {
 	var createdUser User
 
@@ -396,17 +506,22 @@ func CreateUser(user User) (User, error) {
 	return createdUser, nil
 }
 
-// SetAuthenticationProvider sets the primary authentication provider for the user
-// and updates the user information in the Safeguard system.
+// SetAuthenticationProvider updates the primary authentication provider for this user.
+//
+// This method updates the user's primary authentication method and saves the
+// changes to Safeguard.
+//
+// Example:
+//
+//	provider := AuthenticationProvider{Id: 123}
+//	updated, err := user.SetAuthenticationProvider(provider)
 //
 // Parameters:
-//
-//	authProvider - The AuthenticationProvider to be set as the primary authentication provider.
+//   - authProvider: The new authentication provider to set
 //
 // Returns:
-//
-//	User - The updated User object with the new primary authentication provider.
-//	error - An error object if there was an issue updating the user information.
+//   - User: The updated user object
+//   - error: An error if the update fails, nil otherwise
 func (u User) SetAuthenticationProvider(authProvider AuthenticationProvider) (User, error) {
 	var updatedUser User
 
@@ -453,10 +568,16 @@ func updateUser(user User) (User, error) {
 	return updatedUser, nil
 }
 
-// DeleteUser removes a user from the Safeguard system by their ID.
+// DeleteUser removes a user from Safeguard.
+//
+// This method permanently deletes the specified user from the system.
+//
+// Example:
+//
+//	err := DeleteUser(123)
+//
 // Parameters:
-//   - c: The SafeguardClient instance for making API requests
-//   - id: The numeric ID of the user to delete
+//   - id: The unique identifier of the user to delete
 //
 // Returns:
 //   - error: An error if the deletion fails, nil otherwise
@@ -472,7 +593,15 @@ func DeleteUser(id int) error {
 	return nil
 }
 
-// Delete removes the current user instance from the Safeguard system.
+// Delete removes this user from Safeguard.
+//
+// This method is a convenience wrapper around DeleteUser that uses the
+// current user's ID.
+//
+// Example:
+//
+//	err := user.Delete()
+//
 // Returns:
 //   - error: An error if the deletion fails, nil otherwise
 func (u *User) Delete() error {

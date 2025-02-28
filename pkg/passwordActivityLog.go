@@ -193,12 +193,18 @@ type ConnectionProperties struct {
 // CheckTaskState monitors the state of a password activity task.
 // It polls the task status periodically until completion or timeout.
 //
+// Example:
+//
+//	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+//	defer cancel()
+//	success, err := passwordLog.CheckTaskState(ctx)
+//
 // Parameters:
-//   - ctx: Context for timeout and cancellation control
+//   - ctx: Context for timeout and cancellation control. Should include a reasonable timeout.
 //
 // Returns:
-//   - bool: true if task completed successfully, false if failed
-//   - error: An error if monitoring fails or times out
+//   - bool: true if task completed successfully, false if task failed or was cancelled
+//   - error: Error if monitoring fails, times out, or context is cancelled
 func (p *PasswordActivityLog) CheckTaskState(ctx context.Context) (bool, error) {
 	task, err := p.getMatchingAccountTask(ctx)
 	if err != nil {
@@ -249,16 +255,21 @@ func (p *PasswordActivityLog) CheckTaskState(ctx context.Context) (bool, error) 
 	}
 }
 
-// isTaskCompleteForType checks if a specific task type has completed successfully.
+// isTaskCompleteForType determines if a specific account task has completed successfully
+// by checking the appropriate timestamp or counter for the given task type.
+//
+// Example:
+//
+//	complete, err := isTaskCompleteForType(task, logTime, CheckPassword)
 //
 // Parameters:
-//   - task: The AccountTaskData to check
-//   - logTime: The time of the log entry to compare against
-//   - taskType: The type of task being checked
+//   - task: AccountTaskData containing the task execution details and properties
+//   - logTime: Reference time to compare against task completion timestamps
+//   - taskType: Specific type of account task being monitored (e.g., CheckPassword, ChangePassword)
 //
 // Returns:
-//   - bool: true if the task is complete, false otherwise
-//   - error: An error if the task type is unknown
+//   - bool: true if the task has completed successfully after the logTime
+//   - error: Error if the taskType is not recognized or supported
 func isTaskCompleteForType(task AccountTaskData, logTime time.Time, taskType AccountTaskNames) (bool, error) {
 	var successTime time.Time
 	var successCounter int
@@ -295,16 +306,21 @@ func isTaskCompleteForType(task AccountTaskData, logTime time.Time, taskType Acc
 	return !successTime.IsZero() && (successTime.After(logTime) || successTime.Equal(logTime)), nil
 }
 
-// isTaskFailedForType checks if a specific task type has failed.
+// isTaskFailedForType determines if a specific account task has failed
+// by checking the appropriate failure timestamp or counter for the given task type.
+//
+// Example:
+//
+//	failed, err := isTaskFailedForType(task, logTime, CheckPassword)
 //
 // Parameters:
-//   - task: The AccountTaskData to check
-//   - logTime: The time of the log entry to compare against
-//   - taskType: The type of task being checked
+//   - task: AccountTaskData containing the task execution details and properties
+//   - logTime: Reference time to compare against task failure timestamps
+//   - taskType: Specific type of account task being monitored (e.g., CheckPassword, ChangePassword)
 //
 // Returns:
-//   - bool: true if the task has failed, false otherwise
-//   - error: An error if the task type is unknown
+//   - bool: true if the task has failed after the logTime
+//   - error: Error if the taskType is not recognized or supported
 func isTaskFailedForType(task AccountTaskData, logTime time.Time, taskType AccountTaskNames) (bool, error) {
 	var failureTime time.Time
 	var failureCounter int
@@ -341,15 +357,20 @@ func isTaskFailedForType(task AccountTaskData, logTime time.Time, taskType Accou
 	return !failureTime.IsZero() && (failureTime.After(logTime) || failureTime.Equal(logTime)), nil
 }
 
-// getTaskIdForType retrieves the task ID for a specific task type.
+// getTaskIdForType retrieves the appropriate task identifier for a specific task type
+// from the AccountTaskData properties.
+//
+// Example:
+//
+//	taskId, err := getTaskIdForType(task, CheckPassword)
 //
 // Parameters:
-//   - task: The AccountTaskData containing the task information
-//   - taskType: The type of task to get the ID for
+//   - task: AccountTaskData containing task identifiers for various operations
+//   - taskType: Specific type of account task to get the ID for
 //
 // Returns:
-//   - string: The task ID
-//   - error: An error if the task type is unknown
+//   - string: Task identifier for the specified task type
+//   - error: Error if the taskType is not recognized or supported
 func getTaskIdForType(task AccountTaskData, taskType AccountTaskNames) (string, error) {
 	switch taskType {
 	case CheckPassword:
@@ -375,14 +396,21 @@ func getTaskIdForType(task AccountTaskData, taskType AccountTaskNames) (string, 
 	}
 }
 
-// getMatchingAccountTask retrieves the account task data matching the password activity log.
+// getMatchingAccountTask retrieves the AccountTaskData that matches this password activity log.
+// It continuously polls until the matching task is found or the context is cancelled.
+//
+// Example:
+//
+//	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+//	defer cancel()
+//	taskData, err := passwordLog.getMatchingAccountTask(ctx)
 //
 // Parameters:
-//   - ctx: Context for timeout and cancellation control
+//   - ctx: Context for timeout and cancellation control. Should include a reasonable timeout.
 //
 // Returns:
-//   - AccountTaskData: The matching task data
-//   - error: An error if the task cannot be found or if there's a timeout
+//   - AccountTaskData: Task data matching the password activity log's ID and account
+//   - error: Error if the task cannot be found, invalid ID format, or context timeout/cancellation
 func (p PasswordActivityLog) getMatchingAccountTask(ctx context.Context) (AccountTaskData, error) {
 	if p.Id == "" {
 		return AccountTaskData{}, fmt.Errorf("invalid task ID")

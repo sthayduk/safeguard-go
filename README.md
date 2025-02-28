@@ -135,10 +135,10 @@ import (
 )
 
 // Get all users
-users, err := GetUsers(client.Filter{})
+users, err := GetUsers(Filter{})
 
 // Get a specific user
-user, err := GetUser(userId, client.Fields{"Name", "Description"})
+user, err := GetUser(userId, Fields{"Name", "Description"})
 
 // Get user's linked accounts
 accounts, err := user.GetLinkedAccounts()
@@ -163,20 +163,20 @@ providers, err := GetIdentityProviders(sgc)
 provider, err := GetIdentityProvider(providerId)
 
 // Get directory users from provider
-users, err := provider.GetDirectoryUsers(client.Filter{})
+users, err := provider.GetDirectoryUsers(Filter{})
 
 // Get directory groups from provider
-groups, err := provider.GetDirectoryGroups(client.Filter{})
+groups, err := provider.GetDirectoryGroups(Filter{})
 ```
 
 ### Working with Asset Accounts
 
 ```go
 // Get all asset accounts
-accounts, err := GetAssetAccounts(client.Filter{})
+accounts, err := GetAssetAccounts(Filter{})
 
 // Get specific account
-account, err := GetAssetAccount(accountId, client.Fields{})
+account, err := GetAssetAccount(accountId, Fields{})
 
 // Check password
 log, err := account.CheckPassword()
@@ -189,13 +189,13 @@ log, err := account.ChangePassword()
 
 ```go
 // Get current user's actionable requests
-requests, err := GetMeActionableRequests(client.Filter{})
+requests, err := GetMeActionableRequests(Filter{})
 
 // Get requests for specific role
-requests, err := GetMeActionableRequestsByRole(ApproverRole, client.Filter{})
+requests, err := GetMeActionableRequestsByRole(ApproverRole, Filter{})
 
 // Get detailed actionable requests with helper methods
-result, err := GetMeActionableRequestsDetailed(client.Filter{})
+result, err := GetMeActionableRequestsDetailed(Filter{})
 
 // Get pending requests
 pending := result.GetPendingRequests()
@@ -208,10 +208,10 @@ entitlements, err := GetMeAccountEntitlements(
     PasswordEntitlement,
     true,  // includeActiveRequests
     false, // filterByCredential
-    client.Filter{})
+    Filter{})
 
 // Get accessible assets
-assets, err := GetMeAccessRequestAssets(client.Filter{})
+assets, err := GetMeAccessRequestAssets(Filter{})
 ```
 
 ## Query Parameters
@@ -220,12 +220,12 @@ The API supports filtering and field selection:
 
 ```go
 // Create a filter
-filter := client.Filter{}
+filter := Filter{}
 filter.AddFilter("Disabled", "eq", "true")
 filter.AddFilter("Name", "like", "admin")
 
 // Specify fields to return
-fields := client.Fields{"Name", "Description", "CreatedDate"}
+fields := Fields{"Name", "Description", "CreatedDate"}
 
 // Use in API calls
 users, err := GetUsers(filter)

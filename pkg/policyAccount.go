@@ -77,6 +77,26 @@ type Platform struct {
 	PlatformFamily            PlatformFamily `json:"PlatformFamily"`
 }
 
+// ToJson serializes a PolicyAccount object into a JSON string.
+//
+// This method converts the PolicyAccount instance into a JSON-formatted string,
+// including all defined fields. Empty or zero-valued fields are included in
+// the output.
+//
+// Example:
+//
+//	account := PolicyAccount{
+//	    Name: "webserver-admin",
+//	    Description: "Admin account for web servers"
+//	}
+//	json, err := account.ToJson()
+//
+// Parameters:
+//   - none
+//
+// Returns:
+//   - string: A JSON representation of the PolicyAccount object
+//   - error: An error if JSON marshaling fails, nil otherwise
 func (p PolicyAccount) ToJson() (string, error) {
 	policyAccountJSON, err := json.Marshal(p)
 	if err != nil {
@@ -85,17 +105,24 @@ func (p PolicyAccount) ToJson() (string, error) {
 	return string(policyAccountJSON), nil
 }
 
-// GetPolicyAccounts retrieves a list of policy accounts from the Safeguard API.
-// It takes a SafeguardClient and a Filter as parameters, constructs a query string,
-// sends a GET request to the Safeguard API, and unmarshals the response into a slice of PolicyAccount.
+// GetPolicyAccounts retrieves all policy accounts that match the specified filter criteria.
+//
+// The method supports filtering accounts based on various properties like Name, Disabled,
+// PlatformId etc. Multiple filters can be combined to narrow down results.
+//
+// Example:
+//
+//	fields := client.Filter{}
+//	fields.AddFilter("Disabled", "eq", "false")
+//	fields.AddFilter("PlatformId", "eq", "1")
+//	accounts, err := GetPolicyAccounts(fields)
 //
 // Parameters:
-//   - c: A pointer to a SafeguardClient used to send requests to the Safeguard API.
-//   - fields: A Filter object used to construct the query string for filtering the results.
+//   - fields: A Filter object containing field comparisons and ordering preferences
 //
 // Returns:
-//   - A slice of PolicyAccount objects.
-//   - An error if the request fails or the response cannot be unmarshaled.
+//   - []PolicyAccount: A slice of PolicyAccount objects matching the filter criteria
+//   - error: An error if the request fails or response parsing fails, nil otherwise
 func GetPolicyAccounts(fields client.Filter) ([]PolicyAccount, error) {
 	var policyAccounts []PolicyAccount
 
@@ -111,18 +138,24 @@ func GetPolicyAccounts(fields client.Filter) ([]PolicyAccount, error) {
 	return policyAccounts, nil
 }
 
-// GetPolicyAccount retrieves a PolicyAccount by its ID from the SafeguardClient.
-// It takes a SafeguardClient, an integer ID, and optional fields to include in the query.
-// It returns the PolicyAccount and an error if the request fails.
+// GetPolicyAccount retrieves a single policy account by its unique identifier.
+//
+// The method can include additional related objects in the response based on the
+// provided fields parameter.
+//
+// Example:
+//
+//	fields := client.Fields{}
+//	fields.Add("Asset", "Platform", "Owner")
+//	account, err := GetPolicyAccount(123, fields)
 //
 // Parameters:
-//   - c: A pointer to the SafeguardClient used to make the request.
-//   - id: The ID of the PolicyAccount to retrieve.
-//   - fields: Optional fields to include in the query.
+//   - id: The unique identifier of the policy account to retrieve
+//   - fields: Optional Fields object specifying which related objects to include
 //
 // Returns:
-//   - PolicyAccount: The retrieved PolicyAccount.
-//   - error: An error if the request fails or the response cannot be unmarshaled.
+//   - PolicyAccount: The requested policy account with all specified related objects
+//   - error: An error if the account is not found or request fails, nil otherwise
 func GetPolicyAccount(id int, fields client.Fields) (PolicyAccount, error) {
 	var policyAccount PolicyAccount
 
@@ -139,32 +172,42 @@ func GetPolicyAccount(id int, fields client.Fields) (PolicyAccount, error) {
 	return policyAccount, nil
 }
 
-// LinkToUser links the current PolicyAccount to the specified User.
-// It returns a slice of PolicyAccount and an error if any occurs during the linking process.
+// LinkToUser creates a relationship between a policy account and a user.
+//
+// This method establishes a direct link between the account and user, granting
+// access based on existing policies. The operation is atomic and transactional.
+//
+// Example:
+//
+//	user := User{Id: 456}
+//	linkedAccounts, err := account.LinkToUser(user)
 //
 // Parameters:
-//
-//	user - The User to link the PolicyAccount to.
+//   - user: The User object representing the user to link with
 //
 // Returns:
-//
-//	[]PolicyAccount - A slice containing the linked PolicyAccount.
-//	error - An error if any issues occur during the linking process.
+//   - []PolicyAccount: A slice containing the updated account after linking
+//   - error: An error if the link operation fails, nil otherwise
 func (p PolicyAccount) LinkToUser(user User) ([]PolicyAccount, error) {
 	return AddLinkedAccounts(user, []PolicyAccount{p})
 }
 
-// UnlinkFromUser removes the association between the given PolicyAccount and the specified User.
-// It returns a slice of PolicyAccount and an error if the operation fails.
+// UnlinkFromUser removes the relationship between a policy account and a user.
+//
+// This method removes direct access between the account and user. The user may
+// still have access through other means (groups, policies etc).
+//
+// Example:
+//
+//	user := User{Id: 456}
+//	unlinkedAccounts, err := account.UnlinkFromUser(user)
 //
 // Parameters:
-//
-//	user - The User from whom the PolicyAccount should be unlinked.
+//   - user: The User object representing the user to unlink from
 //
 // Returns:
-//
-//	[]PolicyAccount - A slice containing the PolicyAccount after unlinking.
-//	error - An error if the unlinking operation fails.
+//   - []PolicyAccount: A slice containing the updated account after unlinking
+//   - error: An error if the unlink operation fails, nil otherwise
 func (p PolicyAccount) UnlinkFromUser(user User) ([]PolicyAccount, error) {
 	return RemoveLinkedAccounts(user, []PolicyAccount{p})
 }

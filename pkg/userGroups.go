@@ -106,10 +106,23 @@ type DirectoryGroupSyncProperties struct {
 	AdminRoles                                       []string `json:"AdminRoles"`
 }
 
-// ToJson converts a UserGroup to its JSON string representation
+// ToJson serializes a UserGroup object into a JSON string.
+//
+// This method converts the UserGroup instance into a JSON-formatted string,
+// including all defined fields. Empty or zero-valued fields are included in
+// the output.
+//
+// Example:
+//
+//	group := UserGroup{
+//	    Name: "Administrators",
+//	    Description: "System administrators group"
+//	}
+//	json, err := group.ToJson()
+//
 // Returns:
-//   - string: The JSON string representation of the user group
-//   - error: An error if JSON marshaling fails
+//   - string: A JSON representation of the UserGroup object
+//   - error: An error if JSON marshaling fails, nil otherwise
 func (u UserGroup) ToJson() (string, error) {
 	userGroupJSON, err := json.Marshal(u)
 	if err != nil {
@@ -118,14 +131,24 @@ func (u UserGroup) ToJson() (string, error) {
 	return string(userGroupJSON), nil
 }
 
-// GetUserGroups retrieves a list of user groups from Safeguard.
+// GetUserGroups retrieves all user groups that match the specified filter criteria.
+//
+// The method supports filtering groups based on various properties like Name, IsReadOnly,
+// CreatedDate etc. Multiple filters can be combined to narrow down results.
+//
+// Example:
+//
+//	fields := client.Filter{}
+//	fields.AddFilter("IsReadOnly", "eq", "false")
+//	fields.AddFilter("Name", "contains", "admin")
+//	groups, err := GetUserGroups(fields)
+//
 // Parameters:
-//   - c: The SafeguardClient instance for making API requests
-//   - fields: Filter criteria for the request to specify which groups to return
+//   - fields: A Filter object containing field comparisons and ordering preferences
 //
 // Returns:
-//   - []UserGroup: A slice of user groups matching the filter criteria
-//   - error: An error if the request fails or the response cannot be unmarshaled
+//   - []UserGroup: A slice of UserGroup objects matching the filter criteria
+//   - error: An error if the request fails or response parsing fails, nil otherwise
 func GetUserGroups(fields client.Filter) ([]UserGroup, error) {
 	var userGroups []UserGroup
 
@@ -142,15 +165,24 @@ func GetUserGroups(fields client.Filter) ([]UserGroup, error) {
 	return userGroups, nil
 }
 
-// GetUserGroup retrieves details for a specific user group by ID.
+// GetUserGroup retrieves a single user group by its unique identifier.
+//
+// The method can include additional related objects in the response based on the
+// provided fields parameter.
+//
+// Example:
+//
+//	fields := client.Fields{}
+//	fields.Add("Members", "DirectoryProperties")
+//	group, err := GetUserGroup(123, fields)
+//
 // Parameters:
-//   - c: The SafeguardClient instance for making API requests
-//   - id: The numeric ID of the user group to retrieve
-//   - fields: Specific fields to include in the response
+//   - id: The unique identifier of the user group to retrieve
+//   - fields: Optional Fields object specifying which related objects to include
 //
 // Returns:
-//   - UserGroup: The requested user group object
-//   - error: An error if the request fails, nil otherwise
+//   - UserGroup: The requested user group with all specified related objects
+//   - error: An error if the group is not found or request fails, nil otherwise
 func GetUserGroup(id int, fields client.Fields) (UserGroup, error) {
 	var userGroup UserGroup
 

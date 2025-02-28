@@ -30,6 +30,12 @@ type AuthenticationProvider struct {
 	IsDefault          bool   `json:"ForceAsDefault,omitempty"`
 }
 
+// ToJson converts an AuthenticationProvider instance to a JSON string.
+// This is useful for serializing the provider data for transmission or storage.
+//
+// Returns:
+//   - string: A JSON-encoded string representation of the authentication provider
+//   - error: An error if JSON marshaling encounters any issues
 func (a AuthenticationProvider) ToJson() (string, error) {
 	userJSON, err := json.Marshal(a)
 	if err != nil {
@@ -38,17 +44,12 @@ func (a AuthenticationProvider) ToJson() (string, error) {
 	return string(userJSON), nil
 }
 
-// GetAuthenticationProviders retrieves a list of authentication providers from the Safeguard API.
-// It sends a GET request to the "AuthenticationProviders" endpoint and unmarshals the response
-// into a slice of AuthenticationProvider structs. Each AuthenticationProvider is then associated
-// with the provided SafeguardClient.
-//
-// Parameters:
-//   - client: A pointer to a SafeguardClient instance used to make the API request.
+// GetAuthenticationProviders retrieves all authentication providers configured in Safeguard.
+// This includes all provider types like LDAP, RADIUS, certificate-based, etc.
 //
 // Returns:
-//   - A slice of AuthenticationProvider structs.
-//   - An error if the request fails or the response cannot be unmarshaled.
+//   - []AuthenticationProvider: A slice containing all configured authentication providers
+//   - error: An error if the API request fails or the response cannot be parsed
 func GetAuthenticationProviders() ([]AuthenticationProvider, error) {
 	var authProviders []AuthenticationProvider
 
@@ -66,15 +67,15 @@ func GetAuthenticationProviders() ([]AuthenticationProvider, error) {
 	return authProviders, nil
 }
 
-// GetAuthenticationProvider retrieves an authentication provider by its ID.
+// GetAuthenticationProvider retrieves a specific authentication provider by its ID.
+// Use this to get detailed information about a single provider configuration.
 //
 // Parameters:
-//   - client: A pointer to the SafeguardClient used to make the request.
-//   - id: The ID of the authentication provider to retrieve.
+//   - id: The unique identifier of the authentication provider to retrieve
 //
 // Returns:
-//   - AuthenticationProvider: The retrieved authentication provider.
-//   - error: An error object if an error occurred during the request, otherwise nil.
+//   - AuthenticationProvider: The requested authentication provider's configuration
+//   - error: An error if the provider cannot be found or the request fails
 func GetAuthenticationProvider(id int) (AuthenticationProvider, error) {
 	var authProvider AuthenticationProvider
 
@@ -91,14 +92,11 @@ func GetAuthenticationProvider(id int) (AuthenticationProvider, error) {
 	return authProvider, nil
 }
 
-// ClearDefaultAuthProvider clears the default authentication provider in the Safeguard system.
-// It sends a POST request to the "AuthenticationProviders/ClearDefault" endpoint.
-//
-// Parameters:
-//   - c: A pointer to a SafeguardClient instance.
+// ClearDefaultAuthProvider removes the current default authentication provider setting.
+// After calling this, no authentication provider will be marked as default.
 //
 // Returns:
-//   - error: An error object if the request fails, otherwise nil.
+//   - error: An error if the operation fails or the API request is unsuccessful
 func ClearDefaultAuthProvider() error {
 	query := "AuthenticationProviders/ClearDefault"
 
@@ -110,15 +108,15 @@ func ClearDefaultAuthProvider() error {
 	return nil
 }
 
-// ForceAsDefaultAuthProvider sets the specified authentication provider as the default one.
+// ForceAsDefaultAuthProvider sets a specific authentication provider as the system default.
+// Only one provider can be the default at any time.
 //
 // Parameters:
-//   - c: A pointer to the SafeguardClient instance used to make the request.
-//   - id: The ID of the authentication provider to be set as default.
+//   - id: The unique identifier of the authentication provider to set as default
 //
 // Returns:
-//   - AuthenticationProvider: The updated authentication provider object.
-//   - error: An error object if an error occurred, otherwise nil.
+//   - AuthenticationProvider: The updated authentication provider configuration
+//   - error: An error if the operation fails or the provider cannot be found
 func ForceAsDefaultAuthProvider(id int) (AuthenticationProvider, error) {
 	var authProvider AuthenticationProvider
 	query := fmt.Sprintf("AuthenticationProviders/%d/ForceAsDefault", id)
@@ -136,8 +134,12 @@ func ForceAsDefaultAuthProvider(id int) (AuthenticationProvider, error) {
 	return authProvider, nil
 }
 
-// ForceAsDefault sets the current AuthenticationProvider instance as the default authentication provider.
-// It returns the updated AuthenticationProvider instance and an error if the operation fails.
+// ForceAsDefault marks this authentication provider instance as the system default.
+// This is a convenience method that calls ForceAsDefaultAuthProvider with this instance's ID.
+//
+// Returns:
+//   - AuthenticationProvider: The updated authentication provider configuration
+//   - error: An error if the operation fails or the API request is unsuccessful
 func (a AuthenticationProvider) ForceAsDefault() (AuthenticationProvider, error) {
 	return ForceAsDefaultAuthProvider(a.Id)
 }

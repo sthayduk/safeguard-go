@@ -94,6 +94,14 @@ type AccountTaskData struct {
 	ErrorMessage             string           `json:"errorMessage,omitempty"`
 }
 
+// ToJson serializes an AccountTaskData object into a JSON string.
+//
+// Parameters:
+//   - none
+//
+// Returns:
+//   - string: A JSON representation of the AccountTaskData object
+//   - error: An error if JSON marshaling fails, nil otherwise
 func (a AccountTaskData) ToJson() (string, error) {
 	userJSON, err := json.Marshal(a)
 	if err != nil {
@@ -102,17 +110,25 @@ func (a AccountTaskData) ToJson() (string, error) {
 	return string(userJSON), nil
 }
 
-// GetAccountTaskSchedules retrieves the account task schedules for a given task name and filter.
-// It sends a GET request to the Safeguard API and unmarshals the response into a slice of AccountTaskData.
+// GetAccountTaskSchedules retrieves account task schedules matching specified criteria.
+//
+// This method returns task schedules for a given task type that match the provided
+// filter conditions. The response includes details about schedule timing, status,
+// and associated assets/accounts.
+//
+// Example:
+//
+//	filter := client.Filter{}
+//	filter.AddFilter("Disabled", "eq", "false")
+//	schedules, err := GetAccountTaskSchedules(CheckPassword, filter)
 //
 // Parameters:
-//   - c: A pointer to a SafeguardClient instance used to make the API request.
-//   - taskName: The name of the account task to retrieve schedules for.
-//   - filter: A Filter instance to apply to the query.
+//   - taskName: The type of account task to retrieve schedules for
+//   - filter: A Filter object containing field comparisons and ordering preferences
 //
 // Returns:
-//   - A slice of AccountTaskData containing the retrieved account task schedules.
-//   - An error if the request fails or the response cannot be unmarshaled.
+//   - []AccountTaskData: A slice of task schedules matching the filter criteria
+//   - error: An error if the request or response parsing fails, nil otherwise
 func GetAccountTaskSchedules(taskName AccountTaskNames, filter client.Filter) ([]AccountTaskData, error) {
 	var accountTaskSchedules []AccountTaskData
 

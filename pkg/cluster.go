@@ -101,16 +101,15 @@ const (
 	ClusterOperationStateFailed       ClusterOperationState = "Failed"
 )
 
-// GetClusterMembers retrieves the members of a cluster from the Safeguard API.
-// It takes a SafeguardClient and a Filter as parameters and returns a slice of ClusterMember and an error.
+// GetClusterMembers retrieves all members that are part of the Safeguard cluster.
+// Use filters to narrow down the results based on specific criteria.
 //
 // Parameters:
-//   - c: A pointer to a SafeguardClient used to make the API request.
-//   - filter: A Filter object used to filter the cluster members.
+//   - filter: A Filter object containing query parameters to filter the results
 //
 // Returns:
-//   - A slice of ClusterMember containing the cluster members.
-//   - An error if the request fails or the response cannot be unmarshaled.
+//   - []ClusterMember: A slice of cluster members matching the filter criteria
+//   - error: An error if the API request fails or the response cannot be parsed
 func GetClusterMembers(filter client.Filter) ([]ClusterMember, error) {
 	var clusterMembers []ClusterMember
 
@@ -128,99 +127,104 @@ func GetClusterMembers(filter client.Filter) ([]ClusterMember, error) {
 	return clusterMembers, nil
 }
 
-// GetClusterMember retrieves a cluster member by its ID from the Safeguard API.
-// It sends a GET request to the "Cluster/Members/{id}" endpoint and unmarshals
-// the response into a ClusterMember struct.
+// GetClusterMember retrieves detailed information about a specific cluster member.
 //
 // Parameters:
-//   - c: A pointer to a SafeguardClient instance used to make the API request.
-//   - id: An integer representing the ID of the cluster member to retrieve.
+//   - id: The unique identifier (GUID) of the cluster member to retrieve
 //
 // Returns:
-//   - ClusterMember: The retrieved cluster member.
-//   - error: An error if the request or unmarshalling fails.
-func GetClusterMember(id string) (ClusterMember, error) {
+//   - *ClusterMember: The requested cluster member's configuration and status, or nil if not found
+//   - error: An error if the member cannot be found or the request fails
+func GetClusterMember(id string) (*ClusterMember, error) {
 	var clusterMember ClusterMember
 
 	query := fmt.Sprintf("Cluster/Members/%s", id)
 
 	response, err := c.GetRequest(query)
 	if err != nil {
-		return ClusterMember{}, err
+		return nil, err
 	}
 
 	if err := json.Unmarshal(response, &clusterMember); err != nil {
-		return ClusterMember{}, err
+		return nil, err
 	}
 
-	return clusterMember, nil
+	return &clusterMember, nil
 }
 
-// GetClusterLeader retrieves the cluster leader from the SafeguardClient.
-// It applies a filter to find the cluster member with the "IsLeader" attribute set to true.
+// GetClusterLeader identifies and retrieves the current leader of the Safeguard cluster.
 //
-// Parameters:
-//   - c: A pointer to the SafeguardClient instance.
+// A healthy cluster should have exactly one leader at any given time. The leader
+// is responsible for coordinating cluster-wide operations and maintaining consistency.
 //
 // Returns:
-//   - ClusterMember: The cluster member that is the leader.
-//   - error: An error if no leader is found, more than one leader is found, or if there is an issue retrieving the cluster members.
-func GetClusterLeader() (ClusterMember, error) {
+//   - *ClusterMember: The cluster member that is currently the leader, or nil if no leader is found
+//   - error: An error if no leader is found, multiple leaders are detected, or the request fails
+func GetClusterLeader() (*ClusterMember, error) {
 	filter := client.Filter{}
 	filter.AddFilter("IsLeader", "eq", "true")
 
 	clusterMembers, err := GetClusterMembers(filter)
 	if err != nil {
 		fmt.Println(err)
-		return ClusterMember{}, err
+		return nil, err
 	}
 
 	if len(clusterMembers) == 0 {
-		return ClusterMember{}, fmt.Errorf("no cluster leader found")
+		return nil, fmt.Errorf("no cluster leader found")
 	}
 
 	if len(clusterMembers) > 1 {
-		return ClusterMember{}, fmt.Errorf("invalid number of cluster leaders found")
+		return nil, fmt.Errorf("invalid number of cluster leaders found")
 	}
 
-	return clusterMembers[0], nil
+	return &clusterMembers[0], nil
 }
 
-// ForceClusterHealthCheck performs a health check on the cluster members.
-// It sends a GET request to the "Cluster/Members/Self" endpoint and unmarshals
-// the response into a slice of ClusterMember structs. Each ClusterMember is then
-// associated with the provided SafeguardClient.
+// ForceClusterHealthCheck triggers an immediate health check of the cluster.
 //
-// Parameters:
-//   - c: A pointer to a SafeguardClient used to make the GET request.
+// This operation initiates a comprehensive health assessment of the current node,
+// including resource utilization, connectivity, and service status checks.
 //
 // Returns:
-//   - A slice of ClusterMember structs containing the details of each cluster member.
-//   - An error if the request or unmarshalling fails.
-func ForceClusterHealthCheck() (ClusterMember, error) {
+//   - *ClusterMember: The cluster member representing the current node with updated health status
+//   - error: An error if the health check fails to complete or the response cannot be parsed
+func ForceClusterHealthCheck() (*ClusterMember, error) {
 	var clusterMembers ClusterMember
 	query := "Cluster/Members/Self"
 
 	response, err := c.GetRequest(query)
 	if err != nil {
-		return ClusterMember{}, err
+		return nil, err
 	}
 
 	if err := json.Unmarshal(response, &clusterMembers); err != nil {
-		return ClusterMember{}, err
+		return nil, err
 	}
 
-	return clusterMembers, nil
+	return &clusterMembers, nil
 }
 
-// IsClusterLeader checks if the current cluster member is the leader.
-// It returns true if the member is the leader, otherwise false.
-func (c ClusterMember) IsClusterLeader() bool {
-	return c.IsLeader
+// IsClusterLeader checks whether this cluster member is currently the cluster leader.
+//
+// This is a convenience method that checks the leadership status of the current node
+// without requiring a full cluster state query.
+//
+// Returns:
+//   - bool: true if this member is the leader, false otherwise
+//   - error: An error if the leadership status cannot be determined
+func (c ClusterMember) IsClusterLeader() (bool, error) {
+	return c.IsLeader, nil
 }
 
-// GetHealth returns the health status of the cluster member.
-// It returns a NodeHealth object and an error, which is always nil.
-func (c ClusterMember) GetHealth() (NodeHealth, error) {
-	return c.Health, nil
+// GetHealth retrieves the current health status information for this cluster member.
+//
+// The health status includes resource utilization, connectivity status, and
+// any active warnings or errors affecting the node.
+//
+// Returns:
+//   - *NodeHealth: The current health status and detailed health information
+//   - error: An error if the health status cannot be retrieved
+func (c ClusterMember) GetHealth() (*NodeHealth, error) {
+	return &c.Health, nil
 }

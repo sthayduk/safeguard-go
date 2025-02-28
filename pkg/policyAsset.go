@@ -48,7 +48,26 @@ const (
 	AccessRequestTypeFile           AccessRequestType = "File"
 )
 
-// ToJson converts an AssetPolicy to its JSON string representation
+// ToJson serializes an AssetPolicy object into a JSON string.
+//
+// This method converts the AssetPolicy instance into a JSON-formatted string,
+// including all defined fields. Empty or zero-valued fields are included in
+// the output.
+//
+// Example:
+//
+//	policy := AssetPolicy{
+//	    PolicyName: "Linux Servers",
+//	    AccessRequestType: AccessRequestTypeSSH
+//	}
+//	json, err := policy.ToJson()
+//
+// Parameters:
+//   - none
+//
+// Returns:
+//   - string: A JSON representation of the AssetPolicy object
+//   - error: An error if JSON marshaling fails, nil otherwise
 func (a AssetPolicy) ToJson() (string, error) {
 	assetPolicyJSON, err := json.Marshal(a)
 	if err != nil {
@@ -76,6 +95,16 @@ type PolicyAsset struct {
 	SessionAccess      SessionAccessProperties `json:"SessionAccessProperties"`
 }
 
+// ToJson converts a PolicyAsset to its JSON string representation.
+//
+// Example:
+//
+//	asset := PolicyAsset{...}
+//	json, err := asset.ToJson()
+//
+// Returns:
+//   - string: A JSON-formatted string containing all non-empty fields of the PolicyAsset
+//   - error: An error if JSON marshaling fails, nil otherwise
 func (p PolicyAsset) ToJson() (string, error) {
 	policyAssetJSON, err := json.Marshal(p)
 	if err != nil {
@@ -112,17 +141,24 @@ type SessionAccessProperties struct {
 	TelnetSessionPort        int  `json:"TelnetSessionPort,omitempty"`
 }
 
-// GetPolicyAssets retrieves a list of policy assets from the Safeguard API.
-// It takes a SafeguardClient and a Filter as parameters to construct the query.
-// The function returns a slice of PolicyAsset and an error if the request fails.
+// GetPolicyAssets retrieves policy assets based on filter criteria.
+//
+// This method returns assets that match all specified filter conditions. Commonly
+// used filters include Disabled, PlatformId, and AssetPartitionId.
+//
+// Example:
+//
+//	filter := client.Filter{}
+//	filter.AddFilter("Disabled", "eq", "false")
+//	filter.AddFilter("PlatformId", "eq", "1")
+//	assets, err := GetPolicyAssets(filter)
 //
 // Parameters:
-//   - c: A pointer to a SafeguardClient used to make the API request.
-//   - fields: A Filter object used to specify query parameters.
+//   - fields: A Filter object containing field comparisons and ordering preferences
 //
 // Returns:
-//   - []PolicyAsset: A slice of PolicyAsset objects retrieved from the API.
-//   - error: An error object if the request fails or the response cannot be unmarshaled.
+//   - []PolicyAsset: A slice of PolicyAsset objects matching the filter criteria
+//   - error: An error if the request or response parsing fails, nil otherwise
 func GetPolicyAssets(fields client.Filter) ([]PolicyAsset, error) {
 	var policyAssets []PolicyAsset
 
@@ -140,18 +176,24 @@ func GetPolicyAssets(fields client.Filter) ([]PolicyAsset, error) {
 	return policyAssets, nil
 }
 
-// GetPolicyAsset retrieves a PolicyAsset by its ID from the SafeguardClient.
-// It takes a SafeguardClient, an integer ID, and optional fields to include in the query.
-// It returns the PolicyAsset and an error if any occurred during the request.
+// GetPolicyAsset retrieves a single policy asset by its unique identifier.
+//
+// The method supports including additional related objects based on the fields parameter.
+// Common fields include Platform, SessionAccess, and SshHostKey.
+//
+// Example:
+//
+//	fields := client.Fields{}
+//	fields.Add("Platform", "SessionAccess")
+//	asset, err := GetPolicyAsset(123, fields)
 //
 // Parameters:
-//   - c: A pointer to the SafeguardClient used to make the request.
-//   - id: The ID of the PolicyAsset to retrieve.
-//   - fields: Optional fields to include in the query.
+//   - id: The unique identifier of the policy asset to retrieve
+//   - fields: Optional Fields object specifying which related objects to include
 //
 // Returns:
-//   - PolicyAsset: The retrieved PolicyAsset.
-//   - error: An error if any occurred during the request.
+//   - PolicyAsset: The requested policy asset with all specified related objects
+//   - error: An error if the asset is not found or request fails, nil otherwise
 func GetPolicyAsset(id int, fields client.Fields) (PolicyAsset, error) {
 	var policyAsset PolicyAsset
 
@@ -170,16 +212,23 @@ func GetPolicyAsset(id int, fields client.Fields) (PolicyAsset, error) {
 	return policyAsset, nil
 }
 
-// GetAssetGroups retrieves the asset groups associated with a specific policy asset.
-// It takes a SafeguardClient and a Filter as parameters and returns a slice of AssetGroup and an error.
+// GetAssetGroups retrieves all asset groups containing this policy asset.
+//
+// Returns both direct group memberships and nested group memberships if any exist.
+// The results can be filtered using the fields parameter.
+//
+// Example:
+//
+//	filter := client.Filter{}
+//	filter.AddFilter("Disabled", "eq", "false")
+//	groups, err := asset.GetAssetGroups(filter)
 //
 // Parameters:
-//   - c: A pointer to the SafeguardClient used to make the request.
-//   - fields: A Filter object used to specify query parameters.
+//   - fields: A Filter object to restrict which groups are returned
 //
 // Returns:
-//   - A slice of AssetGroup objects representing the asset groups associated with the policy asset.
-//   - An error if the request fails or the response cannot be unmarshaled.
+//   - []AssetGroup: A slice of AssetGroup objects this asset belongs to
+//   - error: An error if the request or response parsing fails, nil otherwise
 func (p PolicyAsset) GetAssetGroups(fields client.Filter) ([]AssetGroup, error) {
 	var assetGroups []AssetGroup
 
@@ -196,16 +245,22 @@ func (p PolicyAsset) GetAssetGroups(fields client.Filter) ([]AssetGroup, error) 
 	return assetGroups, nil
 }
 
-// GetDirectoryServiceEntries retrieves the directory service entries associated with the PolicyAsset.
-// It takes a SafeguardClient and a Filter as parameters and returns a slice of DirectoryServiceEntry and an error.
+// GetDirectoryServiceEntries retrieves directory entries for directory assets.
+//
+// This method is primarily used with directory server assets to list their
+// contained directory entries. Not applicable for non-directory assets.
+//
+// Example:
+//
+//	filter := client.Filter{}
+//	entries, err := directoryAsset.GetDirectoryServiceEntries(filter)
 //
 // Parameters:
-//   - c: A pointer to the SafeguardClient used to make the request.
-//   - fields: A Filter object used to specify query parameters.
+//   - fields: A Filter object to restrict which entries are returned
 //
 // Returns:
-//   - A slice of DirectoryServiceEntry objects.
-//   - An error if the request fails or the response cannot be unmarshaled.
+//   - []DirectoryServiceEntry: A slice of directory entries from this asset
+//   - error: An error if the request or response parsing fails, nil otherwise
 func (p PolicyAsset) GetDirectoryServiceEntries(fields client.Filter) ([]DirectoryServiceEntry, error) {
 	var directoryServiceEntries []DirectoryServiceEntry
 
@@ -222,16 +277,22 @@ func (p PolicyAsset) GetDirectoryServiceEntries(fields client.Filter) ([]Directo
 	return directoryServiceEntries, nil
 }
 
-// GetPolicies retrieves the policies associated with a specific PolicyAsset.
-// It sends a GET request to the Safeguard API using the provided SafeguardClient and query fields.
+// GetPolicies retrieves all access policies affecting this policy asset.
+//
+// Returns policies that grant access to this asset, either directly or through
+// asset group membership. Includes details about how access was granted.
+//
+// Example:
+//
+//	filter := client.Filter{}
+//	policies, err := asset.GetPolicies(filter)
 //
 // Parameters:
-//   - c: A pointer to the SafeguardClient used to send the request.
-//   - fields: A Filter object containing query parameters to be appended to the request URL.
+//   - fields: A Filter object to restrict which policies are returned
 //
 // Returns:
-//   - A slice of AssetPolicy objects representing the policies associated with the PolicyAsset.
-//   - An error if the request fails or the response cannot be unmarshaled.
+//   - []AssetPolicy: A slice of policies granting access to this asset
+//   - error: An error if the request or response parsing fails, nil otherwise
 func (p PolicyAsset) GetPolicies(fields client.Filter) ([]AssetPolicy, error) {
 	var policies []AssetPolicy
 

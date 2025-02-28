@@ -225,10 +225,9 @@ type ReviewerProperties struct {
 }
 
 // GetAccessPolicies retrieves a list of access policies from the Safeguard API.
-// It takes a SafeguardClient and a Filter as parameters and returns a slice of AccessPolicy and an error.
+// It takes a Filter as parameter and uses the global client reference to make the API request.
 //
 // Parameters:
-//   - c: A pointer to a SafeguardClient used to make the API request.
 //   - filter: A Filter object used to filter the access policies.
 //
 // Returns:
@@ -252,11 +251,9 @@ func GetAccessPolicies(filter client.Filter) ([]AccessPolicy, error) {
 }
 
 // GetAccessPolicy retrieves an access policy by its ID from the Safeguard API.
-// It takes a SafeguardClient, an integer ID of the access policy, and optional fields to include in the query.
-// It returns the AccessPolicy and an error if any occurred during the request or unmarshalling process.
+// It uses the global client reference to make the API request.
 //
 // Parameters:
-//   - c: A pointer to the SafeguardClient used to make the API request.
 //   - id: An integer representing the ID of the access policy to retrieve.
 //   - fields: Optional fields to include in the query.
 //
@@ -283,12 +280,10 @@ func GetAccessPolicy(id int, fields client.Fields) (AccessPolicy, error) {
 	return accessPolicy, nil
 }
 
-// DeleteAccessPolicy deletes an access policy with the given ID using the provided SafeguardClient.
-// It constructs a query string with the access policy ID and sends a DELETE request.
-// If the request fails, it returns an error.
+// DeleteAccessPolicy deletes an access policy with the given ID.
+// It uses the global client reference to make the API request.
 //
 // Parameters:
-//   - c: A pointer to a SafeguardClient instance used to send the DELETE request.
 //   - id: An integer representing the ID of the access policy to be deleted.
 //
 // Returns:

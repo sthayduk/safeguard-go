@@ -243,16 +243,15 @@ type AccessRequestReviewBatchResponse struct {
 	Comment string        `json:"Comment,omitempty"`
 }
 
-// GetAccessRequests retrieves a list of access requests from the Safeguard API based on the provided filter.
-// It sends a GET request to the "AccessRequests" endpoint with the filter query string.
+// GetAccessRequests retrieves access requests filtered by the provided criteria.
+// The requests are sorted by creation date in descending order.
 //
 // Parameters:
-//   - c: A pointer to a SafeguardClient instance used to make the API request.
-//   - filter: A Filter object that specifies the criteria for filtering the access requests.
+//   - filter: Filter criteria for the requests
 //
 // Returns:
-//   - A slice of AccessRequest objects that match the filter criteria.
-//   - An error if the request fails or if there is an issue unmarshalling the response.
+//   - []AccessRequest: Matching access requests
+//   - error: API or unmarshalling errors
 func GetAccessRequests(filter client.Filter) ([]AccessRequest, error) {
 
 	query := "AccessRequests" + filter.ToQueryString()
@@ -270,18 +269,15 @@ func GetAccessRequests(filter client.Filter) ([]AccessRequest, error) {
 	return accessRequests, err
 }
 
-// GetAccessRequest retrieves an access request by its ID from the Safeguard API.
-// It takes a SafeguardClient, an access request ID, and optional fields to include in the query.
-// It returns the AccessRequest object and an error if any occurred during the request.
+// GetAccessRequest retrieves a specific access request by its ID.
 //
 // Parameters:
-//   - c: A pointer to the SafeguardClient used to make the API request.
-//   - id: The ID of the access request to retrieve.
-//   - fields: Optional fields to include in the query.
+//   - id: The unique identifier of the access request.
+//   - fields: Optional fields to include in the response.
 //
 // Returns:
-//   - AccessRequest: The retrieved access request object.
-//   - error: An error if any occurred during the request or unmarshalling the response.
+//   - AccessRequest: The retrieved access request.
+//   - error: An error if the request fails or unmarshalling fails.
 func GetAccessRequest(id string, fields client.Fields) (AccessRequest, error) {
 
 	query := "AccessRequests/" + id
@@ -302,16 +298,14 @@ func GetAccessRequest(id string, fields client.Fields) (AccessRequest, error) {
 	return accessRequest, err
 }
 
-// NewAccessRequests creates a batch of access requests based on the provided account entitlements.
-// It constructs individual access requests for each entitlement and then sends them as a batch.
+// NewAccessRequests creates multiple access requests in a single batch operation.
 //
 // Parameters:
-//   - c: A pointer to a SafeguardClient instance used to make API requests.
-//   - accountEntitlements: A slice of MeAccountEntitlement objects representing the account entitlements.
+//   - accountEntitlements: Slice of account entitlements to request access for.
 //
 // Returns:
-//   - A slice of AccessRequestBatchResponse objects containing the responses for each access request.
-//   - An error if the batch creation of access requests fails.
+//   - []AccessRequestBatchResponse: Responses for each request in the batch.
+//   - error: An error if the batch operation fails.
 func NewAccessRequests(accountEntitlements []AccountEntitlement) ([]AccessRequestBatchResponse, error) {
 	var accessRequests []batchAccessRequest
 
@@ -410,16 +404,14 @@ func batchCreateAccessRequest(accessRequests []batchAccessRequest) ([]AccessRequ
 	return createdAccessRequests, nil
 }
 
-// Close attempts to close the AccessRequest based on its current state.
-// It performs different actions depending on the state of the AccessRequest:
-// - If the state is "PasswordCheckedOut", it checks the password back in.
-// - If the state is "Pending", "RequestAvailable" or "PendingAccountRestored", it cancels the request.
-// - If the state is "Complete", it returns the AccessRequest as is.
-// - For any other state, it returns an error indicating that the request cannot be closed.
+// Close attempts to close the request based on its current state.
+// For checked out passwords, checks them back in.
+// For pending/available requests, cancels them.
+// Returns error for invalid states.
 //
 // Returns:
-// - An updated AccessRequest and nil error if the operation is successful.
-// - An empty AccessRequest and an error if the operation fails.
+//   - AccessRequest: Updated request state
+//   - error: Any errors during close
 func (ar AccessRequest) Close() (AccessRequest, error) {
 	switch ar.State {
 	case "PasswordCheckedOut":
@@ -463,8 +455,11 @@ func CancelAccessRequest(id string) (AccessRequest, error) {
 	return accessRequest, err
 }
 
-// Cancel cancels the current access request.
-// It returns the updated AccessRequest and an error if the cancellation fails.
+// Cancel cancels a pending or available access request.
+//
+// Returns:
+//   - AccessRequest: The updated access request showing canceled state.
+//   - error: An error if the cancellation fails.
 func (ar AccessRequest) Cancel() (AccessRequest, error) {
 	return CancelAccessRequest(ar.Id)
 }
@@ -494,10 +489,27 @@ func CheckInAccessRequest(id string) (AccessRequest, error) {
 	return accessRequest, err
 }
 
-// CheckIn checks in the current access request.
-// It returns the updated AccessRequest and an error if the operation fails.
+// CheckIn checks in a checked-out password access request.
+//
+// Returns:
+//   - AccessRequest: The updated access request showing checked-in state.
+//   - error: An error if the check-in fails.
 func (ar AccessRequest) CheckIn() (AccessRequest, error) {
 	return CheckInAccessRequest(ar.Id)
+}
+
+// CheckOutPassword retrieves the password for the request, optionally waiting
+// for pending requests to become available.
+//
+// Parameters:
+//   - ctx: Context for cancellation/timeout
+//   - waitForPending: Whether to wait for pending state
+//
+// Returns:
+//   - string: The password if successful
+//   - error: Checkout or timeout errors
+func (ar AccessRequest) CheckOutPassword(ctx context.Context, waitForPending bool) (string, error) {
+	return CheckOutPassword(ctx, ar, waitForPending)
 }
 
 // CheckOutPassword checks out the password for the access request.
@@ -546,10 +558,10 @@ func CheckOutPassword(ctx context.Context, accessRequest AccessRequest, shouldWa
 	return getPasswordforAccessRequest(accessRequest)
 }
 
-// IsPending checks if the access request is in a pending state.
+// IsPending checks if the access request is in any pending state.
 //
 // Returns:
-//   - bool: True if the access request is in a pending state, false otherwise.
+//   - bool: true if request is pending approval, review, or other pending states.
 func (ar AccessRequest) IsPending() bool {
 	return isAccessRequestPending(ar)
 }
@@ -557,15 +569,15 @@ func (ar AccessRequest) IsPending() bool {
 // IsValid checks if the access request is in a valid state for password checkout.
 //
 // Returns:
-//   - bool: True if the access request is in a valid state, false otherwise.
+//   - bool: true if password can be checked out.
 func (ar AccessRequest) IsValid() bool {
 	return isAccessRequestValid(ar)
 }
 
-// IsInvalid checks if the access request is in an invalid state for password checkout.
+// IsInvalid checks if the access request is in a terminal or invalid state.
 //
 // Returns:
-//   - bool: True if the access request is in an invalid state, false otherwise.
+//   - bool: true if request is completed, expired, denied, canceled or revoked.
 func (ar AccessRequest) IsInvalid() bool {
 	return isAccessRequestInvalid(ar)
 }
@@ -649,24 +661,11 @@ func getPasswordforAccessRequest(accessRequest AccessRequest) (string, error) {
 	return string(response), err
 }
 
-// CheckOutPassword checks out the password for the access request.
-// It returns the password as a string and an error if the operation fails.
-//
-// Parameters:
-//   - ctx: The context for the operation, which can be used to cancel the request.
-//   - waitForPending: A boolean indicating whether to wait for the access request to become valid if it is in a pending state.
+// RefreshState updates the request with its current state from the server.
 //
 // Returns:
-//   - string: The checked-out password.
-//   - error: An error if the password checkout fails.
-func (ar AccessRequest) CheckOutPassword(ctx context.Context, waitForPending bool) (string, error) {
-	return CheckOutPassword(ctx, ar, waitForPending)
-}
-
-// RefreshState refreshes the state of the current AccessRequest instance by
-// retrieving the latest data from the server using the AccessRequest's client
-// and ID. It returns an updated AccessRequest instance and an error if the
-// operation fails.
+//   - AccessRequest: Updated request state
+//   - error: API or unmarshalling errors
 func (ar AccessRequest) RefreshState() (AccessRequest, error) {
 	return GetAccessRequest(ar.Id, nil)
 }

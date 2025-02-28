@@ -49,7 +49,11 @@ type TaggingGroupingCondition struct {
 	CompareValue    string `json:"CompareValue"`
 }
 
-// ToJson converts an AssetGroup to its JSON string representation
+// ToJson serializes the AssetGroup instance into a JSON string representation.
+//
+// Returns:
+//   - (string): JSON representation of the asset group
+//   - (error): An error if JSON marshaling fails
 func (a AssetGroup) ToJson() (string, error) {
 	assetGroupJSON, err := json.Marshal(a)
 	if err != nil {
@@ -58,16 +62,14 @@ func (a AssetGroup) ToJson() (string, error) {
 	return string(assetGroupJSON), nil
 }
 
-// GetAssetGroups retrieves a list of asset groups from the Safeguard API based on the provided filter fields.
-// It sends a GET request to the "AssetGroups" endpoint with the query parameters specified in the fields.
+// GetAssetGroups retrieves all asset groups matching the specified filter criteria.
 //
 // Parameters:
-//   - c: A pointer to a SafeguardClient instance used to send the request.
-//   - fields: A Filter object containing the query parameters for filtering the asset groups.
+//   - filter: Query parameters to filter the results
 //
 // Returns:
-//   - A slice of AssetGroup objects retrieved from the API.
-//   - An error if the request fails or the response cannot be unmarshaled.
+//   - ([]AssetGroup): Slice of matching asset groups
+//   - (error): An error if the API request fails
 func GetAssetGroups(filter client.Filter) ([]AssetGroup, error) {
 	var assetGroup []AssetGroup
 
@@ -83,18 +85,15 @@ func GetAssetGroups(filter client.Filter) ([]AssetGroup, error) {
 	return assetGroup, nil
 }
 
-// GetAssetGroup retrieves an AssetGroup by its ID from the Safeguard API.
-// It takes a SafeguardClient, an integer ID, and optional fields to include in the query.
-// It returns the AssetGroup and an error, if any occurred during the request.
+// GetAssetGroup retrieves a single asset group by its ID.
 //
 // Parameters:
-//   - c: A pointer to the SafeguardClient used to make the request.
-//   - id: The ID of the AssetGroup to retrieve.
-//   - fields: Optional fields to include in the query.
+//   - id: Unique identifier of the asset group
+//   - fields: Optional fields to include in the response
 //
 // Returns:
-//   - AssetGroup: The retrieved AssetGroup.
-//   - error: An error if the request failed or the response could not be unmarshaled.
+//   - (AssetGroup): The requested asset group
+//   - (error): An error if the API request fails
 func GetAssetGroup(id int, fields client.Fields) (AssetGroup, error) {
 	var assetGroup AssetGroup
 
@@ -112,17 +111,15 @@ func GetAssetGroup(id int, fields client.Fields) (AssetGroup, error) {
 	return assetGroup, nil
 }
 
-// UpdateAssetGroup updates an existing asset group identified by the given ID.
-// It sends a PUT request to the Safeguard API with the updated asset group data.
+// UpdateAssetGroup modifies an existing asset group.
 //
 // Parameters:
-//   - c: A pointer to the SafeguardClient used to make the API request.
-//   - id: The ID of the asset group to be updated.
-//   - assetGroup: The AssetGroup object containing the updated data.
+//   - id: Unique identifier of the asset group to update
+//   - assetGroup: Modified asset group data
 //
 // Returns:
-//   - AssetGroup: The updated AssetGroup object returned by the API.
-//   - error: An error object if an error occurred during the update process, otherwise nil.
+//   - (AssetGroup): The updated asset group
+//   - (error): An error if the update fails
 func UpdateAssetGroup(id int, assetGroup AssetGroup) (AssetGroup, error) {
 	query := fmt.Sprintf("AssetGroups/%d", id)
 
@@ -144,24 +141,22 @@ func UpdateAssetGroup(id int, assetGroup AssetGroup) (AssetGroup, error) {
 	return assetGroup, nil
 }
 
-// Update updates the current AssetGroup instance in the database.
-// It returns the updated AssetGroup and an error if the update fails.
+// Update persists any changes made to this AssetGroup instance.
 //
 // Returns:
-//   - (AssetGroup): The updated AssetGroup instance.
-//   - (error): An error if the update operation fails.
+//   - (AssetGroup): The updated asset group
+//   - (error): An error if the update fails
 func (a AssetGroup) Update() (AssetGroup, error) {
 	return UpdateAssetGroup(a.Id, a)
 }
 
-// DeleteAssetGroup deletes an asset group identified by the given ID using the provided SafeguardClient.
+// DeleteAssetGroup removes an asset group from the system.
 //
 // Parameters:
-//   - c: A pointer to a SafeguardClient instance used to make the delete request.
-//   - id: An integer representing the ID of the asset group to be deleted.
+//   - id: Unique identifier of the asset group to delete
 //
 // Returns:
-//   - error: An error object if the delete request fails, otherwise nil.
+//   - (error): An error if the deletion fails
 func DeleteAssetGroup(id int) error {
 	query := fmt.Sprintf("AssetGroups/%d", id)
 
@@ -173,9 +168,10 @@ func DeleteAssetGroup(id int) error {
 	return nil
 }
 
-// Delete removes the AssetGroup from the system.
-// It calls the DeleteAssetGroup function with the client and Id of the AssetGroup.
-// Returns an error if the deletion fails.
+// Delete removes this asset group from the system.
+//
+// Returns:
+//   - (error): An error if the deletion fails
 func (a AssetGroup) Delete() error {
 	return DeleteAssetGroup(a.Id)
 }

@@ -9,7 +9,8 @@ import (
 	"github.com/sthayduk/safeguard-go/client"
 )
 
-// ManagedByUser represents a user who manages the asset account
+// ManagedByUser represents the user or identity that manages an asset account,
+// including their display name, identity provider details, and contact information.
 type ManagedByUser struct {
 	DisplayName                       string `json:"DisplayName,omitempty"`
 	Id                                int    `json:"Id,omitempty"`
@@ -24,7 +25,8 @@ type ManagedByUser struct {
 	FullDisplayName                   string `json:"FullDisplayName,omitempty"`
 }
 
-// Tag represents a tag associated with an asset account
+// Tag represents metadata that can be attached to an asset account for
+// organization and filtering purposes.
 type Tag struct {
 	Id            int    `json:"Id,omitempty"`
 	Name          string `json:"Name,omitempty"`
@@ -32,7 +34,8 @@ type Tag struct {
 	AdminAssigned bool   `json:"AdminAssigned,omitempty"`
 }
 
-// Profile represents a profile associated with an asset account
+// Profile represents configuration settings that can be applied to an asset account,
+// such as password rules or authentication settings.
 type Profile struct {
 	Id            int    `json:"Id,omitempty"`
 	Name          string `json:"Name,omitempty"`
@@ -40,14 +43,16 @@ type Profile struct {
 	EffectiveName string `json:"EffectiveName,omitempty"`
 }
 
-// DiscoveredGroup represents a discovered group associated with an asset account
+// DiscoveredGroup represents a security group or role that was automatically
+// discovered for an asset account during discovery operations.
 type DiscoveredGroup struct {
 	DiscoveredGroupId                string `json:"DiscoveredGroupId,omitempty"`
 	DiscoveredGroupName              string `json:"DiscoveredGroupName,omitempty"`
 	DiscoveredGroupDistinguishedName string `json:"DiscoveredGroupDistinguishedName,omitempty"`
 }
 
-// DiscoveredProperties represents properties discovered for an asset account
+// DiscoveredProperties contains metadata about when and how an account was discovered,
+// including the discovery schedule and discovered group memberships.
 type DiscoveredProperties struct {
 	AccountDiscoveryScheduleId   int               `json:"AccountDiscoveryScheduleId,omitempty"`
 	AccountDiscoveryScheduleName string            `json:"AccountDiscoveryScheduleName,omitempty"`
@@ -147,7 +152,8 @@ type TaskProperties struct {
 	NextElevateAccountDate         time.Time `json:"NextElevateAccountDate,omitempty"`
 }
 
-// AssetAccount represents an asset account in Safeguard
+// AssetAccount represents a privileged account managed by Safeguard,
+// containing its configuration, credentials and relationships.
 type AssetAccount struct {
 	Id                           int                  `json:"Id,omitempty"`
 	Name                         string               `json:"Name,omitempty"`
@@ -217,7 +223,8 @@ const (
 	SshKeyTypeED25519 SshKeyType = "ED25519"
 )
 
-// ToJson converts an AssetAccount to its JSON string representation
+// ToJson serializes an AssetAccount object into its JSON string representation.
+// Returns the JSON string and any error that occurred during marshalling.
 func (a AssetAccount) ToJson() (string, error) {
 	assetAccountJSON, err := json.Marshal(a)
 	if err != nil {
@@ -244,14 +251,14 @@ func (ab AssetAccountBatchResponse) hasError() error {
 	return fmt.Errorf("error: %s", ab.Error.Message)
 }
 
-// GetAssetAccounts retrieves a list of asset accounts from Safeguard.
+// GetAssetAccounts retrieves accounts matching the provided filter.
+//
 // Parameters:
-//   - c: The SafeguardClient instance for making API requests
-//   - fields: Filter criteria for the request
+//   - filter: Query parameters for filtering accounts
 //
 // Returns:
-//   - []AssetAccount: A slice of asset accounts matching the filter criteria
-//   - error: An error if the request fails, nil otherwise
+//   - []AssetAccount: Matching accounts
+//   - error: API or unmarshalling errors
 func GetAssetAccounts(filter client.Filter) ([]AssetAccount, error) {
 	var users []AssetAccount
 
@@ -315,9 +322,10 @@ func DeleteAssetAccount(id int) error {
 	return nil
 }
 
-// Delete removes the AssetAccount from the system.
-// It calls the DeleteAssetAccount function with the client and Id of the AssetAccount.
-// Returns an error if the deletion fails.
+// Delete permanently removes the account.
+//
+// Returns:
+//   - error: Deletion errors
 func (a AssetAccount) Delete() error {
 	return DeleteAssetAccount(a.Id)
 }
@@ -407,12 +415,12 @@ func CreateAssetAccounts(assetAccounts []AssetAccount) ([]AssetAccount, error) {
 	return createdAssetAccounts, nil
 }
 
-// Create creates a new instance of this asset account in Safeguard.
-// It uses the CreateAssetAccount function with the current client.
+// Create adds this account to Safeguard.
+// Required fields must be populated before calling.
 //
 // Returns:
-//   - AssetAccount: The newly created asset account with updated fields
-//   - error: An error if the creation fails, nil otherwise
+//   - AssetAccount: Created account with server-assigned fields
+//   - error: Creation errors
 func (a AssetAccount) Create() (AssetAccount, error) {
 	return CreateAssetAccount(a)
 }
@@ -447,12 +455,12 @@ func UpdateAssetAccount(assetAccount AssetAccount) (AssetAccount, error) {
 	return updatedAssetAccount, nil
 }
 
-// Update modifies the current asset account in Safeguard with any changes.
-// It uses the UpdateAssetAccount function with the current client.
+// Update modifies the account in Safeguard.
+// Only modifiable fields are updated.
 //
 // Returns:
-//   - AssetAccount: The updated asset account with current fields
-//   - error: An error if the update fails, nil otherwise
+//   - AssetAccount: Updated account state
+//   - error: Update errors
 func (a AssetAccount) Update() (AssetAccount, error) {
 	return UpdateAssetAccount(a)
 }
@@ -518,12 +526,11 @@ func DisableAssetAccount(assetAccount AssetAccount) (AssetAccount, error) {
 	return updatedAssetAccount, nil
 }
 
-// Disable disables this asset account in Safeguard.
-// It uses the DisableAssetAccount function with the current client.
+// Disable deactivates the account for password management.
 //
 // Returns:
-//   - AssetAccount: The updated asset account reflecting the disabled state
-//   - error: An error if the disable operation fails, nil otherwise
+//   - AssetAccount: Updated account showing disabled
+//   - error: Disable operation errors
 func (a AssetAccount) Disable() (AssetAccount, error) {
 	return DisableAssetAccount(a)
 }
@@ -552,12 +559,11 @@ func EnableAssetAccount(assetAccount AssetAccount) (AssetAccount, error) {
 	return updatedAssetAccount, nil
 }
 
-// Enable enables this asset account in Safeguard.
-// It uses the EnableAssetAccount function with the current client.
+// Enable activates the account for password management.
 //
 // Returns:
-//   - AssetAccount: The updated asset account reflecting the enabled state
-//   - error: An error if the enable operation fails, nil otherwise
+//   - AssetAccount: Updated account showing enabled
+//   - error: Enable operation errors
 func (a AssetAccount) Enable() (AssetAccount, error) {
 	return EnableAssetAccount(a)
 }
@@ -623,12 +629,11 @@ func SuspendAssetAccount(a AssetAccount) (PasswordActivityLog, error) {
 	return log, nil
 }
 
-// Suspend suspends this asset account in Safeguard.
-// It uses the SuspendAssetAccount function with the current client.
+// Suspend temporarily disables the account on target system.
 //
 // Returns:
-//   - PasswordActivityLog: Log details of the suspend activity
-//   - error: An error if the suspend operation fails, nil otherwise
+//   - PasswordActivityLog: Suspension details
+//   - error: Suspend operation errors
 func (a AssetAccount) Suspend() (PasswordActivityLog, error) {
 	return SuspendAssetAccount(a)
 }

@@ -24,10 +24,11 @@ type AssetPartition struct {
 	DefaultSshKeyProfileName string          `json:"DefaultSshKeyProfileName"`
 }
 
-// ToJson converts the AssetPartition struct to a JSON string representation.
+// ToJson serializes the AssetPartition instance into a JSON string representation.
+//
 // Returns:
-//   - string: JSON string of the asset partition
-//   - error: An error if JSON marshaling fails, nil otherwise
+//   - (string): JSON representation of the asset partition
+//   - (error): An error if JSON marshaling fails
 func (u AssetPartition) ToJson() (string, error) {
 	assetPartitionJSON, err := json.Marshal(u)
 	if err != nil {
@@ -76,21 +77,24 @@ type AccountPasswordRule struct {
 	RepeatedCharacterRestriction            string    `json:"RepeatedCharacterRestriction"`
 }
 
-// Assign applies this password rule to the specified asset account.
+// Assign associates this password rule with the specified asset account.
+// This operation updates the asset account's password profile with the current rule.
+//
 // Parameters:
-//   - assetAccount: The asset account to which the password rule should be applied
+//   - assetAccount: The asset account to modify
 //
 // Returns:
-//   - AssetAccount: The updated asset account with the applied password rule
-//   - error: An error if the assignment fails, nil otherwise
+//   - (AssetAccount): The updated asset account
+//   - (error): An error if the assignment fails
 func (r AccountPasswordRule) Assign(assetAccount AssetAccount) (AssetAccount, error) {
 	return UpdatePasswordProfile(assetAccount, r)
 }
 
-// ToJson converts the AccountPasswordRule struct to a JSON string representation.
+// ToJson serializes the AccountPasswordRule instance into a JSON string representation.
+//
 // Returns:
-//   - string: JSON string of the password rule
-//   - error: An error if JSON marshaling fails, nil otherwise
+//   - (string): JSON representation of the password rule
+//   - (error): An error if JSON marshaling fails
 func (r AccountPasswordRule) ToJson() (string, error) {
 	ruleJSON, err := json.Marshal(r)
 	if err != nil {
@@ -99,14 +103,14 @@ func (r AccountPasswordRule) ToJson() (string, error) {
 	return string(ruleJSON), nil
 }
 
-// GetAssetPartitions retrieves a list of asset partitions from Safeguard.
+// GetAssetPartitions retrieves all asset partitions matching the specified filter criteria.
+//
 // Parameters:
-//   - c: The SafeguardClient instance for making API requests
-//   - filter: Criteria to filter the returned partitions
+//   - filter: Query parameters to filter the results
 //
 // Returns:
-//   - []AssetPartition: A slice of asset partitions matching the filter criteria
-//   - error: An error if the request fails, nil otherwise
+//   - ([]AssetPartition): Slice of matching asset partitions
+//   - (error): An error if the API request fails
 func GetAssetPartitions(filter client.Filter) ([]AssetPartition, error) {
 	var AssetPartitions []AssetPartition
 
@@ -121,15 +125,15 @@ func GetAssetPartitions(filter client.Filter) ([]AssetPartition, error) {
 	return AssetPartitions, nil
 }
 
-// GetAssetPartition retrieves details for a specific asset partition by ID.
+// GetAssetPartition retrieves a single asset partition by its ID.
+//
 // Parameters:
-//   - c: The SafeguardClient instance for making API requests
-//   - id: The numeric ID of the asset partition to retrieve
-//   - fields: Specific fields to include in the response
+//   - id: Unique identifier of the asset partition
+//   - fields: Optional fields to include in the response
 //
 // Returns:
-//   - AssetPartition: The requested asset partition object
-//   - error: An error if the request fails, nil otherwise
+//   - (AssetPartition): The requested asset partition
+//   - (error): An error if the API request fails
 func GetAssetPartition(id int, fields client.Fields) (AssetPartition, error) {
 	var AssetPartition AssetPartition
 
@@ -146,25 +150,24 @@ func GetAssetPartition(id int, fields client.Fields) (AssetPartition, error) {
 	return AssetPartition, nil
 }
 
-// GetPasswordRules retrieves all password rules defined for this asset partition.
-// It uses the current client instance to make the API request.
+// GetPasswordRules retrieves all password rules associated with this asset partition.
 //
 // Returns:
-//   - []AccountPasswordRule: A slice of password rules defined for this partition
-//   - error: An error if the request fails, nil otherwise
+//   - ([]AccountPasswordRule): Slice of password rules for this partition
+//   - (error): An error if the API request fails
 func (a AssetPartition) GetPasswordRules() ([]AccountPasswordRule, error) {
 	return GetPasswordRules(a, client.Filter{})
 }
 
-// GetPasswordRules retrieves all password rules for a specific asset partition.
+// GetPasswordRules retrieves password rules for the specified asset partition.
+//
 // Parameters:
-//   - c: The SafeguardClient instance for making API requests
-//   - assetPartition: The asset partition to get rules for
-//   - filter: Criteria to filter the returned rules
+//   - assetPartition: The partition to get rules for
+//   - filter: Query parameters to filter the results
 //
 // Returns:
-//   - []AccountPasswordRule: A slice of password rules matching the filter
-//   - error: An error if the request fails or no rules are found
+//   - ([]AccountPasswordRule): Slice of matching password rules
+//   - (error): An error if the API request fails or no rules are found
 func GetPasswordRules(assetPartition AssetPartition, filter client.Filter) ([]AccountPasswordRule, error) {
 	var PasswordRules []AccountPasswordRule
 
@@ -186,13 +189,13 @@ func GetPasswordRules(assetPartition AssetPartition, filter client.Filter) ([]Ac
 	return PasswordRules, nil
 }
 
-// DeleteAssetPartition deletes an asset partition with the specified ID.
+// DeleteAssetPartition removes an asset partition from the system.
+//
 // Parameters:
-//   - c: The SafeguardClient instance for making API requests
-//   - id: The ID of the asset partition to delete
+//   - id: Unique identifier of the asset partition to delete
 //
 // Returns:
-//   - error: An error if the deletion fails, nil otherwise
+//   - (error): An error if the deletion fails
 func DeleteAssetPartition(id int) error {
 	query := fmt.Sprintf("AssetPartitions/%d", id)
 
@@ -205,10 +208,9 @@ func DeleteAssetPartition(id int) error {
 }
 
 // Delete removes this asset partition from the system.
-// Uses the DeleteAssetPartition function with the current client instance.
 //
 // Returns:
-//   - error: An error if the deletion fails, nil otherwise
+//   - (error): An error if the deletion fails
 func (a AssetPartition) Delete() error {
 	return DeleteAssetPartition(a.Id)
 }

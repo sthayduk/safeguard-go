@@ -29,7 +29,16 @@ type Role struct {
 	Members                     []RoleMember                `json:"Members"`
 }
 
-// ToJson converts a Role object to its JSON string representation
+// ToJson converts a Role object to its JSON string representation.
+//
+// Example:
+//
+//	role := Role{
+//	    Name: "Administrator",
+//	    Description: "Full system access"
+//	}
+//	json, err := role.ToJson()
+//
 // Returns:
 //   - string: JSON representation of the role
 //   - error: An error if marshaling fails, nil otherwise
@@ -69,9 +78,18 @@ type HourlyRestrictionProperties struct {
 }
 
 // GetRoles retrieves a list of roles from Safeguard.
+//
+// This method returns all roles matching the specified filter criteria. Common filters
+// include Name, IsExpired, and CreatedDate.
+//
+// Example:
+//
+//	filter := client.Filter{}
+//	filter.AddFilter("IsExpired", "eq", "false")
+//	roles, err := GetRoles(filter)
+//
 // Parameters:
-//   - c: The SafeguardClient instance for making API requests
-//   - fields: Filter criteria for the request
+//   - fields: Filter object containing field comparisons and ordering preferences
 //
 // Returns:
 //   - []Role: A slice of roles matching the filter criteria
@@ -94,9 +112,17 @@ func GetRoles(fields client.Filter) ([]Role, error) {
 }
 
 // GetEntitlements is an alias for GetRoles that retrieves a list of roles from Safeguard.
+//
+// This method provides compatibility with systems that use the term "entitlements"
+// instead of "roles". It has identical functionality to GetRoles.
+//
+// Example:
+//
+//	filter := client.Filter{}
+//	entitlements, err := GetEntitlements(filter)
+//
 // Parameters:
-//   - c: The SafeguardClient instance for making API requests
-//   - fields: Filter criteria for the request
+//   - fields: Filter object containing field comparisons and ordering preferences
 //
 // Returns:
 //   - []Role: A slice of roles matching the filter criteria
@@ -106,14 +132,23 @@ func GetEntitlements(fields client.Filter) ([]Role, error) {
 }
 
 // GetRole retrieves details for a specific role by ID.
+//
+// This method returns detailed information about a single role, optionally including
+// related objects specified in the fields parameter.
+//
+// Example:
+//
+//	fields := client.Fields{}
+//	fields.Add("Members", "Policies")
+//	role, err := GetRole(123, fields)
+//
 // Parameters:
-//   - c: The SafeguardClient instance for making API requests
-//   - id: The numeric ID of the role to retrieve
-//   - fields: Specific fields to include in the response
+//   - id: The unique identifier of the role to retrieve
+//   - fields: Optional Fields object specifying which related objects to include
 //
 // Returns:
-//   - Role: The requested role object
-//   - error: An error if the request fails, nil otherwise
+//   - Role: The requested role with all specified related objects
+//   - error: An error if the role is not found or request fails, nil otherwise
 func GetRole(id int, fields client.Fields) (Role, error) {
 	var userRole Role
 
@@ -134,23 +169,40 @@ func GetRole(id int, fields client.Fields) (Role, error) {
 }
 
 // GetEntitlement is an alias for GetRole that retrieves details for a specific role.
+//
+// This method provides compatibility with systems that use the term "entitlement"
+// instead of "role". It has identical functionality to GetRole.
+//
+// Example:
+//
+//	fields := client.Fields{}
+//	entitlement, err := GetEntitlement(123, fields)
+//
 // Parameters:
-//   - c: The SafeguardClient instance for making API requests
-//   - id: The numeric ID of the role to retrieve
-//   - fields: Specific fields to include in the response
+//   - id: The unique identifier of the role to retrieve
+//   - fields: Optional Fields object specifying which related objects to include
 //
 // Returns:
-//   - Role: The requested role object
-//   - error: An error if the request fails, nil otherwise
+//   - Role: The requested role with all specified related objects
+//   - error: An error if the role is not found or request fails, nil otherwise
 func GetEntitlement(id int, fields client.Fields) (Role, error) {
 	return GetRole(id, fields)
 }
 
 // GetRoleMembers retrieves the list of members belonging to a specific role.
+//
+// This method returns all users who are members of the specified role, with optional
+// filtering to restrict the results.
+//
+// Example:
+//
+//	filter := client.Filter{}
+//	filter.AddFilter("PrincipalKind", "eq", "User")
+//	members, err := GetRoleMembers(123, filter)
+//
 // Parameters:
-//   - c: The SafeguardClient instance for making API requests
-//   - id: The numeric ID of the role
-//   - filter: Filter criteria for the request
+//   - id: The unique identifier of the role
+//   - filter: Filter object to restrict which members are returned
 //
 // Returns:
 //   - []ManagedByUser: A slice of users who are members of the role
@@ -172,8 +224,17 @@ func GetRoleMembers(id int, filter client.Filter) ([]ManagedByUser, error) {
 }
 
 // GetMembers retrieves the list of members for the current role instance.
+//
+// This method is a convenience wrapper around GetRoleMembers that uses the
+// current role's ID.
+//
+// Example:
+//
+//	filter := client.Filter{}
+//	members, err := role.GetMembers(filter)
+//
 // Parameters:
-//   - filter: Filter criteria for the request
+//   - filter: Filter object to restrict which members are returned
 //
 // Returns:
 //   - []ManagedByUser: A slice of users who are members of the role
@@ -183,10 +244,19 @@ func (r Role) GetMembers(filter client.Filter) ([]ManagedByUser, error) {
 }
 
 // GetRolePolicies retrieves the list of access policies associated with a specific role.
+//
+// This method returns all access policies that are linked to the specified role,
+// with optional filtering to restrict the results.
+//
+// Example:
+//
+//	filter := client.Filter{}
+//	filter.AddFilter("IsExpired", "eq", "false")
+//	policies, err := GetRolePolicies(123, filter)
+//
 // Parameters:
-//   - c: The SafeguardClient instance for making API requests
-//   - id: The numeric ID of the role
-//   - filter: Filter criteria for the request
+//   - id: The unique identifier of the role
+//   - filter: Filter object to restrict which policies are returned
 //
 // Returns:
 //   - []AccessPolicy: A slice of access policies associated with the role
@@ -209,8 +279,17 @@ func GetRolePolicies(id int, filter client.Filter) ([]AccessPolicy, error) {
 }
 
 // GetPolicies retrieves the list of access policies for the current role instance.
+//
+// This method is a convenience wrapper around GetRolePolicies that uses the
+// current role's ID.
+//
+// Example:
+//
+//	filter := client.Filter{}
+//	policies, err := role.GetPolicies(filter)
+//
 // Parameters:
-//   - filter: Filter criteria for the request
+//   - filter: Filter object to restrict which policies are returned
 //
 // Returns:
 //   - []AccessPolicy: A slice of access policies associated with the role

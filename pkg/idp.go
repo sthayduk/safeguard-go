@@ -151,17 +151,16 @@ type GroupProperties struct {
 	DescriptionAttribute string   `json:"DescriptionAttribute,omitempty"`
 }
 
-// GetIdentityProviders retrieves a list of identity providers from the Safeguard API.
-// It sends a GET request to the "IdentityProviders" endpoint and unmarshals the response
-// into a slice of IdentityProvider structs. Each IdentityProvider is then associated
-// with the provided SafeguardClient.
+// GetIdentityProviders retrieves all configured identity providers from Safeguard.
 //
-// Parameters:
-//   - client: A pointer to a SafeguardClient instance used to make the API request.
+// This function returns all authentication sources configured in the system, including:
+// - Directory services (Active Directory, LDAP)
+// - Federation providers (SAML, OAuth)
+// - Other authentication methods (RADIUS, Starling, etc.)
 //
 // Returns:
-//   - A slice of IdentityProvider structs.
-//   - An error if the request fails or the response cannot be unmarshaled.
+//   - []IdentityProvider: A slice of all configured identity providers
+//   - error: An error if the API request fails or response cannot be parsed
 func GetIdentityProviders() ([]IdentityProvider, error) {
 	var identityProviders []IdentityProvider
 
@@ -179,15 +178,17 @@ func GetIdentityProviders() ([]IdentityProvider, error) {
 	return identityProviders, nil
 }
 
-// GetIdentityProvider retrieves an IdentityProvider by its ID.
+// GetIdentityProvider retrieves a specific identity provider by its ID.
+//
+// This function fetches detailed configuration information for a single identity
+// provider, including all its type-specific properties and settings.
 //
 // Parameters:
-//   - client: A pointer to the SafeguardClient used to make the request.
-//   - id: The ID of the IdentityProvider to retrieve.
+//   - id: The unique identifier of the identity provider
 //
 // Returns:
-//   - IdentityProvider: The retrieved IdentityProvider object.
-//   - error: An error object if an error occurred during the request, otherwise nil.
+//   - IdentityProvider: The requested identity provider's complete configuration
+//   - error: An error if the provider cannot be found or the request fails
 func GetIdentityProvider(id int) (IdentityProvider, error) {
 	var identityProvider IdentityProvider
 
@@ -204,17 +205,18 @@ func GetIdentityProvider(id int) (IdentityProvider, error) {
 	return identityProvider, nil
 }
 
-// GetDirectoryUsers retrieves a list of directory users from the specified identity provider.
-// It sends a GET request to the Safeguard API and unmarshals the response into a slice of User objects.
+// GetDirectoryUsers retrieves users from a specific identity provider's directory.
+//
+// This function only works with identity providers that are directories (IsDirectory = true).
+// It supports pagination and filtering through the filter parameter.
 //
 // Parameters:
-//   - c: A pointer to the SafeguardClient used to send the request.
-//   - id: The ID of the identity provider from which to retrieve directory users.
-//   - filter: A Filter object used to apply query parameters to the request.
+//   - identityProviderId: The ID of the directory identity provider
+//   - filter: Query parameters to filter the results (e.g., search text, limit, offset)
 //
 // Returns:
-//   - A slice of User objects representing the directory users.
-//   - An error if the request fails or the response cannot be unmarshaled.
+//   - []User: A slice of directory users matching the filter criteria
+//   - error: An error if the directory cannot be queried or the request fails
 func GetDirectoryUsers(identityProviderId int, filter client.Filter) ([]User, error) {
 	var directoryUsers []User
 
@@ -236,30 +238,33 @@ func GetDirectoryUsers(identityProviderId int, filter client.Filter) ([]User, er
 	return directoryUsers, nil
 }
 
-// GetDirectoryUsers retrieves a list of users from the directory associated with the IdentityProvider.
-// It accepts a filter parameter to narrow down the search results.
+// GetDirectoryUsers retrieves users from this identity provider's directory.
+//
+// This method is a convenience wrapper around the package-level GetDirectoryUsers
+// function, automatically using this identity provider's ID.
 //
 // Parameters:
-//   - filter: A client.Filter object to specify the criteria for filtering the users.
+//   - filter: Query parameters to filter the results (e.g., search text, limit, offset)
 //
 // Returns:
-//   - []User: A slice of User objects that match the filter criteria.
-//   - error: An error object if there is any issue during the retrieval process.
+//   - []User: A slice of directory users matching the filter criteria
+//   - error: An error if the directory cannot be queried or the request fails
 func (idp IdentityProvider) GetDirectoryUsers(filter client.Filter) ([]User, error) {
 	return GetDirectoryUsers(idp.Id, filter)
 }
 
-// GetDirectoryGroups retrieves the directory groups associated with a specific identity provider.
-// It sends a GET request to the Safeguard API and unmarshals the response into a slice of UserGroup.
+// GetDirectoryGroups retrieves groups from a specific identity provider's directory.
+//
+// This function only works with identity providers that are directories (IsDirectory = true).
+// It supports pagination and filtering through the filter parameter.
 //
 // Parameters:
-//   - c: A pointer to a SafeguardClient instance used to send the request.
-//   - id: The ID of the identity provider.
-//   - filter: A Filter instance used to filter the results.
+//   - id: The ID of the directory identity provider
+//   - filter: Query parameters to filter the results (e.g., search text, limit, offset)
 //
 // Returns:
-//   - A slice of UserGroup containing the directory groups.
-//   - An error if the request fails or the response cannot be unmarshaled.
+//   - []UserGroup: A slice of directory groups matching the filter criteria
+//   - error: An error if the directory cannot be queried or the request fails
 func GetDirectoryGroups(id int, filter client.Filter) ([]UserGroup, error) {
 	var directoryGroups []UserGroup
 
@@ -277,16 +282,17 @@ func GetDirectoryGroups(id int, filter client.Filter) ([]UserGroup, error) {
 	return directoryGroups, nil
 }
 
-// GetDirectoryGroups retrieves the directory groups associated with the IdentityProvider.
-// It takes a filter parameter to apply specific filtering criteria and returns a slice of UserGroup
-// and an error if any occurs during the retrieval process.
+// GetDirectoryGroups retrieves groups from this identity provider's directory.
+//
+// This method is a convenience wrapper around the package-level GetDirectoryGroups
+// function, automatically using this identity provider's ID.
 //
 // Parameters:
-//   - filter: A client.Filter object to specify the filtering criteria.
+//   - filter: Query parameters to filter the results (e.g., search text, limit, offset)
 //
 // Returns:
-//   - []UserGroup: A slice of UserGroup objects that match the filtering criteria.
-//   - error: An error object if any issues occur during the retrieval process.
+//   - []UserGroup: A slice of directory groups matching the filter criteria
+//   - error: An error if the directory cannot be queried or the request fails
 func (idp IdentityProvider) GetDirectoryGroups(filter client.Filter) ([]UserGroup, error) {
 	return GetDirectoryGroups(idp.Id, filter)
 }

@@ -161,13 +161,10 @@ const (
 )
 
 // GetMe retrieves information about the currently authenticated user.
-// Parameters:
-//   - c: The SafeguardClient instance for making API requests
-//   - fields: Filter criteria for the request
 //
 // Returns:
 //   - User: The user information for the authenticated user
-//   - error: An error if the request fails, nil otherwise
+//   - error: An error if the request fails or the response cannot be parsed
 func GetMe(filter client.Filter) (User, error) {
 	query := "me" + filter.ToQueryString()
 
@@ -184,14 +181,14 @@ func GetMe(filter client.Filter) (User, error) {
 	return me, nil
 }
 
-// GetMeAccessRequestAssets retrieves all assets that the current user can request access to
+// GetMeAccessRequestAssets retrieves all assets that the current user can request access to.
+//
 // Parameters:
-//   - c: The SafeguardClient instance for making API requests
-//   - filter: Filter criteria for the request
+//   - filter: Filter criteria to narrow down the results
 //
 // Returns:
 //   - []PolicyAsset: A slice of assets the user can request access to
-//   - error: An error if the request fails, nil otherwise
+//   - error: An error if the request fails or the response cannot be parsed
 func GetMeAccessRequestAssets(filter client.Filter) ([]PolicyAsset, error) {
 	var assets []PolicyAsset
 
@@ -209,14 +206,14 @@ func GetMeAccessRequestAssets(filter client.Filter) ([]PolicyAsset, error) {
 	return assets, nil
 }
 
-// GetMeAccessRequestAsset retrieves a specific asset that the current user can request access to
+// GetMeAccessRequestAsset retrieves a specific asset that the current user can request access to.
+//
 // Parameters:
-//   - c: The SafeguardClient instance for making API requests
-//   - assetId: The ID of the asset to retrieve
+//   - assetId: The ID of the asset to retrieve information for
 //
 // Returns:
-//   - PolicyAsset: The requested asset information
-//   - error: An error if the request fails, nil otherwise
+//   - PolicyAsset: The requested asset's information
+//   - error: An error if the asset cannot be found or the request fails
 func GetMeAccessRequestAsset(assetId string) (PolicyAsset, error) {
 	query := "me/AccessRequestAssets/" + assetId
 
@@ -233,14 +230,14 @@ func GetMeAccessRequestAsset(assetId string) (PolicyAsset, error) {
 	return asset, nil
 }
 
-// GetMeActionableRequests retrieves access requests that the current user can perform actions on
+// GetMeActionableRequests retrieves access requests that require action from the current user.
+//
 // Parameters:
-//   - c: The SafeguardClient instance for making API requests
-//   - filter: Filter criteria for the request
+//   - filter: Filter criteria to narrow down the results
 //
 // Returns:
-//   - map[AccessRequestRole][]AccessRequest: Access requests grouped by role that the user can act on
-//   - error: An error if the request fails, nil otherwise
+//   - map[AccessRequestRole][]AccessRequest: Access requests grouped by role
+//   - error: An error if the request fails or the response cannot be parsed
 func GetMeActionableRequests(filter client.Filter) (map[AccessRequestRole][]AccessRequest, error) {
 	query := "me/ActionableRequests" + filter.ToQueryString()
 
@@ -257,15 +254,15 @@ func GetMeActionableRequests(filter client.Filter) (map[AccessRequestRole][]Acce
 	return requests, nil
 }
 
-// GetMeActionableRequestsByRole retrieves access requests for a specific role that the current user can perform actions on
+// GetMeActionableRequestsByRole retrieves access requests for a specific role that require action.
+//
 // Parameters:
-//   - c: The SafeguardClient instance for making API requests
-//   - role: The access request role to filter by
-//   - filter: Filter criteria for the request
+//   - role: The specific role to filter requests by
+//   - filter: Additional filter criteria to narrow down the results
 //
 // Returns:
-//   - []AccessRequest: Access requests for the specified role that the user can act on
-//   - error: An error if the request fails, nil otherwise
+//   - []AccessRequest: Access requests for the specified role
+//   - error: An error if the request fails or the response cannot be parsed
 func GetMeActionableRequestsByRole(role AccessRequestRole, filter client.Filter) ([]AccessRequest, error) {
 	query := "me/ActionableRequests/" + string(role) + filter.ToQueryString()
 
@@ -291,14 +288,16 @@ type ActionableRequestsResult struct {
 	AvailableRoles []AccessRequestRole
 }
 
-// GetMeActionableRequestsDetailed retrieves and processes access requests that the current user can perform actions on
+// GetMeActionableRequestsDetailed provides a detailed analysis of actionable access requests.
+// This is a convenience method that processes the results from GetMeActionableRequests
+// and provides additional helper information.
+//
 // Parameters:
-//   - c: The SafeguardClient instance for making API requests
-//   - filter: Filter criteria for the request
+//   - filter: Filter criteria to narrow down the results
 //
 // Returns:
-//   - ActionableRequestsResult: Processed access requests with additional helper information
-//   - error: An error if the request fails, nil otherwise
+//   - ActionableRequestsResult: Processed access requests with additional metadata
+//   - error: An error if the request fails or the response cannot be parsed
 func GetMeActionableRequestsDetailed(filter client.Filter) (ActionableRequestsResult, error) {
 	requests, err := GetMeActionableRequests(filter)
 	if err != nil {
@@ -321,7 +320,13 @@ func GetMeActionableRequestsDetailed(filter client.Filter) (ActionableRequestsRe
 	return result, nil
 }
 
-// FilterRequestsByState returns all requests matching the given state
+// FilterRequestsByState returns all requests matching the specified state.
+//
+// Parameters:
+//   - state: The AccessRequestState to filter by
+//
+// Returns:
+//   - []AccessRequest: A slice of access requests in the specified state
 func (r *ActionableRequestsResult) FilterRequestsByState(state AccessRequestState) []AccessRequest {
 	var filtered []AccessRequest
 	for _, req := range r.AllRequests {
@@ -332,7 +337,11 @@ func (r *ActionableRequestsResult) FilterRequestsByState(state AccessRequestStat
 	return filtered
 }
 
-// GetPendingRequests returns all requests that require action
+// GetPendingRequests returns all requests that require action.
+// This includes requests in New, PendingApproval, and PendingReview states.
+//
+// Returns:
+//   - []AccessRequest: A slice of pending access requests
 func (r *ActionableRequestsResult) GetPendingRequests() []AccessRequest {
 	var pending []AccessRequest
 	pendingStates := map[AccessRequestState]bool{
@@ -349,13 +358,25 @@ func (r *ActionableRequestsResult) GetPendingRequests() []AccessRequest {
 	return pending
 }
 
-// HasRole checks if there are any requests for the given role
+// HasRole checks if there are any requests for the specified role.
+//
+// Parameters:
+//   - role: The AccessRequestRole to check for
+//
+// Returns:
+//   - bool: true if there are requests for the role, false otherwise
 func (r *ActionableRequestsResult) HasRole(role AccessRequestRole) bool {
 	_, exists := r.RequestsByRole[role]
 	return exists
 }
 
-// GetRequestsForRole returns all requests for a specific role
+// GetRequestsForRole returns all requests for a specific role.
+//
+// Parameters:
+//   - role: The AccessRequestRole to get requests for
+//
+// Returns:
+//   - []AccessRequest: A slice of access requests for the specified role
 func (r *ActionableRequestsResult) GetRequestsForRole(role AccessRequestRole) []AccessRequest {
 	return r.RequestsByRole[role]
 }
@@ -363,15 +384,14 @@ func (r *ActionableRequestsResult) GetRequestsForRole(role AccessRequestRole) []
 // GetMeAccountEntitlements retrieves the account entitlements for the current user.
 //
 // Parameters:
-//   - c: A pointer to the SafeguardClient used to make the request.
-//   - accessRequestType: The type of access request to filter by.
-//   - includeActiveRequests: A boolean indicating whether to include active requests in the response.
-//   - filterByCredential: A boolean indicating whether to filter by credential.
-//   - filter: A client.Filter object to apply additional filtering.
+//   - accessRequestType: Optional type of access request to filter by
+//   - includeActiveRequests: If true, includes currently active requests in the response
+//   - filterByCredential: If true, filters results by credential type
+//   - filter: Additional filter criteria to narrow down the results
 //
 // Returns:
-//   - A slice of AccountEntitlement objects.
-//   - An error if the request fails or the response cannot be unmarshaled.
+//   - []AccountEntitlement: A slice of account entitlements for the user
+//   - error: An error if the request fails or the response cannot be parsed
 func GetMeAccountEntitlements(accessRequestType AccessRequestType, includeActiveRequests bool, filterByCredential bool, filter client.Filter) ([]AccountEntitlement, error) {
 	var entitlements []AccountEntitlement
 
