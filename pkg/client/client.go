@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"log/slog"
@@ -64,6 +65,10 @@ func New(applianceUrl string, apiVersion string, debug bool) *SafeguardClient {
 	}
 
 	sgclient = &c
+
+	ctx := context.Background()
+	go c.refreshToken(ctx)
+
 	return &c
 }
 
@@ -95,6 +100,45 @@ func createTLSClient() *http.Client {
 				RootCAs: caCertPool,
 			},
 		},
+	}
+}
+
+func (c SafeguardClient) refreshToken(ctx context.Context) {
+
+	if c.AccessToken.AuthProvider == "" {
+		logger.Debug("token refresh skipped: no auth provider")
+		return
+	}
+
+	// Wait until Authentication is done
+	if c.AccessToken.AuthTime.IsZero() {
+		logger.Debug("wait until authentication is done")
+
+		for {
+			if !c.AccessToken.AuthTime.IsZero() {
+				break
+			}
+			time.Sleep(1 * time.Second)
+		}
+	}
+
+	remainingTokenTime := c.RemainingTokenTime()
+	ticker := time.NewTicker(remainingTokenTime - 1*time.Minute)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			ticker.Stop()
+			return
+
+		case <-ticker.C:
+			if c.AccessToken.AuthProvider == AuthProviderLocal {
+				c.LoginWithPassword(c.AccessToken.credentials.username, c.AccessToken.credentials.password)
+			} else if c.AccessToken.AuthProvider == AuthProviderCertificate {
+				c.LoginWithCertificate(c.AccessToken.credentials.certPath, c.AccessToken.credentials.certPassword)
+			}
+		}
 	}
 }
 

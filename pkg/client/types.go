@@ -11,9 +11,33 @@ type RSTSAuthResponse struct {
 	Scope        string `json:"scope"`
 
 	// Safeguard specific fields
-	UserToken         string    `json:"UserToken"`
-	Status            string    `json:"Status"`
-	IdentityProvider  string    `json:"IdentityProvider"`
-	AuthorizationCode string    `json:"-"` // Used internally for OAuth flow
-	AuthTime          time.Time `json:"-"` // Time when the token was received
+	UserToken         string       `json:"UserToken"`
+	Status            string       `json:"Status"`
+	IdentityProvider  string       `json:"IdentityProvider"`
+	AuthorizationCode string       `json:"-"` // Used internally for OAuth flow
+	AuthTime          time.Time    `json:"-"` // Time when the token was received
+	AuthProvider      AuthProvider `json:"-"` // Type of authentication provider
+	credentials       Credentials  `json:"-"`
+}
+
+type Credentials struct {
+	username     string
+	password     string
+	certPath     string
+	certPassword string
+}
+
+// AuthProvider represents the type of authentication provider
+type AuthProvider string
+
+const (
+	// AuthProviderCertificate represents certificate-based authentication
+	AuthProviderCertificate AuthProvider = "rsts:sts:primaryproviderid:certificate"
+	// AuthProviderLocal represents local username/password authentication
+	AuthProviderLocal AuthProvider = "rsts:sts:primaryproviderid:local"
+)
+
+// String returns the string representation of the AuthProvider
+func (a AuthProvider) String() string {
+	return string(a)
 }

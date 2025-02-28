@@ -15,9 +15,13 @@ import (
 // - certPassword: Password for the certificate
 // - authProvider: The authentication provider to use (e.g. "certificate")
 // Returns an error if the authentication fails.
-func (c *SafeguardClient) LoginWithCertificate(certPath, certPassword, authProvider string) error {
+func (c *SafeguardClient) LoginWithCertificate(certPath, certPassword string) error {
 	if c.AccessToken == nil {
-		c.AccessToken = &RSTSAuthResponse{}
+		c.AccessToken = &RSTSAuthResponse{
+			AuthProvider: AuthProviderCertificate,
+		}
+	} else {
+		c.AccessToken.AuthProvider = AuthProviderCertificate
 	}
 
 	// Read client certificate
@@ -44,7 +48,7 @@ func (c *SafeguardClient) LoginWithCertificate(certPath, certPassword, authProvi
 	}
 
 	// Get RSTS token
-	rstsToken, err := c.getRSTSTokenWithCert(tempClient, authProvider)
+	rstsToken, err := c.getRSTSTokenWithCert(tempClient, AuthProviderCertificate)
 	if err != nil {
 		return fmt.Errorf("acquire RSTS token failed: %v", err)
 	}
@@ -56,17 +60,20 @@ func (c *SafeguardClient) LoginWithCertificate(certPath, certPassword, authProvi
 	}
 	c.AccessToken.UserToken = safeguardToken
 	c.AccessToken.AccessToken = safeguardToken
+	c.AccessToken.credentials.certPath = certPath
+	c.AccessToken.credentials.certPassword = certPassword
 	fmt.Println("✅ Certificate authentication successful")
+
 	return nil
 }
 
-func (c *SafeguardClient) getRSTSTokenWithCert(client *http.Client, authProvider string) (string, error) {
+func (c *SafeguardClient) getRSTSTokenWithCert(client *http.Client, authProvider AuthProvider) (string, error) {
 	requestBody := struct {
 		GrantType string `json:"grant_type"`
 		Scope     string `json:"scope"`
 	}{
 		GrantType: "client_credentials",
-		Scope:     authProvider,
+		Scope:     authProvider.String(),
 	}
 
 	bodyBytes, err := json.Marshal(requestBody)

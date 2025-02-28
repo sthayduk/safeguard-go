@@ -26,7 +26,7 @@ func main() {
 
 	if accessToken == "" {
 		sgc = safeguard.SetupClient(applianceUrl, apiVersion, true)
-		err := sgc.LoginWithCertificate(pfxPath, pfxPassword, "rsts:sts:primaryproviderid:certificate")
+		err := sgc.LoginWithCertificate(pfxPath, pfxPassword)
 		if err != nil {
 			panic(err)
 		}

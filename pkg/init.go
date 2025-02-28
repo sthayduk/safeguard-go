@@ -13,7 +13,7 @@ var c *client.SafeguardClient
 //
 // Returns:
 //   - *client.SafeguardClient: The initialized client instance that will be used globally
-func SetupClient(url, version string, insecure bool) *client.SafeguardClient {
-	c = client.New(url, version, insecure)
+func SetupClient(url, version string, debug bool) *client.SafeguardClient {
+	c = client.New(url, version, debug)
 	return c
 }

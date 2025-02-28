@@ -16,14 +16,18 @@ import (
 // Returns an error if the login process fails, otherwise nil.
 func (c *SafeguardClient) LoginWithPassword(username, password string) error {
 	if c.AccessToken == nil {
-		c.AccessToken = &RSTSAuthResponse{}
+		c.AccessToken = &RSTSAuthResponse{
+			AuthProvider: AuthProviderLocal,
+		}
+	} else {
+		c.AccessToken.AuthProvider = AuthProviderLocal
 	}
 
 	data := url.Values{}
 	data.Set("grant_type", "password")
 	data.Set("username", username)
 	data.Set("password", password)
-	data.Set("scope", "rsts:sts:primaryproviderid:local")
+	data.Set("scope", AuthProviderLocal.String())
 
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/RSTS/oauth2/token", c.ApplicanceURL), strings.NewReader(data.Encode()))
 	if err != nil {
@@ -47,6 +51,8 @@ func (c *SafeguardClient) LoginWithPassword(username, password string) error {
 		return fmt.Errorf("token exchange failed: %v", err)
 	}
 
+	c.AccessToken.credentials.username = username
+	c.AccessToken.credentials.password = password
 	fmt.Println("✅ Login successful")
 	return nil
 }
