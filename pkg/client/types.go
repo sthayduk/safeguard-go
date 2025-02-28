@@ -1,6 +1,21 @@
 package client
 
-import "time"
+import (
+	"net/http"
+	"time"
+)
+
+type SafeguardClient struct {
+	AccessToken      *RSTSAuthResponse
+	ApplicanceURL    string
+	ClusterLeaderUrl string
+	ApiVersion       string
+	HttpClient       *http.Client
+	tokenEndpoint    string
+	redirectPort     int
+	redirectURI      string
+	DefaultHeaders   http.Header
+}
 
 // RSTSAuthResponse represents the complete authentication response from both RSTS and Safeguard
 type RSTSAuthResponse struct {
@@ -25,6 +40,13 @@ type Credentials struct {
 	password     string
 	certPath     string
 	certPassword string
+}
+
+type URLComponents struct {
+	Protocol   string
+	Hostname   string
+	DomainName string
+	Port       string
 }
 
 // AuthProvider represents the type of authentication provider

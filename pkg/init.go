@@ -1,6 +1,8 @@
 package pkg
 
-import "github.com/sthayduk/safeguard-go/client"
+import (
+	"github.com/sthayduk/safeguard-go/client"
+)
 
 var c *client.SafeguardClient
 

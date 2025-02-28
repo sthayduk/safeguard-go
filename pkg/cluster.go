@@ -158,25 +158,25 @@ func GetClusterMember(id string) (*ClusterMember, error) {
 // Returns:
 //   - *ClusterMember: The cluster member that is currently the leader, or nil if no leader is found
 //   - error: An error if no leader is found, multiple leaders are detected, or the request fails
-func GetClusterLeader() (*ClusterMember, error) {
+func GetClusterLeader() (ClusterMember, error) {
 	filter := Filter{}
 	filter.AddFilter("IsLeader", "eq", "true")
 
 	clusterMembers, err := GetClusterMembers(filter)
 	if err != nil {
 		fmt.Println(err)
-		return nil, err
+		return ClusterMember{}, err
 	}
 
 	if len(clusterMembers) == 0 {
-		return nil, fmt.Errorf("no cluster leader found")
+		return ClusterMember{}, fmt.Errorf("no cluster leader found")
 	}
 
 	if len(clusterMembers) > 1 {
-		return nil, fmt.Errorf("invalid number of cluster leaders found")
+		return ClusterMember{}, fmt.Errorf("invalid number of cluster leaders found")
 	}
 
-	return &clusterMembers[0], nil
+	return clusterMembers[0], nil
 }
 
 // ForceClusterHealthCheck triggers an immediate health check of the cluster.

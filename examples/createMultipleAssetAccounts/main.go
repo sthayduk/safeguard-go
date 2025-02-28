@@ -77,16 +77,19 @@ func main() {
 		}
 
 		// Wait for the task to complete
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		timeout := time.Duration(60 * len(createdUsers)) // timeout depends on the number of users and appliance performance
+		logger.Printf("Waiting for task to complete with timeout: %d seconds", timeout)
+		ctx, cancel := context.WithTimeout(context.Background(), timeout*time.Second)
 		defer cancel()
-		logger.Println("Waiting for task to complete...")
+
+		logger.Printf("Waiting for task %s for user %s to complete...", task.Name, task.AccountName)
 		if _, err := task.CheckTaskState(ctx); err != nil {
-			logger.Fatalf("Failed to check task state: %v", err)
+			logger.Fatalf("Failed to check task state for Suspend User: %v", err)
 		}
 
 		// Update and check password in a goroutine
 		wg.Add(1)
-		go updateAndCheckPassword(&wg, logger, createdUser)
+		go updateAndCheckPassword(ctx, &wg, logger, createdUser)
 	}
 
 	// Wait for all goroutines to complete
@@ -99,7 +102,7 @@ func main() {
 
 }
 
-func updateAndCheckPassword(wg *sync.WaitGroup, logger *log.Logger, createdUser safeguard.AssetAccount) {
+func updateAndCheckPassword(ctx context.Context, wg *sync.WaitGroup, logger *log.Logger, createdUser safeguard.AssetAccount) {
 	// Initialize colored output
 	info := color.New(color.FgCyan).SprintFunc()
 
@@ -137,17 +140,13 @@ func updateAndCheckPassword(wg *sync.WaitGroup, logger *log.Logger, createdUser 
 
 	// Update User Password
 	logger.Println("Updating user password...")
-	taskState, err := updatedUser.ChangePassword()
+	task, err := updatedUser.ChangePassword()
 	if err != nil {
 		logger.Fatalf("Failed to change user password: %v", err)
 	}
 
-	// Wait for the task to complete
-	ctx, cancel := context.WithTimeout(context.Background(), 300*time.Second)
-	defer cancel()
-
-	logger.Println("Waiting for task to complete...")
-	if _, err := taskState.CheckTaskState(ctx); err != nil {
+	logger.Printf("Waiting for task %s for user %s to complete...", task.Name, task.AccountName)
+	if _, err := task.CheckTaskState(ctx); err != nil {
 		logger.Fatalf("Failed to check task state: %v", err)
 	}
 

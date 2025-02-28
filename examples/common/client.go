@@ -1,6 +1,7 @@
 package common
 
 import (
+	"fmt"
 	"os"
 
 	safeguard "github.com/sthayduk/safeguard-go"
@@ -16,13 +17,13 @@ func InitClient() error {
 	var sgc *client.SafeguardClient
 
 	if accessToken == "" {
-		sgc = safeguard.SetupClient(applianceUrl, apiVersion, true)
+		sgc = safeguard.SetupClient(applianceUrl, apiVersion, false)
 		err := sgc.LoginWithOauth()
 		if err != nil {
 			return err
 		}
 	} else {
-		sgc = safeguard.SetupClient(applianceUrl, apiVersion, true)
+		sgc = safeguard.SetupClient(applianceUrl, apiVersion, false)
 		sgc.AccessToken = &client.RSTSAuthResponse{
 			AccessToken: accessToken,
 		}
@@ -32,6 +33,15 @@ func InitClient() error {
 	if err != nil {
 		return err
 	}
+
+	// Get Cluster Leader
+	clusterLeader, err := safeguard.GetClusterLeader()
+	if err != nil {
+		fmt.Println("Failed to get cluster leader:", err)
+		return nil
+	}
+
+	sgc.SetClusterLeader(clusterLeader.Name)
 
 	return nil
 }
