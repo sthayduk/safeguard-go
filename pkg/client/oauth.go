@@ -1,14 +1,11 @@
 package client
 
 import (
-	"bytes"
 	"crypto/rand"
 	"crypto/sha256"
 	"crypto/tls"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -21,7 +18,7 @@ import (
 // Returns an error if the authentication or token exchange process fails.
 func (c *SafeguardClient) LoginWithOauth() error {
 	if c.AccessToken == nil {
-		c.AccessToken = &TokenResponse{}
+		c.AccessToken = &RSTSAuthResponse{}
 	}
 
 	codeVerifier, codeChallenge := generateCodeChallenge()
@@ -113,7 +110,7 @@ func startHTTPSListener(authCodeChan chan string, errorChan chan error) *http.Se
 	return server
 }
 
-func (c *SafeguardClient) exchangeToken(authCode, codeVerifier string) (*TokenResponse, error) {
+func (c *SafeguardClient) exchangeToken(authCode, codeVerifier string) (*RSTSAuthResponse, error) {
 	data := url.Values{}
 	data.Set("grant_type", "authorization_code")
 	data.Set("code", authCode)
@@ -132,56 +129,10 @@ func (c *SafeguardClient) exchangeToken(authCode, codeVerifier string) (*TokenRe
 	}
 	defer resp.Body.Close()
 
-	body, _ := io.ReadAll(resp.Body)
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("rSTS token request failed: %s", string(body))
-	}
-
-	var rStsToken TokenResponse
-	if err := json.NewDecoder(bytes.NewReader(body)).Decode(&rStsToken); err != nil {
-		return nil, err
-	}
-
-	logger.Debug("rSTS Token Response", "body", string(body))
-	logger.Debug("rSTS Token", "token", rStsToken.AccessToken)
-
-	tokenReq := struct {
-		StsAccessToken string `json:"StsAccessToken"`
-	}{
-		StsAccessToken: rStsToken.AccessToken,
-	}
-
-	tokenData, err := json.Marshal(tokenReq)
+	rstsResp, err := handleTokenResponse(resp)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("RSTS token request failed: %v", err)
 	}
 
-	req, err = http.NewRequest("POST", fmt.Sprintf("%s/service/core/v4/Token/LoginResponse", c.ApplicanceURL), bytes.NewBuffer(tokenData))
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err = c.HttpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	body, _ = io.ReadAll(resp.Body)
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("safeguard token request failed: %s", string(body))
-	}
-
-	var tokenResponse TokenResponse
-	if err := json.NewDecoder(bytes.NewReader(body)).Decode(&tokenResponse); err != nil {
-		return nil, err
-	}
-
-	logger.Debug("Safeguard Token Response", "body", string(body))
-	logger.Debug("Safeguard Token", "token", tokenResponse.UserToken)
-
-	tokenResponse.AccessToken = tokenResponse.UserToken
-
-	return &tokenResponse, nil
+	return c.exchangeRSTSTokenForSafeguard(c.HttpClient, rstsResp.AccessToken)
 }

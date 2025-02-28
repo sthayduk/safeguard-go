@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"time"
 )
 
 var logger *slog.Logger // Declare global logger variable
@@ -21,7 +22,7 @@ const (
 )
 
 type SafeguardClient struct {
-	AccessToken    *TokenResponse
+	AccessToken    *RSTSAuthResponse
 	ApplicanceURL  string
 	ApiVersion     string
 	HttpClient     *http.Client
@@ -29,14 +30,6 @@ type SafeguardClient struct {
 	redirectPort   int
 	redirectURI    string
 	DefaultHeaders http.Header
-}
-
-type TokenResponse struct {
-	AccessToken       string `json:"access_token"`
-	AuthorizationCode string `json:"authorization_code"`
-	TokenType         string `json:"token_type,omitempty"`
-	ExpiresIn         int    `json:"expires_in,omitempty"`
-	UserToken         string `json:"UserToken,omitempty"`
 }
 
 // New creates a new instance of SafeguardClient.
@@ -61,7 +54,7 @@ func New(applianceUrl string, apiVersion string, debug bool) *SafeguardClient {
 	}
 
 	c := SafeguardClient{
-		AccessToken:   &TokenResponse{},
+		AccessToken:   &RSTSAuthResponse{},
 		ApiVersion:    apiVersion,
 		ApplicanceURL: applianceUrl,
 		HttpClient:    createTLSClient(),
@@ -103,4 +96,25 @@ func createTLSClient() *http.Client {
 			},
 		},
 	}
+}
+
+// GetTokenExpirationTime returns the time when the current access token will expire
+func (c *SafeguardClient) GetTokenExpirationTime() time.Time {
+	return c.AccessToken.AuthTime.Add(time.Duration(c.AccessToken.ExpiresIn) * time.Second)
+}
+
+// IsTokenExpired checks if the current access token has expired
+func (c *SafeguardClient) IsTokenExpired() bool {
+	if c.AccessToken == nil || c.AccessToken.AuthTime.IsZero() {
+		return true
+	}
+	return time.Now().After(c.GetTokenExpirationTime())
+}
+
+// RemainingTokenTime returns the duration until the token expires
+func (c *SafeguardClient) RemainingTokenTime() time.Duration {
+	if c.AccessToken == nil || c.AccessToken.AuthTime.IsZero() {
+		return 0
+	}
+	return time.Until(c.GetTokenExpirationTime())
 }

@@ -5,10 +5,8 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
-	"strings"
 )
 
 // LoginWithCertificate authenticates using a PKCS12 certificate file.
@@ -19,7 +17,7 @@ import (
 // Returns an error if the authentication fails.
 func (c *SafeguardClient) LoginWithCertificate(certPath, certPassword, authProvider string) error {
 	if c.AccessToken == nil {
-		c.AccessToken = &TokenResponse{}
+		c.AccessToken = &RSTSAuthResponse{}
 	}
 
 	// Read client certificate
@@ -56,19 +54,19 @@ func (c *SafeguardClient) LoginWithCertificate(certPath, certPassword, authProvi
 	if err != nil {
 		return fmt.Errorf("acquire Safeguard token failed: %v", err)
 	}
+	c.AccessToken.UserToken = safeguardToken
 	c.AccessToken.AccessToken = safeguardToken
 	fmt.Println("✅ Certificate authentication successful")
 	return nil
 }
 
 func (c *SafeguardClient) getRSTSTokenWithCert(client *http.Client, authProvider string) (string, error) {
-	// Create request body using struct
 	requestBody := struct {
 		GrantType string `json:"grant_type"`
 		Scope     string `json:"scope"`
 	}{
 		GrantType: "client_credentials",
-		Scope:     authProvider, // Use authProvider directly without prefix
+		Scope:     authProvider,
 	}
 
 	bodyBytes, err := json.Marshal(requestBody)
@@ -76,70 +74,34 @@ func (c *SafeguardClient) getRSTSTokenWithCert(client *http.Client, authProvider
 		return "", fmt.Errorf("failed to marshal request body: %v", err)
 	}
 
-	logger.Debug("RSTS request body", "body", string(bodyBytes))
-
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/RSTS/oauth2/token", c.ApplicanceURL), bytes.NewBuffer(bodyBytes))
 	if err != nil {
 		return "", err
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	logger.Debug("RSTS request URL", "url", req.URL.String())
-
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", err
 	}
 	defer resp.Body.Close()
 
-	body, _ := io.ReadAll(resp.Body)
-	logger.Debug("RSTS response", "body", string(body))
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("RSTS token request failed: %s", string(body))
+	rstsResp, err := handleTokenResponse(resp)
+	if err != nil {
+		return "", fmt.Errorf("RSTS token request failed: %v", err)
 	}
 
-	var authResp struct {
-		AccessToken string `json:"access_token"`
-	}
-	if err := json.Unmarshal(body, &authResp); err != nil {
-		return "", err
-	}
-
-	if authResp.AccessToken == "" {
-		return "", fmt.Errorf("no access token received")
-	}
-
-	return authResp.AccessToken, nil
+	// Store RSTS response
+	c.AccessToken = rstsResp
+	return rstsResp.AccessToken, nil
 }
 
 func (c *SafeguardClient) exchangeRSTSToken(client *http.Client, rstsToken string) (string, error) {
-	data := strings.NewReader(fmt.Sprintf(`{
-		"StsAccessToken": "%s"
-	}`, rstsToken))
-
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/service/core/v4/Token/LoginResponse", c.ApplicanceURL), data)
+	safeguardResponse, err := c.exchangeRSTSTokenForSafeguard(client, rstsToken)
 	if err != nil {
 		return "", err
 	}
-	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	body, _ := io.ReadAll(resp.Body)
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("safeguard token request failed: %s", string(body))
-	}
-
-	var tokenResp struct {
-		UserToken string `json:"UserToken"`
-	}
-	if err := json.Unmarshal(body, &tokenResp); err != nil {
-		return "", err
-	}
-
-	return tokenResp.UserToken, nil
+	c.AccessToken = safeguardResponse
+	return safeguardResponse.UserToken, nil
 }

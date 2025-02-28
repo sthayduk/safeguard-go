@@ -32,7 +32,7 @@ func main() {
 		}
 	} else {
 		sgc = safeguard.SetupClient(applianceUrl, apiVersion, true)
-		sgc.AccessToken = &client.TokenResponse{
+		sgc.AccessToken = &client.RSTSAuthResponse{
 			AccessToken: accessToken,
 		}
 	}
