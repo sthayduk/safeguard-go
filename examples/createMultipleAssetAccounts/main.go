@@ -69,24 +69,25 @@ func main() {
 		fmt.Printf("│ Created by:        %-15s │\n", createdUser.CreatedByUserDisplayName)
 		fmt.Printf("%s\n\n", info("╰──────────────────────────────────╯"))
 
-		// Suspend User
-		logger.Println("Suspending user...")
-		task, err := createdUser.Suspend()
-		if err != nil {
-			logger.Fatalf("Failed to suspend user: %v", err)
-		}
-
 		// Wait for the task to complete
 		timeout := time.Duration(60 * len(createdUsers)) // timeout depends on the number of users and appliance performance
 		logger.Printf("Waiting for task to complete with timeout: %d seconds", timeout)
 		ctx, cancel := context.WithTimeout(context.Background(), timeout*time.Second)
 		defer cancel()
 
-		logger.Printf("Waiting for task %s for user %s to complete...", task.Name, task.AccountName)
-		if _, err := task.CheckTaskState(ctx); err != nil {
-			logger.Fatalf("Failed to check task state for Suspend User: %v", err)
-		}
+		// Suspend User
+		go func() {
+			logger.Println("Suspending user...")
+			task, err := createdUser.Suspend()
+			if err != nil {
+				logger.Fatalf("Failed to suspend user: %v", err)
+			}
 
+			logger.Printf("Waiting for task %s for user %s to complete...", task.Name, task.AccountName)
+			if _, err := task.CheckTaskState(ctx); err != nil {
+				logger.Fatalf("Failed to check task state for Suspend User: %v", err)
+			}
+		}()
 		// Update and check password in a goroutine
 		wg.Add(1)
 		go updateAndCheckPassword(ctx, &wg, logger, createdUser)

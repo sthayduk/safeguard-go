@@ -11,11 +11,11 @@ var c *client.SafeguardClient
 // Parameters:
 //   - url: The base URL of the Safeguard API endpoint
 //   - version: The API version to use (e.g., "v3")
-//   - insecure: If true, skips SSL certificate validation
+//   - debug: If true, enables debugging
 //
 // Returns:
 //   - *client.SafeguardClient: The initialized client instance that will be used globally
-func SetupClient(url, version string, debug bool) *client.SafeguardClient {
-	c = client.New(url, version, debug)
+func SetupClient(url, apiVersion string, debug bool) *client.SafeguardClient {
+	c = client.New(url, apiVersion, debug)
 	return c
 }

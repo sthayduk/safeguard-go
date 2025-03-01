@@ -115,7 +115,7 @@ func GetClusterMembers(filter Filter) ([]ClusterMember, error) {
 
 	response, err := c.GetRequest(query)
 	if err != nil {
-		return nil, err
+		return []ClusterMember{}, err
 	}
 
 	if err := json.Unmarshal(response, &clusterMembers); err != nil {
@@ -131,23 +131,23 @@ func GetClusterMembers(filter Filter) ([]ClusterMember, error) {
 //   - id: The unique identifier (GUID) of the cluster member to retrieve
 //
 // Returns:
-//   - *ClusterMember: The requested cluster member's configuration and status, or nil if not found
+//   - ClusterMember: The requested cluster member's configuration and status, or nil if not found
 //   - error: An error if the member cannot be found or the request fails
-func GetClusterMember(id string) (*ClusterMember, error) {
+func GetClusterMember(id string) (ClusterMember, error) {
 	var clusterMember ClusterMember
 
 	query := fmt.Sprintf("Cluster/Members/%s", id)
 
 	response, err := c.GetRequest(query)
 	if err != nil {
-		return nil, err
+		return ClusterMember{}, err
 	}
 
 	if err := json.Unmarshal(response, &clusterMember); err != nil {
-		return nil, err
+		return ClusterMember{}, err
 	}
 
-	return &clusterMember, nil
+	return clusterMember, nil
 }
 
 // GetClusterLeader identifies and retrieves the current leader of the Safeguard cluster.
@@ -156,7 +156,7 @@ func GetClusterMember(id string) (*ClusterMember, error) {
 // is responsible for coordinating cluster-wide operations and maintaining consistency.
 //
 // Returns:
-//   - *ClusterMember: The cluster member that is currently the leader, or nil if no leader is found
+//   - ClusterMember: The cluster member that is currently the leader, or nil if no leader is found
 //   - error: An error if no leader is found, multiple leaders are detected, or the request fails
 func GetClusterLeader() (ClusterMember, error) {
 	filter := Filter{}
@@ -185,22 +185,22 @@ func GetClusterLeader() (ClusterMember, error) {
 // including resource utilization, connectivity, and service status checks.
 //
 // Returns:
-//   - *ClusterMember: The cluster member representing the current node with updated health status
+//   - ClusterMember: The cluster member representing the current node with updated health status
 //   - error: An error if the health check fails to complete or the response cannot be parsed
-func ForceClusterHealthCheck() (*ClusterMember, error) {
+func ForceClusterHealthCheck() (ClusterMember, error) {
 	var clusterMembers ClusterMember
 	query := "Cluster/Members/Self"
 
 	response, err := c.GetRequest(query)
 	if err != nil {
-		return nil, err
+		return ClusterMember{}, err
 	}
 
 	if err := json.Unmarshal(response, &clusterMembers); err != nil {
-		return nil, err
+		return ClusterMember{}, err
 	}
 
-	return &clusterMembers, nil
+	return clusterMembers, nil
 }
 
 // IsClusterLeader checks whether this cluster member is currently the cluster leader.
