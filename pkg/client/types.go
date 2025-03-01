@@ -7,21 +7,43 @@ import (
 )
 
 type SafeguardClient struct {
+	AccessToken    *RSTSAuthResponse
+	Appliance      applianceURL
+	ClusterLeader  applianceURL
+	ApiVersion     string
+	HttpClient     *http.Client
+	tokenEndpoint  string
+	redirectPort   int
+	redirectURI    string
+	DefaultHeaders http.Header
+}
+
+type applianceURL struct {
 	sync.RWMutex
 
-	AccessToken      *RSTSAuthResponse
-	ApplicanceURL    string
-	ClusterLeaderUrl string
-	ApiVersion       string
-	HttpClient       *http.Client
-	tokenEndpoint    string
-	redirectPort     int
-	redirectURI      string
-	DefaultHeaders   http.Header
+	Protocol   string
+	Hostname   string
+	DomainName string
+	Port       string
+	Url        string
+}
+
+func (a *applianceURL) getUrl() string {
+	a.RWMutex.RLock()
+	defer a.RWMutex.RUnlock()
+	return a.Url
+}
+
+func (a *applianceURL) setUrl(url string) {
+	a.RWMutex.Lock()
+	defer a.RWMutex.Unlock()
+	a.Url = url
 }
 
 // RSTSAuthResponse represents the complete authentication response from both RSTS and Safeguard
 type RSTSAuthResponse struct {
+	sync.RWMutex
+
 	AccessToken  string `json:"access_token"`
 	TokenType    string `json:"token_type"`
 	ExpiresIn    int    `json:"expires_in"`
@@ -39,18 +61,55 @@ type RSTSAuthResponse struct {
 	isValid           bool         `json:"-"`
 }
 
+func (a *RSTSAuthResponse) getAccessToken() string {
+	a.RWMutex.RLock()
+	defer a.RWMutex.RUnlock()
+	return a.AccessToken
+}
+
+func (a *RSTSAuthResponse) setAccessToken(accessToken string) {
+	a.RWMutex.Lock()
+	defer a.RWMutex.Unlock()
+	a.AccessToken = accessToken
+}
+
+func (a *RSTSAuthResponse) setUserNamePassword(username, password string) {
+	a.RWMutex.Lock()
+	defer a.RWMutex.Unlock()
+	a.credentials.username = username
+	a.credentials.password = password
+}
+
+func (a *RSTSAuthResponse) getUserNamePassword() (string, string) {
+	a.RWMutex.RLock()
+	defer a.RWMutex.RUnlock()
+	return a.credentials.username, a.credentials.password
+}
+
+func (a *RSTSAuthResponse) setCertificate(certPath, certPassword string) {
+	a.RWMutex.Lock()
+	defer a.RWMutex.Unlock()
+	a.credentials.certPath = certPath
+	a.credentials.certPassword = certPassword
+}
+
+func (a *RSTSAuthResponse) getCertificate() (string, string) {
+	a.RWMutex.RLock()
+	defer a.RWMutex.RUnlock()
+	return a.credentials.certPath, a.credentials.certPassword
+}
+
+func (a *RSTSAuthResponse) setUserToken(userToken string) {
+	a.RWMutex.Lock()
+	defer a.RWMutex.Unlock()
+	a.UserToken = userToken
+}
+
 type Credentials struct {
 	username     string
 	password     string
 	certPath     string
 	certPassword string
-}
-
-type URLComponents struct {
-	Protocol   string
-	Hostname   string
-	DomainName string
-	Port       string
 }
 
 // AuthProvider represents the type of authentication provider

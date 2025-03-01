@@ -15,9 +15,6 @@ import (
 // - password: The password of the user.
 // Returns an error if the login process fails, otherwise nil.
 func (c *SafeguardClient) LoginWithPassword(username, password string) error {
-	c.RWMutex.Lock()
-	defer c.RWMutex.Unlock()
-
 	if c.AccessToken == nil {
 		c.AccessToken = &RSTSAuthResponse{
 			AuthProvider: AuthProviderLocal,
@@ -32,7 +29,7 @@ func (c *SafeguardClient) LoginWithPassword(username, password string) error {
 	data.Set("password", password)
 	data.Set("scope", AuthProviderLocal.String())
 
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/RSTS/oauth2/token", c.ApplicanceURL), strings.NewReader(data.Encode()))
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/RSTS/oauth2/token", c.Appliance.getUrl()), strings.NewReader(data.Encode()))
 	if err != nil {
 		return fmt.Errorf("error creating request: %v", err)
 	}
@@ -49,13 +46,13 @@ func (c *SafeguardClient) LoginWithPassword(username, password string) error {
 		return fmt.Errorf("RSTS login failed: %v", err)
 	}
 
-	c.AccessToken, err = c.exchangeRSTSTokenForSafeguard(c.HttpClient, rstsResp.AccessToken)
+	accessToken, err := c.exchangeRSTSTokenForSafeguard(c.HttpClient, rstsResp.getAccessToken())
 	if err != nil {
 		return fmt.Errorf("token exchange failed: %v", err)
 	}
 
-	c.AccessToken.credentials.username = username
-	c.AccessToken.credentials.password = password
+	c.AccessToken.setAccessToken(accessToken.getAccessToken())
+	c.AccessToken.setUserNamePassword(username, password)
 	fmt.Println("✅ Login successful")
 	return nil
 }

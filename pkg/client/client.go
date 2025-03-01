@@ -58,7 +58,7 @@ func New(applianceUrl string, apiVersion string, debug bool) *SafeguardClient {
 	sgclient = &SafeguardClient{
 		AccessToken:   &RSTSAuthResponse{},
 		ApiVersion:    apiVersion,
-		ApplicanceURL: applianceUrl,
+		Appliance:     applianceURL{Url: applianceUrl},
 		HttpClient:    createTLSClient(),
 		redirectPort:  redirectPort,
 		redirectURI:   redirectURI,
@@ -70,18 +70,18 @@ func New(applianceUrl string, apiVersion string, debug bool) *SafeguardClient {
 	return sgclient
 }
 
-// GetClusterLeaderUrl returns the URL of the cluster leader.
+// getClusterLeaderUrl returns the URL of the cluster leader.
 // This URL is used to identify the leader node in a cluster setup.
-func (c *SafeguardClient) GetClusterLeaderUrl() string {
-	if c.ClusterLeaderUrl == "" {
+func (c *SafeguardClient) getClusterLeaderUrl() string {
+	if c.ClusterLeader.getUrl() == "" {
 		for {
-			if c.ClusterLeaderUrl != "" {
+			if c.ClusterLeader.getUrl() != "" {
 				break
 			}
 			time.Sleep(100 * time.Millisecond)
 		}
 	}
-	return c.ClusterLeaderUrl
+	return c.ClusterLeader.getUrl()
 }
 
 // createTLSClient creates and returns a new HTTP client with TLS configuration.
@@ -179,7 +179,7 @@ func (c *SafeguardClient) refreshToken(ctx context.Context) {
 //	c - A pointer to the SafeguardClient instance whose token needs to be refreshed.
 func refreshTokenWithCertificate(c *SafeguardClient) {
 	// Refresh the token using the certificate
-	c.LoginWithCertificate(c.AccessToken.credentials.certPath, c.AccessToken.credentials.certPassword)
+	c.LoginWithCertificate(c.AccessToken.getCertificate())
 }
 
 // refreshTokenWithPassword refreshes the authentication token for the SafeguardClient
@@ -192,7 +192,7 @@ func refreshTokenWithCertificate(c *SafeguardClient) {
 // to obtain a new access token using the current username and password.
 func refreshTokenWithPassword(c *SafeguardClient) {
 	// Refresh the token using the password
-	c.LoginWithPassword(c.AccessToken.credentials.username, c.AccessToken.credentials.password)
+	c.LoginWithPassword(c.AccessToken.getUserNamePassword())
 }
 
 // GetTokenExpirationTime returns the time when the current access token will expire
@@ -264,23 +264,21 @@ func (c *SafeguardClient) setClusterLeader(clusterLeaderHostName string) {
 		return
 	}
 
-	if sgclient.ClusterLeaderUrl == clusterLeaderUrl {
+	if sgclient.ClusterLeader.getUrl() == clusterLeaderUrl {
 		logger.Debug("Cluster leader unchanged", "url", clusterLeaderUrl)
 		return
 	}
 
-	c.RWMutex.Lock()
-	defer c.RWMutex.Unlock()
-	if sgclient.ApplicanceURL == clusterLeaderUrl {
+	if sgclient.Appliance.getUrl() == clusterLeaderUrl {
 		logger.Debug("Cluster leader is same as appliance URL", "url", clusterLeaderUrl)
-		sgclient.ClusterLeaderUrl = sgclient.ApplicanceURL
+		sgclient.ClusterLeader.setUrl(sgclient.Appliance.getUrl())
 		return
 	}
 
 	logger.Debug("Updating cluster leader URL",
-		"old", sgclient.ClusterLeaderUrl,
+		"old", sgclient.ClusterLeader.getUrl(),
 		"new", clusterLeaderUrl)
-	sgclient.ClusterLeaderUrl = clusterLeaderUrl
+	sgclient.ClusterLeader.setUrl(clusterLeaderUrl)
 }
 
 // generateClusterLeaderURL generates the URL for the cluster leader based on the provided
@@ -295,7 +293,7 @@ func (c *SafeguardClient) setClusterLeader(clusterLeaderHostName string) {
 // Returns:
 //   - string: The generated cluster leader URL.
 //   - error: An error if there was an issue generating the URL.
-func (*SafeguardClient) generateClusterLeaderURL(clusterLeaderHostName string) (string, error) {
+func (c *SafeguardClient) generateClusterLeaderURL(clusterLeaderHostName string) (string, error) {
 	logger.Debug("Generating cluster leader URL", "hostname", clusterLeaderHostName)
 	protocol, _, domainName, port, err := sgclient.splitApplianceURL()
 	if err != nil {

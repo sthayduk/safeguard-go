@@ -29,7 +29,7 @@ func (c *SafeguardClient) LoginWithOauth() error {
 	defer server.Close()
 
 	authURL := fmt.Sprintf("%s/RSTS/Login?response_type=code&code_challenge_method=S256&code_challenge=%s&redirect_uri=%s&port=%d",
-		c.ApplicanceURL, codeChallenge, url.QueryEscape(c.redirectURI), c.redirectPort)
+		c.Appliance.getUrl(), codeChallenge, url.QueryEscape(c.redirectURI), c.redirectPort)
 
 	openBrowser(authURL)
 	fmt.Println("Please log in using your browser...")
@@ -117,7 +117,7 @@ func (c *SafeguardClient) exchangeToken(authCode, codeVerifier string) (*RSTSAut
 	data.Set("redirect_uri", c.redirectURI)
 	data.Set("code_verifier", codeVerifier)
 
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/RSTS/oauth2/token", c.ApplicanceURL), strings.NewReader(data.Encode()))
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/RSTS/oauth2/token", c.Appliance.getUrl()), strings.NewReader(data.Encode()))
 	if err != nil {
 		return nil, err
 	}
@@ -134,5 +134,5 @@ func (c *SafeguardClient) exchangeToken(authCode, codeVerifier string) (*RSTSAut
 		return nil, fmt.Errorf("RSTS token request failed: %v", err)
 	}
 
-	return c.exchangeRSTSTokenForSafeguard(c.HttpClient, rstsResp.AccessToken)
+	return c.exchangeRSTSTokenForSafeguard(c.HttpClient, rstsResp.getAccessToken())
 }

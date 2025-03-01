@@ -16,9 +16,6 @@ import (
 // - authProvider: The authentication provider to use (e.g. "certificate")
 // Returns an error if the authentication fails.
 func (c *SafeguardClient) LoginWithCertificate(certPath, certPassword string) error {
-	c.RWMutex.Lock()
-	defer c.RWMutex.Unlock()
-
 	if c.AccessToken == nil {
 		c.AccessToken = &RSTSAuthResponse{
 			AuthProvider: AuthProviderCertificate,
@@ -61,10 +58,10 @@ func (c *SafeguardClient) LoginWithCertificate(certPath, certPassword string) er
 	if err != nil {
 		return fmt.Errorf("acquire Safeguard token failed: %v", err)
 	}
-	c.AccessToken.UserToken = safeguardToken
-	c.AccessToken.AccessToken = safeguardToken
-	c.AccessToken.credentials.certPath = certPath
-	c.AccessToken.credentials.certPassword = certPassword
+
+	c.AccessToken.setAccessToken(safeguardToken)
+	c.AccessToken.setCertificate(certPath, certPassword)
+	c.AccessToken.setUserToken(safeguardToken)
 	fmt.Println("✅ Certificate authentication successful")
 
 	return nil
@@ -95,7 +92,7 @@ func (c *SafeguardClient) getRSTSTokenWithCert(client *http.Client, authProvider
 		return "", fmt.Errorf("failed to marshal request body: %v", err)
 	}
 
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/RSTS/oauth2/token", c.ApplicanceURL), bytes.NewBuffer(bodyBytes))
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/RSTS/oauth2/token", c.Appliance.getUrl()), bytes.NewBuffer(bodyBytes))
 	if err != nil {
 		return "", err
 	}
@@ -114,7 +111,7 @@ func (c *SafeguardClient) getRSTSTokenWithCert(client *http.Client, authProvider
 
 	// Store RSTS response
 	c.AccessToken = rstsResp
-	return rstsResp.AccessToken, nil
+	return rstsResp.getAccessToken(), nil
 }
 
 // exchangeRSTSToken exchanges an RSTS token for a Safeguard access token.

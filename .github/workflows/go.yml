@@ -30,4 +30,4 @@ jobs:
 
     - name: Test
       working-directory: ./pkg
-      run: go test -v ./...
+      run: go test -v ./... --race

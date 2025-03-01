@@ -55,7 +55,7 @@ func openBrowser(url string) {
 //   - port: The port number. If no port is specified in the URL, it returns the default port for the protocol.
 //   - err: An error if the URL is invalid or the protocol is unknown.
 func (c *SafeguardClient) splitApplianceURL() (protocol, hostname, domainName, port string, err error) {
-	parsedURL, err := url.Parse(c.ApplicanceURL)
+	parsedURL, err := url.Parse(c.Appliance.getUrl())
 	if err != nil {
 		return "", "", "", "", fmt.Errorf("invalid URL format: %v", err)
 	}

@@ -15,7 +15,7 @@ import (
 // Returns an error if the operation fails.
 func (c *SafeguardClient) SaveAccessTokenToEnv() error {
 	envVar := "SAFEGUARD_ACCESS_TOKEN"
-	err := os.Setenv(envVar, c.AccessToken.AccessToken)
+	err := os.Setenv(envVar, c.AccessToken.getAccessToken())
 	if err != nil {
 		logger.Error("Error saving access token to environment variable", "error", err)
 		return err
@@ -29,14 +29,14 @@ func (c *SafeguardClient) SaveAccessTokenToEnv() error {
 // It returns an error if the access token is empty or invalid.
 // Returns nil if the access token is valid, otherwise an error.
 func (c *SafeguardClient) ValidateAccessToken() error {
-	if c.AccessToken.AccessToken == "" {
+	if c.AccessToken.getAccessToken() == "" {
 		c.AccessToken.isValid = false
 		return fmt.Errorf("access token is empty")
 	}
 
 	logger.Debug("Token validation",
-		"length", len(c.AccessToken.AccessToken),
-		"formatCheck", strings.HasPrefix(c.AccessToken.AccessToken, "ey"))
+		"length", len(c.AccessToken.getAccessToken()),
+		"formatCheck", strings.HasPrefix(c.AccessToken.getAccessToken(), "ey"))
 
 	fields := []string{"id"}
 	err := c.testAccessToken(fields...)
@@ -61,7 +61,7 @@ func (c *SafeguardClient) ValidateAccessToken() error {
 //	The modified HTTP request with the added headers.
 func (c *SafeguardClient) getAuthorizationHeader(req *http.Request) *http.Request {
 	req.Header.Set("accept", "application/json")
-	req.Header.Set("Authorization", "Bearer "+c.AccessToken.AccessToken)
+	req.Header.Set("Authorization", "Bearer "+c.AccessToken.getAccessToken())
 
 	return req
 }
@@ -116,7 +116,7 @@ func (c *SafeguardClient) exchangeRSTSTokenForSafeguard(client *http.Client, rst
 		return nil, fmt.Errorf("error marshaling token request: %v", err)
 	}
 
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/service/core/v4/Token/LoginResponse", c.ApplicanceURL), bytes.NewBuffer(tokenData))
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/service/core/v4/Token/LoginResponse", c.Appliance.getUrl()), bytes.NewBuffer(tokenData))
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +146,7 @@ func (c *SafeguardClient) exchangeRSTSTokenForSafeguard(client *http.Client, rst
 		safeguardResponse.Scope = c.AccessToken.Scope
 	}
 
-	safeguardResponse.AccessToken = safeguardResponse.UserToken
+	safeguardResponse.setAccessToken(safeguardResponse.UserToken)
 	safeguardResponse.AuthTime = time.Now()
 
 	return &safeguardResponse, nil
