@@ -63,7 +63,7 @@ func TestSetClusterLeader(t *testing.T) {
 				ApplicanceURL: tt.applianceURL,
 			}
 
-			sgclient.SetClusterLeader(tt.clusterLeaderHost)
+			sgclient.setClusterLeader(tt.clusterLeaderHost)
 
 			if sgclient.ClusterLeaderUrl != tt.expectedClusterURL {
 				t.Errorf("expected %s, got %s", tt.expectedClusterURL, sgclient.ClusterLeaderUrl)

@@ -4,9 +4,11 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 )
@@ -53,7 +55,7 @@ func New(applianceUrl string, apiVersion string, debug bool) *SafeguardClient {
 		return sgclient
 	}
 
-	c := SafeguardClient{
+	sgclient = &SafeguardClient{
 		AccessToken:   &RSTSAuthResponse{},
 		ApiVersion:    apiVersion,
 		ApplicanceURL: applianceUrl,
@@ -63,57 +65,23 @@ func New(applianceUrl string, apiVersion string, debug bool) *SafeguardClient {
 		tokenEndpoint: applianceUrl + "/service/core/v4/Token/LoginResponse",
 	}
 
-	sgclient = &c
-
 	ctx := context.Background()
-	go c.refreshToken(ctx)
-
-	return &c
+	go sgclient.refreshToken(ctx)
+	return sgclient
 }
 
 // GetClusterLeaderUrl returns the URL of the cluster leader.
 // This URL is used to identify the leader node in a cluster setup.
 func (c *SafeguardClient) GetClusterLeaderUrl() string {
+	if c.ClusterLeaderUrl == "" {
+		for {
+			if c.ClusterLeaderUrl != "" {
+				break
+			}
+			time.Sleep(100 * time.Millisecond)
+		}
+	}
 	return c.ClusterLeaderUrl
-}
-
-// SetClusterLeader sets the cluster leader URL for the SafeguardClient.
-// It constructs the URL based on the provided cluster leader host name and the
-// existing appliance URL components (protocol, domain name, and port).
-//
-// Parameters:
-//   - clusterLeaderHostName: The host name of the cluster leader.
-//
-// If the constructed cluster leader URL is the same as the current appliance URL,
-// it sets the ClusterLeaderUrl to the appliance URL and logs a debug message.
-// Otherwise, it updates the ClusterLeaderUrl with the new cluster leader URL and logs
-// the change.
-//
-// Logs:
-//   - Error: If there is an error splitting the appliance URL.
-//   - Debug: If the cluster leader is the same as the appliance URL or if the cluster leader is set successfully.
-func (c *SafeguardClient) SetClusterLeader(clusterLeaderHostName string) {
-	protocol, _, domainName, port, err := sgclient.splitApplianceURL()
-	if err != nil {
-		logger.Error("Error splitting appliance URL", "error", err)
-		return
-	}
-
-	var clusterLeaderUrl string
-	if domainName == "" {
-		clusterLeaderUrl = fmt.Sprintf("%s://%s:%s", protocol, clusterLeaderHostName, port)
-	} else {
-		clusterLeaderUrl = fmt.Sprintf("%s://%s.%s:%s", protocol, clusterLeaderHostName, domainName, port)
-	}
-
-	if sgclient.ApplicanceURL == clusterLeaderUrl {
-		logger.Debug("Cluster leader is the same as appliance URL")
-		sgclient.ClusterLeaderUrl = sgclient.ApplicanceURL
-		return
-	}
-
-	sgclient.ClusterLeaderUrl = clusterLeaderUrl
-	logger.Debug("Cluster leader set to:", "url", clusterLeaderUrl)
 }
 
 // createTLSClient creates and returns a new HTTP client with TLS configuration.
@@ -163,7 +131,7 @@ func createTLSClient() *http.Client {
 //
 // Parameters:
 // - ctx: The context to control the lifecycle of the token refresh process.
-func (c SafeguardClient) refreshToken(ctx context.Context) {
+func (c *SafeguardClient) refreshToken(ctx context.Context) {
 	if c.AccessToken.AuthProvider == "" {
 		logger.Debug("token refresh skipped: no auth provider")
 		return
@@ -177,7 +145,7 @@ func (c SafeguardClient) refreshToken(ctx context.Context) {
 			if !c.AccessToken.AuthTime.IsZero() {
 				break
 			}
-			time.Sleep(1 * time.Second)
+			time.Sleep(100 * time.Millisecond)
 		}
 	}
 
@@ -192,12 +160,39 @@ func (c SafeguardClient) refreshToken(ctx context.Context) {
 
 		case <-ticker.C:
 			if c.AccessToken.AuthProvider == AuthProviderLocal {
-				c.LoginWithPassword(c.AccessToken.credentials.username, c.AccessToken.credentials.password)
+				refreshTokenWithPassword(c)
 			} else if c.AccessToken.AuthProvider == AuthProviderCertificate {
-				c.LoginWithCertificate(c.AccessToken.credentials.certPath, c.AccessToken.credentials.certPassword)
+				refreshTokenWithCertificate(c)
 			}
 		}
 	}
+}
+
+// refreshTokenWithCertificate refreshes the access token of the SafeguardClient
+// using the provided certificate credentials.
+//
+// It calls the LoginWithCertificate method on the SafeguardClient instance,
+// passing the certificate path and password from the client's AccessToken credentials.
+//
+// Parameters:
+//
+//	c - A pointer to the SafeguardClient instance whose token needs to be refreshed.
+func refreshTokenWithCertificate(c *SafeguardClient) {
+	// Refresh the token using the certificate
+	c.LoginWithCertificate(c.AccessToken.credentials.certPath, c.AccessToken.credentials.certPassword)
+}
+
+// refreshTokenWithPassword refreshes the authentication token for the SafeguardClient
+// using the stored username and password credentials.
+//
+// Parameters:
+// - c: A pointer to the SafeguardClient instance.
+//
+// This function calls the LoginWithPassword method on the SafeguardClient
+// to obtain a new access token using the current username and password.
+func refreshTokenWithPassword(c *SafeguardClient) {
+	// Refresh the token using the password
+	c.LoginWithPassword(c.AccessToken.credentials.username, c.AccessToken.credentials.password)
 }
 
 // GetTokenExpirationTime returns the time when the current access token will expire
@@ -231,4 +226,132 @@ func (c *SafeguardClient) RemainingTokenTime() time.Duration {
 		return 0
 	}
 	return time.Until(c.GetTokenExpirationTime())
+}
+
+// updateClusterLeaderUrl retrieves the cluster leader host name and updates the
+// cluster leader URL for the SafeguardClient. If an error occurs while getting
+// the cluster leader host name, it logs the error and returns without updating
+// the cluster leader URL.
+func (c *SafeguardClient) updateClusterLeaderUrl() {
+	clusterLeaderHostName, err := c.getClusterLeaderHostName()
+	if err != nil {
+		logger.Error("Failed to get cluster leader host name", "error", err)
+		return
+	}
+	c.setClusterLeader(clusterLeaderHostName)
+}
+
+// setClusterLeader sets the cluster leader URL for the SafeguardClient.
+// It takes the hostname of the cluster leader as a parameter and generates
+// the corresponding URL. If the generated URL is the same as the current
+// cluster leader URL, no changes are made. If the generated URL is the same
+// as the appliance URL, the cluster leader URL is set to the appliance URL.
+// Otherwise, the cluster leader URL is updated to the new URL.
+//
+// Parameters:
+//   - clusterLeaderHostName: The hostname of the cluster leader.
+//
+// Logs:
+//   - Debug: When setting the cluster leader, when the cluster leader is
+//     unchanged, when the cluster leader is the same as the appliance URL,
+//     and when updating the cluster leader URL.
+//   - Error: If there is an error generating the cluster leader URL.
+func (c *SafeguardClient) setClusterLeader(clusterLeaderHostName string) {
+	logger.Debug("Setting cluster leader", "hostname", clusterLeaderHostName)
+	clusterLeaderUrl, err := c.generateClusterLeaderURL(clusterLeaderHostName)
+	if err != nil {
+		logger.Error("Failed to set cluster leader", "error", err)
+		return
+	}
+
+	if sgclient.ClusterLeaderUrl == clusterLeaderUrl {
+		logger.Debug("Cluster leader unchanged", "url", clusterLeaderUrl)
+		return
+	}
+
+	c.RWMutex.Lock()
+	defer c.RWMutex.Unlock()
+	if sgclient.ApplicanceURL == clusterLeaderUrl {
+		logger.Debug("Cluster leader is same as appliance URL", "url", clusterLeaderUrl)
+		sgclient.ClusterLeaderUrl = sgclient.ApplicanceURL
+		return
+	}
+
+	logger.Debug("Updating cluster leader URL",
+		"old", sgclient.ClusterLeaderUrl,
+		"new", clusterLeaderUrl)
+	sgclient.ClusterLeaderUrl = clusterLeaderUrl
+}
+
+// generateClusterLeaderURL generates the URL for the cluster leader based on the provided
+// cluster leader host name. It splits the appliance URL to extract the protocol, domain name,
+// and port, and then constructs the cluster leader URL accordingly. If the domain name is empty,
+// it constructs the URL without the domain name. If there is an error while splitting the appliance
+// URL, it logs the error and returns an empty string along with the error.
+//
+// Parameters:
+//   - clusterLeaderHostName: The host name of the cluster leader.
+//
+// Returns:
+//   - string: The generated cluster leader URL.
+//   - error: An error if there was an issue generating the URL.
+func (*SafeguardClient) generateClusterLeaderURL(clusterLeaderHostName string) (string, error) {
+	logger.Debug("Generating cluster leader URL", "hostname", clusterLeaderHostName)
+	protocol, _, domainName, port, err := sgclient.splitApplianceURL()
+	if err != nil {
+		logger.Error("Error splitting appliance URL", "error", err)
+		return "", err
+	}
+
+	var clusterLeaderUrl string
+	if domainName == "" {
+		clusterLeaderUrl = fmt.Sprintf("%s://%s:%s", protocol, clusterLeaderHostName, port)
+	} else {
+		clusterLeaderUrl = fmt.Sprintf("%s://%s.%s:%s", protocol, clusterLeaderHostName, domainName, port)
+	}
+	logger.Debug("Generated cluster leader URL", "url", clusterLeaderUrl)
+	return clusterLeaderUrl, nil
+}
+
+// getClusterLeaderHostName fetches the hostname of the cluster leader.
+// It sends a request to the "Cluster/Members" endpoint with specific query parameters
+// to filter for the leader and retrieve its name. The function returns the hostname
+// of the cluster leader or an error if the request fails or no leader is found.
+//
+// Returns:
+//   - string: The hostname of the cluster leader.
+//   - error: An error if the request fails or no leader is found.
+func (c *SafeguardClient) getClusterLeaderHostName() (string, error) {
+	logger.Debug("Fetching cluster leader hostname")
+
+	query := "Cluster/Members"
+	params := url.Values{}
+	params.Add("filter", "IsLeader eq true")
+	params.Add("count", "false")
+	params.Add("fields", "Name")
+
+	fullPath := fmt.Sprintf("%s?%s", query, params.Encode())
+	logger.Debug("Sending request for cluster leader", "path", fullPath)
+
+	response, err := c.GetRequest(fullPath)
+	if err != nil {
+		logger.Error("Failed to get cluster leader response", "error", err)
+		return "", err
+	}
+
+	var leaderHostName []struct {
+		Name string `json:"Name"`
+	}
+	if err := json.Unmarshal(response, &leaderHostName); err != nil {
+		logger.Error("Failed to unmarshal cluster leader response", "error", err)
+		return "", err
+	}
+
+	if len(leaderHostName) == 0 {
+		logger.Error("No cluster leader found in response")
+		return "", fmt.Errorf("no cluster leader found")
+	}
+
+	logger.Debug("Found cluster leader", "hostname", leaderHostName[0].Name)
+	return leaderHostName[0].Name, nil
 }

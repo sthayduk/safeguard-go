@@ -12,6 +12,7 @@ import (
 // Returns:
 //   - string: The complete root URL for read-only API operations.
 func (c *SafeguardClient) getReadOnlyRootUrl() string {
+	// If the appliance URL is not set, fall back to the cluster leader URL
 	return fmt.Sprintf("%s/service/core/%s", c.ApplicanceURL, c.ApiVersion)
 }
 
@@ -22,7 +23,11 @@ func (c *SafeguardClient) getReadOnlyRootUrl() string {
 // Returns:
 //   - string: The complete root URL for read-write API operations.
 func (c *SafeguardClient) getReadWriteRootUrl() string {
-	return fmt.Sprintf("%s/service/core/%s", c.ClusterLeaderUrl, c.ApiVersion)
+	// Update the cluster leader URL to ensure it's set correctly
+	c.updateClusterLeaderUrl()
+
+	// If the cluster leader URL is not set, fall back to the appliance URL
+	return fmt.Sprintf("%s/service/core/%s", c.GetClusterLeaderUrl(), c.ApiVersion)
 }
 
 // GetRequest makes a GET request to the specified path on the Safeguard API.

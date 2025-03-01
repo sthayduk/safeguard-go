@@ -16,6 +16,9 @@ import (
 // - authProvider: The authentication provider to use (e.g. "certificate")
 // Returns an error if the authentication fails.
 func (c *SafeguardClient) LoginWithCertificate(certPath, certPassword string) error {
+	c.RWMutex.Lock()
+	defer c.RWMutex.Unlock()
+
 	if c.AccessToken == nil {
 		c.AccessToken = &RSTSAuthResponse{
 			AuthProvider: AuthProviderCertificate,
@@ -67,6 +70,17 @@ func (c *SafeguardClient) LoginWithCertificate(certPath, certPassword string) er
 	return nil
 }
 
+// getRSTSTokenWithCert retrieves an RSTS token using client certificate authentication.
+// It sends a POST request to the RSTS endpoint with the required grant type and scope.
+// The function returns the access token as a string or an error if the request fails.
+//
+// Parameters:
+//   - client: An HTTP client to send the request.
+//   - authProvider: An AuthProvider instance that provides the scope for the request.
+//
+// Returns:
+//   - A string containing the access token.
+//   - An error if the request fails or if there is an issue with the response.
 func (c *SafeguardClient) getRSTSTokenWithCert(client *http.Client, authProvider AuthProvider) (string, error) {
 	requestBody := struct {
 		GrantType string `json:"grant_type"`
@@ -103,6 +117,19 @@ func (c *SafeguardClient) getRSTSTokenWithCert(client *http.Client, authProvider
 	return rstsResp.AccessToken, nil
 }
 
+// exchangeRSTSToken exchanges an RSTS token for a Safeguard access token.
+// It takes an HTTP client and an RSTS token as input parameters and returns
+// the Safeguard user token and an error if any occurred during the exchange.
+//
+// Parameters:
+//
+//	client - The HTTP client used to make the request.
+//	rstsToken - The RSTS token to be exchanged.
+//
+// Returns:
+//
+//	string - The Safeguard user token.
+//	error - An error if the token exchange fails.
 func (c *SafeguardClient) exchangeRSTSToken(client *http.Client, rstsToken string) (string, error) {
 	safeguardResponse, err := c.exchangeRSTSTokenForSafeguard(client, rstsToken)
 	if err != nil {

@@ -15,6 +15,9 @@ import (
 // - password: The password of the user.
 // Returns an error if the login process fails, otherwise nil.
 func (c *SafeguardClient) LoginWithPassword(username, password string) error {
+	c.RWMutex.Lock()
+	defer c.RWMutex.Unlock()
+
 	if c.AccessToken == nil {
 		c.AccessToken = &RSTSAuthResponse{
 			AuthProvider: AuthProviderLocal,

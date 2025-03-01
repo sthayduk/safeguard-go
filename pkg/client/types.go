@@ -2,10 +2,13 @@ package client
 
 import (
 	"net/http"
+	"sync"
 	"time"
 )
 
 type SafeguardClient struct {
+	sync.RWMutex
+
 	AccessToken      *RSTSAuthResponse
 	ApplicanceURL    string
 	ClusterLeaderUrl string
@@ -33,6 +36,7 @@ type RSTSAuthResponse struct {
 	AuthTime          time.Time    `json:"-"` // Time when the token was received
 	AuthProvider      AuthProvider `json:"-"` // Type of authentication provider
 	credentials       Credentials  `json:"-"`
+	isValid           bool         `json:"-"`
 }
 
 type Credentials struct {

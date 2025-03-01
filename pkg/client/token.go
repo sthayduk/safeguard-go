@@ -30,6 +30,7 @@ func (c *SafeguardClient) SaveAccessTokenToEnv() error {
 // Returns nil if the access token is valid, otherwise an error.
 func (c *SafeguardClient) ValidateAccessToken() error {
 	if c.AccessToken.AccessToken == "" {
+		c.AccessToken.isValid = false
 		return fmt.Errorf("access token is empty")
 	}
 
@@ -37,13 +38,27 @@ func (c *SafeguardClient) ValidateAccessToken() error {
 		"length", len(c.AccessToken.AccessToken),
 		"formatCheck", strings.HasPrefix(c.AccessToken.AccessToken, "ey"))
 
-	err := c.testAccessToken()
+	fields := []string{"id"}
+	err := c.testAccessToken(fields...)
 	if err != nil {
+		c.AccessToken.isValid = false
 		return fmt.Errorf("invalid access token: %v", err)
 	}
+	c.AccessToken.isValid = true
 	return nil
 }
 
+// getAuthorizationHeader sets the necessary headers for authorization and content type
+// on the provided HTTP request. It adds an "accept" header with the value "application/json"
+// and an "Authorization" header with the Bearer token from the SafeguardClient's AccessToken.
+//
+// Parameters:
+//
+//	req - The HTTP request to which the headers will be added.
+//
+// Returns:
+//
+//	The modified HTTP request with the added headers.
 func (c *SafeguardClient) getAuthorizationHeader(req *http.Request) *http.Request {
 	req.Header.Set("accept", "application/json")
 	req.Header.Set("Authorization", "Bearer "+c.AccessToken.AccessToken)
@@ -51,6 +66,16 @@ func (c *SafeguardClient) getAuthorizationHeader(req *http.Request) *http.Reques
 	return req
 }
 
+// testAccessToken checks the access token by making a GET request to the "me" endpoint.
+// If fields are provided, they are appended as query parameters to the request.
+//
+// Parameters:
+//
+//	fields - Optional list of fields to include in the query.
+//
+// Returns:
+//
+//	error - An error if the request fails, otherwise nil.
 func (c *SafeguardClient) testAccessToken(fields ...string) error {
 	query := "me"
 	if len(fields) > 0 {
@@ -67,7 +92,18 @@ func (c *SafeguardClient) testAccessToken(fields ...string) error {
 	return nil
 }
 
-// exchangeRSTSTokenForSafeguard exchanges an RSTS token for a Safeguard token
+// exchangeRSTSTokenForSafeguard exchanges an RSTS token for a Safeguard token.
+//
+// This function sends a POST request to the Safeguard appliance to exchange the provided RSTS token
+// for a Safeguard token. It constructs the request payload, sends the request, and processes the response.
+//
+// Parameters:
+//   - client: The HTTP client used to send the request.
+//   - rstsToken: The RSTS token to be exchanged.
+//
+// Returns:
+//   - A pointer to an RSTSAuthResponse containing the Safeguard token information.
+//   - An error if the request fails or the response cannot be processed.
 func (c *SafeguardClient) exchangeRSTSTokenForSafeguard(client *http.Client, rstsToken string) (*RSTSAuthResponse, error) {
 	tokenReq := struct {
 		StsAccessToken string `json:"StsAccessToken"`
@@ -116,7 +152,18 @@ func (c *SafeguardClient) exchangeRSTSTokenForSafeguard(client *http.Client, rst
 	return &safeguardResponse, nil
 }
 
-// handleTokenResponse processes an HTTP response containing a token
+// handleTokenResponse processes the HTTP response from a token request.
+// It reads the response body and checks if the status code is OK (200).
+// If the status code is not OK, it returns an error with the response body as the message.
+// If the status code is OK, it decodes the response body into an RSTSAuthResponse struct
+// and returns it. If decoding fails, it returns the decoding error.
+//
+// Parameters:
+//   - resp: The HTTP response from the token request.
+//
+// Returns:
+//   - A pointer to an RSTSAuthResponse struct if the request was successful.
+//   - An error if the request failed or if decoding the response body failed.
 func handleTokenResponse(resp *http.Response) (*RSTSAuthResponse, error) {
 	body, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode != http.StatusOK {

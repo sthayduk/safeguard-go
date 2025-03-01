@@ -1,7 +1,6 @@
 package common
 
 import (
-	"fmt"
 	"os"
 
 	safeguard "github.com/sthayduk/safeguard-go"
@@ -33,15 +32,6 @@ func InitClient() error {
 	if err != nil {
 		return err
 	}
-
-	// Get Cluster Leader
-	clusterLeader, err := safeguard.GetClusterLeader()
-	if err != nil {
-		fmt.Println("Failed to get cluster leader:", err)
-		return nil
-	}
-
-	sgc.SetClusterLeader(clusterLeader.Name)
 
 	return nil
 }
