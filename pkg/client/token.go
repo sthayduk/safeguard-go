@@ -104,52 +104,45 @@ func (c *SafeguardClient) testAccessToken(fields ...string) error {
 // Returns:
 //   - A pointer to an RSTSAuthResponse containing the Safeguard token information.
 //   - An error if the request fails or the response cannot be processed.
-func (c *SafeguardClient) exchangeRSTSTokenForSafeguard(client *http.Client, rstsToken string) (*RSTSAuthResponse, error) {
+func (c *SafeguardClient) exchangeRSTSTokenForSafeguard(client *http.Client) error {
+	// tokenReq required because LoginResponse need AccessToken as StsAccessToken
 	tokenReq := struct {
 		StsAccessToken string `json:"StsAccessToken"`
 	}{
-		StsAccessToken: rstsToken,
+		StsAccessToken: c.AccessToken.getAccessToken(),
 	}
 
 	tokenData, err := json.Marshal(tokenReq)
 	if err != nil {
-		return nil, fmt.Errorf("error marshaling token request: %v", err)
+		return fmt.Errorf("error marshaling token request: %v", err)
 	}
 
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/service/core/v4/Token/LoginResponse", c.Appliance.getUrl()), bytes.NewBuffer(tokenData))
 	if err != nil {
-		return nil, err
+		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer resp.Body.Close()
 
 	body, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("safeguard token request failed: %s", string(body))
+		return fmt.Errorf("safeguard token request failed: %s", string(body))
 	}
 
 	var safeguardResponse RSTSAuthResponse
 	if err := json.NewDecoder(bytes.NewReader(body)).Decode(&safeguardResponse); err != nil {
-		return nil, err
+		return err
 	}
 
-	// If we have existing RSTS token info, merge it
-	if c.AccessToken != nil {
-		safeguardResponse.RefreshToken = c.AccessToken.RefreshToken
-		safeguardResponse.TokenType = c.AccessToken.TokenType
-		safeguardResponse.ExpiresIn = c.AccessToken.ExpiresIn
-		safeguardResponse.Scope = c.AccessToken.Scope
-	}
+	c.AccessToken.setUserToken(safeguardResponse.UserToken)
+	c.AccessToken.AuthTime = time.Now()
 
-	safeguardResponse.setUserToken(safeguardResponse.UserToken)
-	safeguardResponse.AuthTime = time.Now()
-
-	return &safeguardResponse, nil
+	return nil
 }
 
 // handleTokenResponse processes the HTTP response from a token request.
@@ -164,16 +157,18 @@ func (c *SafeguardClient) exchangeRSTSTokenForSafeguard(client *http.Client, rst
 // Returns:
 //   - A pointer to an RSTSAuthResponse struct if the request was successful.
 //   - An error if the request failed or if decoding the response body failed.
-func handleTokenResponse(resp *http.Response) (*RSTSAuthResponse, error) {
+func (c *SafeguardClient) handleTokenResponse(resp *http.Response) error {
 	body, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("token request failed: %s", string(body))
+		return fmt.Errorf("token request failed: %s", string(body))
 	}
 
-	var tokenResp RSTSAuthResponse
+	var tokenResp *RSTSAuthResponse
 	if err := json.NewDecoder(bytes.NewReader(body)).Decode(&tokenResp); err != nil {
-		return nil, err
+		return err
 	}
 
-	return &tokenResp, nil
+	c.AccessToken = tokenResp
+
+	return nil
 }

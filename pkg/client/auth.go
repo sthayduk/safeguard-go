@@ -41,18 +41,16 @@ func (c *SafeguardClient) LoginWithPassword(username, password string) error {
 	}
 	defer resp.Body.Close()
 
-	rstsResp, err := handleTokenResponse(resp)
+	err = c.handleTokenResponse(resp)
 	if err != nil {
 		return fmt.Errorf("RSTS login failed: %v", err)
 	}
 
-	userToken, err := c.exchangeRSTSTokenForSafeguard(c.HttpClient, rstsResp.getAccessToken())
+	err = c.exchangeRSTSTokenForSafeguard(c.HttpClient)
 	if err != nil {
 		return fmt.Errorf("token exchange failed: %v", err)
 	}
 
-	c.AccessToken.setAccessToken(rstsResp.getAccessToken())
-	c.AccessToken.setUserToken(userToken.getUserToken())
 	c.AccessToken.setUserNamePassword(username, password)
 	fmt.Println("✅ Login successful")
 	return nil

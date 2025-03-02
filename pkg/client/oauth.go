@@ -42,12 +42,17 @@ func (c *SafeguardClient) LoginWithOauth() error {
 		return fmt.Errorf("authentication failed: %v", err)
 	}
 
-	tokenResponse, err := c.exchangeToken(c.AccessToken.AuthorizationCode, codeVerifier)
+	err := c.getRSTSTokenWithOauth(c.AccessToken.AuthorizationCode, codeVerifier)
 	if err != nil {
 		return fmt.Errorf("error retrieving token: %v", err)
 	}
 
-	c.AccessToken = tokenResponse
+	// Exchange for Safeguard token
+	err = c.exchangeRSTSTokenForSafeguard(c.HttpClient)
+	if err != nil {
+		return fmt.Errorf("acquire Safeguard token failed: %v", err)
+	}
+
 	fmt.Println("✅ Access Token received")
 	return nil
 }
@@ -110,7 +115,7 @@ func startHTTPSListener(authCodeChan chan string, errorChan chan error) *http.Se
 	return server
 }
 
-func (c *SafeguardClient) exchangeToken(authCode, codeVerifier string) (*RSTSAuthResponse, error) {
+func (c *SafeguardClient) getRSTSTokenWithOauth(authCode, codeVerifier string) error {
 	data := url.Values{}
 	data.Set("grant_type", "authorization_code")
 	data.Set("code", authCode)
@@ -119,20 +124,20 @@ func (c *SafeguardClient) exchangeToken(authCode, codeVerifier string) (*RSTSAut
 
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/RSTS/oauth2/token", c.Appliance.getUrl()), strings.NewReader(data.Encode()))
 	if err != nil {
-		return nil, err
+		return err
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, err := c.HttpClient.Do(req)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer resp.Body.Close()
 
-	rstsResp, err := handleTokenResponse(resp)
+	err = c.handleTokenResponse(resp)
 	if err != nil {
-		return nil, fmt.Errorf("RSTS token request failed: %v", err)
+		return fmt.Errorf("RSTS token request failed: %v", err)
 	}
 
-	return c.exchangeRSTSTokenForSafeguard(c.HttpClient, rstsResp.getAccessToken())
+	return nil
 }

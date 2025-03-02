@@ -48,20 +48,18 @@ func (c *SafeguardClient) LoginWithCertificate(certPath, certPassword string) er
 	}
 
 	// Get RSTS token
-	rstsToken, err := c.getRSTSTokenWithCert(tempClient, AuthProviderCertificate)
+	err = c.getRSTSTokenWithCert(tempClient, AuthProviderCertificate)
 	if err != nil {
 		return fmt.Errorf("acquire RSTS token failed: %v", err)
 	}
 
 	// Exchange for Safeguard token
-	userToken, err := c.exchangeRSTSToken(tempClient, rstsToken)
+	err = c.exchangeRSTSTokenForSafeguard(tempClient)
 	if err != nil {
 		return fmt.Errorf("acquire Safeguard token failed: %v", err)
 	}
 
-	c.AccessToken.setAccessToken(rstsToken)
 	c.AccessToken.setCertificate(certPath, certPassword)
-	c.AccessToken.setUserToken(userToken)
 	fmt.Println("✅ Certificate authentication successful")
 
 	return nil
@@ -78,7 +76,7 @@ func (c *SafeguardClient) LoginWithCertificate(certPath, certPassword string) er
 // Returns:
 //   - A string containing the access token.
 //   - An error if the request fails or if there is an issue with the response.
-func (c *SafeguardClient) getRSTSTokenWithCert(client *http.Client, authProvider AuthProvider) (string, error) {
+func (c *SafeguardClient) getRSTSTokenWithCert(client *http.Client, authProvider AuthProvider) error {
 	requestBody := struct {
 		GrantType string `json:"grant_type"`
 		Scope     string `json:"scope"`
@@ -89,50 +87,25 @@ func (c *SafeguardClient) getRSTSTokenWithCert(client *http.Client, authProvider
 
 	bodyBytes, err := json.Marshal(requestBody)
 	if err != nil {
-		return "", fmt.Errorf("failed to marshal request body: %v", err)
+		return fmt.Errorf("failed to marshal request body: %v", err)
 	}
 
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/RSTS/oauth2/token", c.Appliance.getUrl()), bytes.NewBuffer(bodyBytes))
 	if err != nil {
-		return "", err
+		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", err
+		return err
 	}
 	defer resp.Body.Close()
 
-	rstsResp, err := handleTokenResponse(resp)
+	err = c.handleTokenResponse(resp)
 	if err != nil {
-		return "", fmt.Errorf("RSTS token request failed: %v", err)
+		return fmt.Errorf("RSTS token request failed: %v", err)
 	}
 
-	// Store RSTS response
-	c.AccessToken = rstsResp
-	return rstsResp.getAccessToken(), nil
-}
-
-// exchangeRSTSToken exchanges an RSTS token for a Safeguard access token.
-// It takes an HTTP client and an RSTS token as input parameters and returns
-// the Safeguard user token and an error if any occurred during the exchange.
-//
-// Parameters:
-//
-//	client - The HTTP client used to make the request.
-//	rstsToken - The RSTS token to be exchanged.
-//
-// Returns:
-//
-//	string - The Safeguard user token.
-//	error - An error if the token exchange fails.
-func (c *SafeguardClient) exchangeRSTSToken(client *http.Client, rstsToken string) (string, error) {
-	safeguardResponse, err := c.exchangeRSTSTokenForSafeguard(client, rstsToken)
-	if err != nil {
-		return "", err
-	}
-
-	c.AccessToken = safeguardResponse
-	return safeguardResponse.UserToken, nil
+	return nil
 }
