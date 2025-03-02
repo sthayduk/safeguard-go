@@ -54,14 +54,14 @@ func (c *SafeguardClient) LoginWithCertificate(certPath, certPassword string) er
 	}
 
 	// Exchange for Safeguard token
-	safeguardToken, err := c.exchangeRSTSToken(tempClient, rstsToken)
+	userToken, err := c.exchangeRSTSToken(tempClient, rstsToken)
 	if err != nil {
 		return fmt.Errorf("acquire Safeguard token failed: %v", err)
 	}
 
-	c.AccessToken.setAccessToken(safeguardToken)
+	c.AccessToken.setAccessToken(rstsToken)
 	c.AccessToken.setCertificate(certPath, certPassword)
-	c.AccessToken.setUserToken(safeguardToken)
+	c.AccessToken.setUserToken(userToken)
 	fmt.Println("✅ Certificate authentication successful")
 
 	return nil

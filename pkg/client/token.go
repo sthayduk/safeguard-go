@@ -29,14 +29,14 @@ func (c *SafeguardClient) SaveAccessTokenToEnv() error {
 // It returns an error if the access token is empty or invalid.
 // Returns nil if the access token is valid, otherwise an error.
 func (c *SafeguardClient) ValidateAccessToken() error {
-	if c.AccessToken.getAccessToken() == "" {
+	if c.AccessToken.getUserToken() == "" {
 		c.AccessToken.isValid = false
 		return fmt.Errorf("access token is empty")
 	}
 
 	logger.Debug("Token validation",
-		"length", len(c.AccessToken.getAccessToken()),
-		"formatCheck", strings.HasPrefix(c.AccessToken.getAccessToken(), "ey"))
+		"length", len(c.AccessToken.getUserToken()),
+		"formatCheck", strings.HasPrefix(c.AccessToken.getUserToken(), "ey"))
 
 	fields := []string{"id"}
 	err := c.testAccessToken(fields...)
@@ -61,7 +61,7 @@ func (c *SafeguardClient) ValidateAccessToken() error {
 //	The modified HTTP request with the added headers.
 func (c *SafeguardClient) getAuthorizationHeader(req *http.Request) *http.Request {
 	req.Header.Set("accept", "application/json")
-	req.Header.Set("Authorization", "Bearer "+c.AccessToken.getAccessToken())
+	req.Header.Set("Authorization", "Bearer "+c.AccessToken.getUserToken())
 
 	return req
 }
@@ -146,7 +146,7 @@ func (c *SafeguardClient) exchangeRSTSTokenForSafeguard(client *http.Client, rst
 		safeguardResponse.Scope = c.AccessToken.Scope
 	}
 
-	safeguardResponse.setAccessToken(safeguardResponse.UserToken)
+	safeguardResponse.setUserToken(safeguardResponse.UserToken)
 	safeguardResponse.AuthTime = time.Now()
 
 	return &safeguardResponse, nil
