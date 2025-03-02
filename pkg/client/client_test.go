@@ -558,7 +558,7 @@ func TestRWMutexStress(t *testing.T) {
 				if rand.Float32() < 0.2 { // 20% chance of writing
 					// Write operation
 					client.AccessToken.setAccessToken(fmt.Sprintf("token-%d-%d", id, j))
-					client.ClusterLeader.setUrl(fmt.Sprintf("https://leader-%d-%d.example.com", id, j))
+					client.ClusterLeader.setUrl(fmt.Sprintf("https://leader-%d-%d.example.com", id, j), 10*time.Minute)
 				} else {
 					// Read operation
 					token := client.AccessToken.getAccessToken()

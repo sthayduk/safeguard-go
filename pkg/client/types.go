@@ -26,6 +26,24 @@ type applianceURL struct {
 	DomainName string
 	Port       string
 	Url        string
+
+	lastUpdate time.Time
+	cacheTime  time.Duration
+}
+
+func (a *applianceURL) isExpired() bool {
+	a.RWMutex.RLock()
+	defer a.RWMutex.RUnlock()
+
+	if a.cacheTime == 0 {
+		return true
+	}
+
+	if a.cacheTime == -1 {
+		return false
+	}
+
+	return time.Since(a.lastUpdate) > a.cacheTime
 }
 
 func (a *applianceURL) getUrl() string {
@@ -34,10 +52,20 @@ func (a *applianceURL) getUrl() string {
 	return a.Url
 }
 
-func (a *applianceURL) setUrl(url string) {
+func (a *applianceURL) setUrl(url string, cacheTime time.Duration) {
 	a.RWMutex.Lock()
 	defer a.RWMutex.Unlock()
+
+	var err error
+	a.Protocol, a.Hostname, a.DomainName, a.Port, err = splitApplianceURL(url)
+	if err != nil {
+		logger.Error("Failed to split appliance URL", "error", err)
+		return
+	}
+
 	a.Url = url
+	a.lastUpdate = time.Now()
+	a.cacheTime = cacheTime
 }
 
 // RSTSAuthResponse represents the complete authentication response from both RSTS and Safeguard
@@ -73,6 +101,18 @@ func (a *RSTSAuthResponse) setAccessToken(accessToken string) {
 	a.AccessToken = accessToken
 }
 
+func (a *RSTSAuthResponse) getUserToken() string {
+	a.RWMutex.RLock()
+	defer a.RWMutex.RUnlock()
+	return a.UserToken
+}
+
+func (a *RSTSAuthResponse) setUserToken(userToken string) {
+	a.RWMutex.Lock()
+	defer a.RWMutex.Unlock()
+	a.UserToken = userToken
+}
+
 func (a *RSTSAuthResponse) setUserNamePassword(username, password string) {
 	a.RWMutex.Lock()
 	defer a.RWMutex.Unlock()
@@ -97,12 +137,6 @@ func (a *RSTSAuthResponse) getCertificate() (string, string) {
 	a.RWMutex.RLock()
 	defer a.RWMutex.RUnlock()
 	return a.credentials.certPath, a.credentials.certPassword
-}
-
-func (a *RSTSAuthResponse) setUserToken(userToken string) {
-	a.RWMutex.Lock()
-	defer a.RWMutex.Unlock()
-	a.UserToken = userToken
 }
 
 type Credentials struct {

@@ -12,17 +12,19 @@ func InitClient() error {
 	accessToken := os.Getenv("SAFEGUARD_ACCESS_TOKEN")
 	applianceUrl := os.Getenv("SAFEGUARD_HOST_URL")
 	apiVersion := os.Getenv("SAFEGUARD_API_VERSION")
+	pfxPassword := os.Getenv("SAFEGUARD_PFX_PASSWORD")
+	pfxPath := os.Getenv("SAFEGUARD_PFX_PATH")
 
 	var sgc *client.SafeguardClient
 
 	if accessToken == "" {
-		sgc = safeguard.SetupClient(applianceUrl, apiVersion, false)
-		err := sgc.LoginWithOauth()
+		sgc = safeguard.SetupClient(applianceUrl, apiVersion, true)
+		err := sgc.LoginWithCertificate(pfxPath, pfxPassword)
 		if err != nil {
 			return err
 		}
 	} else {
-		sgc = safeguard.SetupClient(applianceUrl, apiVersion, false)
+		sgc = safeguard.SetupClient(applianceUrl, apiVersion, true)
 		sgc.AccessToken = &client.RSTSAuthResponse{
 			AccessToken: accessToken,
 		}

@@ -24,7 +24,9 @@ func (c *SafeguardClient) getReadOnlyRootUrl() string {
 //   - string: The complete root URL for read-write API operations.
 func (c *SafeguardClient) getReadWriteRootUrl() string {
 	// Update the cluster leader URL to ensure it's set correctly
-	c.updateClusterLeaderUrl()
+	if c.ClusterLeader.isExpired() {
+		c.updateClusterLeaderUrl()
+	}
 
 	// If the cluster leader URL is not set, fall back to the appliance URL
 	return fmt.Sprintf("%s/service/core/%s", c.getClusterLeaderUrl(), c.ApiVersion)

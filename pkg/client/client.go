@@ -58,12 +58,13 @@ func New(applianceUrl string, apiVersion string, debug bool) *SafeguardClient {
 	sgclient = &SafeguardClient{
 		AccessToken:   &RSTSAuthResponse{},
 		ApiVersion:    apiVersion,
-		Appliance:     applianceURL{Url: applianceUrl},
 		HttpClient:    createTLSClient(),
 		redirectPort:  redirectPort,
 		redirectURI:   redirectURI,
 		tokenEndpoint: applianceUrl + "/service/core/v4/Token/LoginResponse",
 	}
+
+	sgclient.Appliance.setUrl(applianceUrl, -1)
 
 	ctx := context.Background()
 	go sgclient.refreshToken(ctx)
@@ -257,6 +258,8 @@ func (c *SafeguardClient) updateClusterLeaderUrl() {
 //     and when updating the cluster leader URL.
 //   - Error: If there is an error generating the cluster leader URL.
 func (c *SafeguardClient) setClusterLeader(clusterLeaderHostName string) {
+	clusterLeaderTimeout := time.Duration(10 * time.Second)
+
 	logger.Debug("Setting cluster leader", "hostname", clusterLeaderHostName)
 	clusterLeaderUrl, err := c.generateClusterLeaderURL(clusterLeaderHostName)
 	if err != nil {
@@ -266,19 +269,16 @@ func (c *SafeguardClient) setClusterLeader(clusterLeaderHostName string) {
 
 	if sgclient.ClusterLeader.getUrl() == clusterLeaderUrl {
 		logger.Debug("Cluster leader unchanged", "url", clusterLeaderUrl)
-		return
 	}
 
 	if sgclient.Appliance.getUrl() == clusterLeaderUrl {
 		logger.Debug("Cluster leader is same as appliance URL", "url", clusterLeaderUrl)
-		sgclient.ClusterLeader.setUrl(sgclient.Appliance.getUrl())
-		return
 	}
 
 	logger.Debug("Updating cluster leader URL",
 		"old", sgclient.ClusterLeader.getUrl(),
 		"new", clusterLeaderUrl)
-	sgclient.ClusterLeader.setUrl(clusterLeaderUrl)
+	sgclient.ClusterLeader.setUrl(clusterLeaderUrl, clusterLeaderTimeout)
 }
 
 // generateClusterLeaderURL generates the URL for the cluster leader based on the provided
@@ -295,7 +295,7 @@ func (c *SafeguardClient) setClusterLeader(clusterLeaderHostName string) {
 //   - error: An error if there was an issue generating the URL.
 func (c *SafeguardClient) generateClusterLeaderURL(clusterLeaderHostName string) (string, error) {
 	logger.Debug("Generating cluster leader URL", "hostname", clusterLeaderHostName)
-	protocol, _, domainName, port, err := sgclient.splitApplianceURL()
+	protocol, _, domainName, port, err := splitApplianceURL(sgclient.Appliance.getUrl())
 	if err != nil {
 		logger.Error("Error splitting appliance URL", "error", err)
 		return "", err
