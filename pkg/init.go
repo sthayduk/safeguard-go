@@ -19,3 +19,8 @@ func SetupClient(url, apiVersion string, debug bool) *client.SafeguardClient {
 	c = client.New(url, apiVersion, debug)
 	return c
 }
+
+func SetupSignalRClient(c *client.SafeguardClient) *client.EventHandler {
+	eventHandler := client.NewEventHandler(c)
+	return eventHandler
+}

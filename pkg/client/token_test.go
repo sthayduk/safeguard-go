@@ -189,7 +189,7 @@ func TestGetAuthorizationHeader(t *testing.T) {
 	}
 
 	req, _ := http.NewRequest("GET", "http://example.com", nil)
-	req = client.getAuthorizationHeader(req)
+	req.Header = client.getAuthorizationHeader()
 
 	assert.Equal(t, "application/json", req.Header.Get("accept"))
 	assert.Equal(t, "Bearer test-user-token", req.Header.Get("Authorization"))

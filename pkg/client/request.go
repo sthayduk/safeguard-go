@@ -6,8 +6,8 @@ import (
 	"net/http"
 )
 
-// getReadOnlyRootUrl constructs and returns the root URL for the Safeguard API.
-// It combines the appliance URL with the service path and API version for read-only operations.
+// getReadOnlyRootUrl constructs and returns the root URL for read-only operations.
+// It uses the appliance URL for operations that don't require cluster leader coordination.
 //
 // Returns:
 //   - string: The complete root URL for read-only API operations.
@@ -16,9 +16,8 @@ func (c *SafeguardClient) getReadOnlyRootUrl() string {
 	return fmt.Sprintf("%s/service/core/%s", c.Appliance.getUrl(), c.ApiVersion)
 }
 
-// getReadWriteRootUrl constructs and returns the root URL for read-write operations on the Safeguard API.
-// It uses the cluster leader URL instead of the appliance URL to ensure write operations are directed
-// to the correct node in a cluster setup.
+// getReadWriteRootUrl constructs and returns the root URL for write operations.
+// It ensures write operations are directed to the current cluster leader.
 //
 // Returns:
 //   - string: The complete root URL for read-write API operations.
@@ -62,16 +61,15 @@ func (c *SafeguardClient) GetRequest(path string) ([]byte, error) {
 }
 
 // PostRequest sends an HTTP POST request to the specified path with the provided body.
-// It uses the read-write root URL to ensure write operations are directed to the cluster leader.
-// The request includes proper authorization headers and handles the response appropriately.
+// It automatically handles authentication, request routing, and response processing.
 //
 // Parameters:
 //   - path: The endpoint path to which the request will be sent.
-//   - body: An io.Reader containing the request body data.
+//   - body: The request body data as an io.Reader.
 //
 // Returns:
 //   - []byte: The response body from the API call.
-//   - error: An error if the request creation fails, the request fails, or returns a non-successful status code.
+//   - error: An error if the request fails or returns a non-successful status code.
 func (c *SafeguardClient) PostRequest(path string, body io.Reader) ([]byte, error) {
 	url := fmt.Sprintf("%s/%s", c.getReadWriteRootUrl(), path)
 	logger.Debug("Preparing POST request",
@@ -92,16 +90,15 @@ func (c *SafeguardClient) PostRequest(path string, body io.Reader) ([]byte, erro
 }
 
 // PutRequest sends an HTTP PUT request to update resources on the Safeguard API.
-// It uses the read-write root URL to ensure write operations are directed to the cluster leader.
-// The request includes the provided body data and proper authorization headers.
+// It automatically handles authentication and routes requests through the cluster leader.
 //
 // Parameters:
-//   - path: The endpoint path to which the PUT request will be sent.
-//   - body: An io.Reader containing the request body data to update the resource.
+//   - path: The endpoint path for the resource to update.
+//   - body: The request body containing the update data.
 //
 // Returns:
 //   - []byte: The response body from the API call.
-//   - error: An error if the request creation fails, the request fails, or returns a non-successful status code.
+//   - error: An error if the request fails.
 func (c *SafeguardClient) PutRequest(path string, body io.Reader) ([]byte, error) {
 	url := fmt.Sprintf("%s/%s", c.getReadWriteRootUrl(), path)
 	logger.Debug("Preparing PUT request",
@@ -121,16 +118,15 @@ func (c *SafeguardClient) PutRequest(path string, body io.Reader) ([]byte, error
 	return c.sendHttpRequest(req)
 }
 
-// DeleteRequest sends an HTTP DELETE request to remove resources from the Safeguard API.
-// It uses the read-write root URL to ensure write operations are directed to the cluster leader.
-// The request includes proper authorization headers and handles the response appropriately.
+// DeleteRequest sends an HTTP DELETE request to remove resources.
+// It ensures proper routing through the cluster leader for consistency.
 //
 // Parameters:
 //   - path: The endpoint path identifying the resource to delete.
 //
 // Returns:
-//   - []byte: The response body from the API call, if any.
-//   - error: An error if the request creation fails, the request fails, or returns a non-successful status code.
+//   - []byte: The response body if any.
+//   - error: An error if the deletion fails.
 func (c *SafeguardClient) DeleteRequest(path string) ([]byte, error) {
 	url := fmt.Sprintf("%s/%s", c.getReadWriteRootUrl(), path)
 	logger.Debug("Preparing DELETE request",
@@ -239,7 +235,7 @@ func (c *SafeguardClient) sendHttpRequest(req *http.Request) ([]byte, error) {
 func (c *SafeguardClient) setHeaders(req *http.Request) {
 	logger.Debug("Setting request headers", "existingHeaders", req.Header)
 
-	req = c.getAuthorizationHeader(req)
+	req.Header = c.getAuthorizationHeader()
 
 	for key, values := range c.DefaultHeaders {
 		for _, value := range values {

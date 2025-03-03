@@ -36,32 +36,34 @@ func (c *SafeguardClient) LoginWithCertificate(certPath, certPassword string) er
 		return fmt.Errorf("create tls config failed: %v", err)
 	}
 
-	// Enable insecure skip verify for Safeguard appliance
-	tlsConfig.InsecureSkipVerify = true
-	tlsConfig.Renegotiation = tls.RenegotiateOnceAsClient
-
-	// Create temporary client with cert config
-	tempClient := &http.Client{
-		Transport: &http.Transport{
+	if c.HttpClient.Transport == nil {
+		c.HttpClient.Transport = &http.Transport{
 			TLSClientConfig: tlsConfig,
-		},
+		}
+	} else {
+		if transport, ok := c.HttpClient.Transport.(*http.Transport); ok {
+			transport.TLSClientConfig.Certificates = tlsConfig.Certificates
+			transport.TLSClientConfig.Renegotiation = tls.RenegotiateFreelyAsClient
+		} else {
+			return fmt.Errorf("existing transport is not an *http.Transport")
+		}
 	}
 
 	// Get RSTS token
-	err = c.getRSTSTokenWithCert(tempClient, AuthProviderCertificate)
+	err = c.getRSTSTokenWithCert(c.HttpClient, AuthProviderCertificate)
 	if err != nil {
 		return fmt.Errorf("acquire RSTS token failed: %v", err)
 	}
 
 	// Exchange for Safeguard token
-	err = c.exchangeRSTSTokenForSafeguard(tempClient)
+	err = c.exchangeRSTSTokenForSafeguard(c.HttpClient)
 	if err != nil {
 		return fmt.Errorf("acquire Safeguard token failed: %v", err)
 	}
 
 	c.AccessToken.setCertificate(certPath, certPassword)
 	fmt.Println("✅ Certificate authentication successful")
-
+	c.authDone <- "Done"
 	return nil
 }
 

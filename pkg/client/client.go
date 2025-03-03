@@ -62,6 +62,7 @@ func New(applianceUrl string, apiVersion string, debug bool) *SafeguardClient {
 		redirectPort:  redirectPort,
 		redirectURI:   redirectURI,
 		tokenEndpoint: applianceUrl + "/service/core/v4/Token/LoginResponse",
+		authDone:      make(chan string),
 	}
 
 	sgclient.Appliance.setUrl(applianceUrl, -1)
@@ -118,7 +119,10 @@ func createTLSClient() *http.Client {
 	return &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
-				RootCAs: caCertPool,
+				RootCAs:            caCertPool,
+				InsecureSkipVerify: true,
+				MinVersion:         tls.VersionTLS12,
+				MaxVersion:         tls.VersionTLS13,
 			},
 		},
 	}
@@ -133,23 +137,14 @@ func createTLSClient() *http.Client {
 // Parameters:
 // - ctx: The context to control the lifecycle of the token refresh process.
 func (c *SafeguardClient) refreshToken(ctx context.Context) {
+	<-c.authDone
+
 	if c.AccessToken.AuthProvider == "" {
 		logger.Debug("token refresh skipped: no auth provider")
 		return
 	}
 
-	// Wait until Authentication is done
-	if c.AccessToken.AuthTime.IsZero() {
-		logger.Debug("wait until authentication is done")
-
-		for {
-			if !c.AccessToken.AuthTime.IsZero() {
-				break
-			}
-			time.Sleep(100 * time.Millisecond)
-		}
-	}
-
+	logger.Debug("token refresh started")
 	remainingTokenTime := c.RemainingTokenTime()
 	ticker := time.NewTicker(remainingTokenTime - 1*time.Minute)
 	defer ticker.Stop()

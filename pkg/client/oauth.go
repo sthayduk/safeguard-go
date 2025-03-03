@@ -54,6 +54,8 @@ func (c *SafeguardClient) LoginWithOauth() error {
 	}
 
 	fmt.Println("✅ Access Token received")
+	c.authDone <- "Done"
+
 	return nil
 }
 
@@ -115,6 +117,17 @@ func startHTTPSListener(authCodeChan chan string, errorChan chan error) *http.Se
 	return server
 }
 
+// getRSTSTokenWithOauth exchanges an authorization code for an RSTS token using OAuth2.
+// It sends a POST request to the RSTS token endpoint with the necessary parameters.
+//
+// Parameters:
+//
+//	authCode - The authorization code received from the OAuth2 authorization server.
+//	codeVerifier - The code verifier used in the PKCE (Proof Key for Code Exchange) flow.
+//
+// Returns:
+//
+//	error - An error if the token request fails or if there is an issue handling the token response.
 func (c *SafeguardClient) getRSTSTokenWithOauth(authCode, codeVerifier string) error {
 	data := url.Values{}
 	data.Set("grant_type", "authorization_code")

@@ -10,10 +10,19 @@ import (
 // LoginWithPassword authenticates a user using their username and password.
 // It first obtains an RSTS token and then exchanges it for a Safeguard token.
 // The obtained token is stored in the SafeguardClient's AccessToken field.
+//
 // Parameters:
-// - username: The username of the user.
-// - password: The password of the user.
-// Returns an error if the login process fails, otherwise nil.
+//   - username: The username of the user.
+//   - password: The password of the user.
+//
+// Returns:
+//   - error: An error if the login process fails, otherwise nil.
+//
+// The function automatically handles:
+//   - RSTS token acquisition
+//   - Token exchange for Safeguard access
+//   - Token storage and management
+//   - Error handling and logging
 func (c *SafeguardClient) LoginWithPassword(username, password string) error {
 	if c.AccessToken == nil {
 		c.AccessToken = &RSTSAuthResponse{
@@ -53,5 +62,6 @@ func (c *SafeguardClient) LoginWithPassword(username, password string) error {
 
 	c.AccessToken.setUserNamePassword(username, password)
 	fmt.Println("✅ Login successful")
+	c.authDone <- "Done"
 	return nil
 }

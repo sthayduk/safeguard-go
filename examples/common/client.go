@@ -9,7 +9,7 @@ import (
 
 // InitClient creates and initializes a SafeguardClient using environment variables
 func InitClient() error {
-	accessToken := os.Getenv("SAFEGUARD_ACCESS_TOKEN")
+	userToken := os.Getenv("SAFEGUARD_USER_TOKEN")
 	applianceUrl := os.Getenv("SAFEGUARD_HOST_URL")
 	apiVersion := os.Getenv("SAFEGUARD_API_VERSION")
 	pfxPassword := os.Getenv("SAFEGUARD_PFX_PASSWORD")
@@ -17,7 +17,7 @@ func InitClient() error {
 
 	var sgc *client.SafeguardClient
 
-	if accessToken == "" {
+	if userToken == "" {
 		sgc = safeguard.SetupClient(applianceUrl, apiVersion, true)
 		err := sgc.LoginWithCertificate(pfxPath, pfxPassword)
 		if err != nil {
@@ -26,7 +26,7 @@ func InitClient() error {
 	} else {
 		sgc = safeguard.SetupClient(applianceUrl, apiVersion, true)
 		sgc.AccessToken = &client.RSTSAuthResponse{
-			AccessToken: accessToken,
+			UserToken: userToken,
 		}
 	}
 

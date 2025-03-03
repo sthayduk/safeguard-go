@@ -11,8 +11,11 @@ import (
 	"time"
 )
 
-// SaveAccessTokenToEnv saves the access token to an environment variable.
-// Returns an error if the operation fails.
+// SaveAccessTokenToEnv saves the current access token to an environment variable.
+// This allows persistence of the token across sessions.
+//
+// Returns:
+//   - error: An error if saving the token fails.
 func (c *SafeguardClient) SaveAccessTokenToEnv() error {
 	envVar := "SAFEGUARD_ACCESS_TOKEN"
 	err := os.Setenv(envVar, c.AccessToken.getAccessToken())
@@ -25,9 +28,11 @@ func (c *SafeguardClient) SaveAccessTokenToEnv() error {
 	return nil
 }
 
-// ValidateAccessToken checks if the access token in the SafeguardClient is valid.
-// It returns an error if the access token is empty or invalid.
-// Returns nil if the access token is valid, otherwise an error.
+// ValidateAccessToken checks if the current access token is valid by testing it
+// against the Safeguard API. It verifies both token format and server acceptance.
+//
+// Returns:
+//   - error: An error if the token is invalid or validation fails.
 func (c *SafeguardClient) ValidateAccessToken() error {
 	if c.AccessToken.getUserToken() == "" {
 		c.AccessToken.isValid = false
@@ -48,22 +53,20 @@ func (c *SafeguardClient) ValidateAccessToken() error {
 	return nil
 }
 
-// getAuthorizationHeader sets the necessary headers for authorization and content type
-// on the provided HTTP request. It adds an "accept" header with the value "application/json"
-// and an "Authorization" header with the Bearer token from the SafeguardClient's AccessToken.
+// getAuthorizationHeader prepares authorization headers for API requests.
+// It formats the access token according to the required Bearer scheme.
 //
 // Parameters:
-//
-//	req - The HTTP request to which the headers will be added.
+//   - req: The HTTP request to modify with authorization headers.
 //
 // Returns:
-//
-//	The modified HTTP request with the added headers.
-func (c *SafeguardClient) getAuthorizationHeader(req *http.Request) *http.Request {
-	req.Header.Set("accept", "application/json")
-	req.Header.Set("Authorization", "Bearer "+c.AccessToken.getUserToken())
+//   - *http.Request: The modified request with authorization headers.
+func (c *SafeguardClient) getAuthorizationHeader() http.Header {
+	headers := http.Header{}
+	headers.Set("accept", "application/json")
+	headers.Set("Authorization", "Bearer "+c.AccessToken.getUserToken())
 
-	return req
+	return headers
 }
 
 // testAccessToken checks the access token by making a GET request to the "me" endpoint.
@@ -99,7 +102,6 @@ func (c *SafeguardClient) testAccessToken(fields ...string) error {
 //
 // Parameters:
 //   - client: The HTTP client used to send the request.
-//   - rstsToken: The RSTS token to be exchanged.
 //
 // Returns:
 //   - A pointer to an RSTSAuthResponse containing the Safeguard token information.
@@ -169,6 +171,6 @@ func (c *SafeguardClient) handleTokenResponse(resp *http.Response) error {
 	}
 
 	c.AccessToken = tokenResp
-
+	c.AccessToken.AuthProvider = AuthProvider(tokenResp.Scope)
 	return nil
 }
