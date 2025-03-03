@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	safeguard "github.com/sthayduk/safeguard-go"
+	"github.com/sthayduk/safeguard-go"
 )
 
 func main() {

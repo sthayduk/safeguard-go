@@ -2,7 +2,7 @@ module github.com/sthayduk/safeguard-go/examples
 
 go 1.24.0
 
-replace github.com/sthayduk/safeguard-go => ../pkg
+replace github.com/sthayduk/safeguard-go => ../
 
 require (
 	github.com/fatih/color v1.18.0

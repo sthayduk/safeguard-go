@@ -3,7 +3,7 @@ package common
 import (
 	"os"
 
-	safeguard "github.com/sthayduk/safeguard-go"
+	"github.com/sthayduk/safeguard-go"
 	"github.com/sthayduk/safeguard-go/client"
 )
 

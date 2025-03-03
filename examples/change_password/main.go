@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/fatih/color"
-	safeguard "github.com/sthayduk/safeguard-go"
+	"github.com/sthayduk/safeguard-go"
 	"github.com/sthayduk/safeguard-go/examples/common"
 )
 

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	safeguard "github.com/sthayduk/safeguard-go"
+	"github.com/sthayduk/safeguard-go"
 	"github.com/sthayduk/safeguard-go/examples/common"
 )
 

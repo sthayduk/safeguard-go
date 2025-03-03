@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	safeguard "github.com/sthayduk/safeguard-go"
+	"github.com/sthayduk/safeguard-go"
 	"github.com/sthayduk/safeguard-go/examples/common"
 )
 
