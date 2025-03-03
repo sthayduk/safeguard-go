@@ -1,6 +1,7 @@
 package client
 
 import (
+	"log/slog"
 	"net/http"
 	"sync"
 	"time"
@@ -19,6 +20,7 @@ type SafeguardClient struct {
 	redirectURI    string
 	DefaultHeaders http.Header
 	authDone       chan string
+	Logger         *slog.Logger
 }
 
 // applianceURL represents a Safeguard appliance URL with thread-safe access
@@ -211,4 +213,82 @@ const (
 //   - string: The provider identifier string used in authentication requests.
 func (a AuthProvider) String() string {
 	return string(a)
+}
+
+// AccessRequestType represents the type of access request
+type AccessRequestType string
+
+// AccessRequestType constants define the supported types of access requests
+const (
+	AccessRequestTypePassword              AccessRequestType = "Password"
+	AccessRequestTypeSsh                   AccessRequestType = "Ssh"
+	AccessRequestTypeRemoteDesktop         AccessRequestType = "RemoteDesktop"
+	AccessRequestTypeRemoteDesktopManager  AccessRequestType = "RemoteDesktopManager"
+	AccessRequestTypeRemoteSsh             AccessRequestType = "RemoteSsh"
+	AccessRequestTypeRemoteSshPrivateKey   AccessRequestType = "RemoteSshPrivateKey"
+	AccessRequestTypeRemoteDesktopAccounts AccessRequestType = "RemoteDesktopAccounts"
+	AccessRequestTypeRemoteDesktopServices AccessRequestType = "RemoteDesktopServices"
+	AccessRequestTypeApi                   AccessRequestType = "Api"
+	AccessRequestTypeApiExternal           AccessRequestType = "ApiExternal"
+	AccessRequestTypeRemoteProcess         AccessRequestType = "RemoteProcess"
+	AccessRequestTypeResourceCertificate   AccessRequestType = "ResourceCertificate"
+	AccessRequestTypeFile                  AccessRequestType = "File"
+	AccessRequestTypeSshKey                AccessRequestType = "SshKey"
+	AccessRequestTypeTotp                  AccessRequestType = "Totp"
+)
+
+// String returns the string representation of the AccessRequestType
+func (a AccessRequestType) String() string {
+	return string(a)
+}
+
+// SignalREvent represents the root structure of a SignalR event notification
+type SignalREvent struct {
+	ApplianceId string    `json:"ApplianceId"`
+	Name        string    `json:"Name"`
+	Time        time.Time `json:"Time"`
+	Message     string    `json:"Message"`
+	AuditLogUri *string   `json:"AuditLogUri"`
+	Data        EventData `json:"Data"`
+}
+
+// EventData represents the Data field of a SignalR event
+type EventData struct {
+	AccessRequestType           AccessRequestType `json:"AccessRequestType"`
+	AccountDistinguishedName    string            `json:"AccountDistinguishedName"`
+	AccountDomainName           string            `json:"AccountDomainName"`
+	AccountHasTotpAuthenticator bool              `json:"AccountHasTotpAuthenticator"`
+	AccountId                   int               `json:"AccountId"`
+	AccountName                 string            `json:"AccountName"`
+	ActionUserIds               []int             `json:"ActionUserIds"`
+	ApproverAccessRequestUri    string            `json:"ApproverAccessRequestUri"`
+	AssetId                     int               `json:"AssetId"`
+	AssetName                   string            `json:"AssetName"`
+	AssetNetworkAddress         string            `json:"AssetNetworkAddress"`
+	AssetPlatformType           string            `json:"AssetPlatformType"`
+	Comment                     *string           `json:"Comment"`
+	DurationInMinutes           int               `json:"DurationInMinutes"`
+	OfflineWorkflowMode         bool              `json:"OfflineWorkflowMode"`
+	Reason                      *string           `json:"Reason"`
+	ReasonCode                  *string           `json:"ReasonCode"`
+	Requester                   string            `json:"Requester"`
+	RequesterAccessRequestUri   string            `json:"RequesterAccessRequestUri"`
+	RequesterId                 int               `json:"RequesterId"`
+	RequesterUsername           string            `json:"RequesterUsername"`
+	RequestId                   string            `json:"RequestId"`
+	RequiredDate                time.Time         `json:"RequiredDate"`
+	ReviewerAccessRequestUri    string            `json:"ReviewerAccessRequestUri"`
+	SessionSpsNodeIpAddress     *string           `json:"SessionSpsNodeIpAddress"`
+	TicketNumber                *string           `json:"TicketNumber"`
+	WasCheckedOut               bool              `json:"WasCheckedOut"`
+	EventName                   string            `json:"EventName"`
+	EventTimestamp              time.Time         `json:"EventTimestamp"`
+	ApplianceId                 string            `json:"ApplianceId"`
+	EventUserId                 int               `json:"EventUserId"`
+	EventUserDisplayName        string            `json:"EventUserDisplayName"`
+	EventUserName               string            `json:"EventUserName"`
+	EventUserDomainName         *string           `json:"EventUserDomainName"`
+	AuditLogUri                 *string           `json:"AuditLogUri"`
+	EventDisplayName            string            `json:"EventDisplayName"`
+	EventDescription            string            `json:"EventDescription"`
 }

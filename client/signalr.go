@@ -2,7 +2,9 @@ package client
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -15,12 +17,29 @@ type EventHandler struct {
 	client  *SafeguardClient
 	ctx     context.Context
 	started bool
+
+	// logger is the applications logger.
+	logger *slog.Logger
+
+	// Channel for handling Events
+	EventChannel chan SignalREvent
+
+	// signalr hub is the signalr client used to register and listen for events from the pam appliance.
+	signalr.Hub
+}
+
+// Log logs messages from the signalr client in debug mode.
+func (h *EventHandler) Log(keyVals ...interface{}) error {
+	h.logger.WithGroup("signalr").Debug("SIGNALR", keyVals...)
+	return nil
 }
 
 // NewEventHandler creates a new SignalR event handler
 func NewEventHandler(client *SafeguardClient) *EventHandler {
 	return &EventHandler{
-		client: client,
+		client:       client,
+		logger:       client.Logger,
+		EventChannel: make(chan SignalREvent, 100), // buffered channel to prevent blocking
 	}
 }
 
@@ -32,17 +51,15 @@ func (h *EventHandler) Run(ctx context.Context) error {
 
 	// Validate access token
 	if err := h.client.ValidateAccessToken(); err != nil {
-		logger.Error("token validation failed", "error", err)
+		h.logger.Error("token validation failed", "error", err)
 		return err
 	}
-
-	httpClient := h.client.HttpClient
 
 	// Create the signalr connection
 	connector := func() (signalr.Connection, error) {
 		conn, err := signalr.NewHTTPConnection(
 			ctx,
-			fmt.Sprintf("%s/service/event/signalr", h.client.Appliance.getUrl()),
+			fmt.Sprintf("%s/service/event/signalr", h.client.getClusterLeaderUrl()),
 			signalr.WithHTTPHeaders(func() http.Header {
 				header := http.Header{
 					"Authorization": []string{"Bearer " + h.client.AccessToken.getUserToken()},
@@ -50,13 +67,13 @@ func (h *EventHandler) Run(ctx context.Context) error {
 				}
 				return header
 			}),
-			signalr.WithHTTPClient(httpClient),
+			signalr.WithHTTPClient(h.client.HttpClient),
 		)
 		if err != nil {
-			logger.Error("creating signalr connection failed", "error", err)
+			h.logger.Error("creating signalr connection failed", "error", err)
 			return nil, err
 		}
-		logger.Info("signalr connection (re)created")
+		h.logger.Info("signalr connection (re)created")
 		return conn, nil
 	}
 
@@ -71,10 +88,11 @@ func (h *EventHandler) Run(ctx context.Context) error {
 		}),
 		signalr.TransferFormat(signalr.TransferFormatText),
 		signalr.WithReceiver(h),
+		signalr.Logger(h, true), // overwrite default signalr logger
 	)
 
 	if err != nil {
-		logger.Error("creating signalr client failed", "error", err)
+		h.logger.Error("creating signalr client failed", "error", err)
 		return err
 	}
 
@@ -88,18 +106,26 @@ func (h *EventHandler) Run(ctx context.Context) error {
 	return <-client.WaitForState(ctx, signalr.ClientClosed)
 }
 
-// OnReceive is called when a message is received from the SignalR server.
-func (h *EventHandler) OnReceive(eventName string, payload []byte) {
-	logger.Info("received event", "event", eventName, "payload", string(payload))
-	// Handle the event based on the eventName and payload
-}
+func (h *EventHandler) NotifyEventAsync(rawEvent interface{}) {
+	// Convert the raw event to JSON
+	jsonData, err := json.Marshal(rawEvent)
+	if err != nil {
+		h.logger.Error("failed to marshal raw event", "error", err)
+		return
+	}
 
-// OnClose is called when the SignalR connection is closed.
-func (h *EventHandler) OnClose(err error) {
-	logger.Info("signalr connection closed", "error", err)
-	// Handle the connection close event
-}
+	// Unmarshal JSON data to SignalREvent struct
+	var event SignalREvent
+	if err := json.Unmarshal(jsonData, &event); err != nil {
+		h.logger.Error("failed to unmarshal event", "error", err)
+		return
+	}
 
-func (h *EventHandler) Receive(msg string) {
-	logger.Info(msg)
+	// Send the event to the EventChannel
+	select {
+	case h.EventChannel <- event:
+		h.logger.Debug("event received", "type", fmt.Sprintf("%T", rawEvent), "event", event)
+	default:
+		h.logger.Warn("event channel is full, dropping event", "event", event)
+	}
 }

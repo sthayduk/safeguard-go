@@ -63,6 +63,8 @@ func New(applianceUrl string, apiVersion string, debug bool) *SafeguardClient {
 		redirectURI:   redirectURI,
 		tokenEndpoint: applianceUrl + "/service/core/v4/Token/LoginResponse",
 
+		Logger: logger,
+
 		// channel to signal when authentication is done
 		authDone: make(chan string),
 	}
@@ -77,14 +79,11 @@ func New(applianceUrl string, apiVersion string, debug bool) *SafeguardClient {
 // getClusterLeaderUrl returns the URL of the cluster leader.
 // This URL is used to identify the leader node in a cluster setup.
 func (c *SafeguardClient) getClusterLeaderUrl() string {
-	if c.ClusterLeader.getUrl() == "" {
-		for {
-			if c.ClusterLeader.getUrl() != "" {
-				break
-			}
-			time.Sleep(100 * time.Millisecond)
-		}
+	// Update the cluster leader URL to ensure it's set correctly
+	if c.ClusterLeader.isExpired() {
+		c.updateClusterLeaderUrl()
 	}
+
 	return c.ClusterLeader.getUrl()
 }
 
