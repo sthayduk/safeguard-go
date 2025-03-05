@@ -212,6 +212,53 @@ groups, err := user.GetGroups()
 err = user.Delete()
 ```
 
+
+## Example Access Request Workflow
+
+```go
+import (
+    safeguard "github.com/sthayduk/safeguard-go"
+)
+
+// Get user information
+me, err := client.GetMe()
+if err != nil {
+    panic(err)
+}
+fmt.Printf("Logged in as: %s\n", me.Name)
+
+// Get account entitlements
+entitlements, err := client.GetMeAccountEntitlements()
+if err != nil {
+    panic(err)
+}
+
+// Create a new access request
+responses, err := client.NewAccessRequests(entitlements)
+if err != nil {
+    panic(err)
+}
+
+// Check out password from the first successful request
+for _, response := range responses {
+    if !response.hasError() {
+        password, err := response.AccessRequest.CheckOutPassword(context.Background(), true)
+        if err != nil {
+            fmt.Println("Error checking out password:", err)
+            continue
+        }
+        fmt.Println("Password:", password)
+        
+        // Close the request when done
+        _, err = response.AccessRequest.Close()
+        if err != nil {
+            fmt.Println("Error closing request:", err)
+        }
+        break
+    }
+}
+```
+
 ### Working with Identity Providers
 
 ```go
@@ -421,53 +468,6 @@ A basic filter might produce a query string like:
 A complex search filter might produce:
 ```
 ?filter=(Name contains 'server' or NetworkAddress contains 'server' or Description contains 'server')
-```
-
-
-## Example Access Request Workflow
-
-```go
-import (
-    safeguard "github.com/sthayduk/safeguard-go"
-)
-
-// Get user information
-me, err := client.GetMe()
-if err != nil {
-    panic(err)
-}
-fmt.Printf("Logged in as: %s\n", me.Name)
-
-// Get account entitlements
-entitlements, err := client.GetMeAccountEntitlements()
-if err != nil {
-    panic(err)
-}
-
-// Create a new access request
-responses, err := client.NewAccessRequests(entitlements)
-if err != nil {
-    panic(err)
-}
-
-// Check out password from the first successful request
-for _, response := range responses {
-    if !response.hasError() {
-        password, err := response.AccessRequest.CheckOutPassword(context.Background(), true)
-        if err != nil {
-            fmt.Println("Error checking out password:", err)
-            continue
-        }
-        fmt.Println("Password:", password)
-        
-        // Close the request when done
-        _, err = response.AccessRequest.Close()
-        if err != nil {
-            fmt.Println("Error closing request:", err)
-        }
-        break
-    }
-}
 ```
 
 ## Contributing
