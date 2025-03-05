@@ -1,6 +1,7 @@
 package safeguard
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -11,7 +12,7 @@ type IdentityProvider struct {
 	apiClient *SafeguardClient `json:"-"`
 
 	Id                       int                   `json:"Id,omitempty"`
-	TypeReferenceName        string                `json:"TypeReferenceName,omitempty"`
+	TypeReferenceName        TypeReferenceName     `json:"TypeReferenceName,omitempty"`
 	Name                     string                `json:"Name,omitempty"`
 	Description              string                `json:"Description,omitempty"`
 	NetworkAddress           string                `json:"NetworkAddress,omitempty"`
@@ -208,6 +209,144 @@ func (c *SafeguardClient) GetIdentityProvider(id int) (IdentityProvider, error) 
 		return IdentityProvider{}, err
 	}
 	return addClient(c, identityProvider), nil
+}
+
+// UpdateIdentityProvider updates an existing identity provider with the given ID using the provided updated identity provider data.
+// It sends a PUT request to the "IdentityProviders/{id}" endpoint with the updated data in JSON format.
+// If the request is successful, it unmarshals the response into an IdentityProvider object and returns it.
+// If there is an error during the process, it returns an empty IdentityProvider object and the error.
+//
+// Parameters:
+//   - id: The ID of the identity provider to update.
+//   - updatedIdp: The updated identity provider data.
+//
+// Returns:
+//   - IdentityProvider: The updated identity provider object.
+//   - error: An error object if there was an issue with the update process, otherwise nil.
+func (c *SafeguardClient) UpdateIdentityProvider(id int, updatedIdp IdentityProvider) (IdentityProvider, error) {
+	var identityProvider IdentityProvider
+
+	query := fmt.Sprintf("IdentityProviders/%d", id)
+
+	jsonData, err := json.Marshal(updatedIdp)
+	if err != nil {
+		return IdentityProvider{}, err
+	}
+
+	response, err := c.PutRequest(query, bytes.NewReader(jsonData))
+	if err != nil {
+		return IdentityProvider{}, err
+	}
+
+	if err := json.Unmarshal(response, &identityProvider); err != nil {
+		return IdentityProvider{}, err
+	}
+	return addClient(c, identityProvider), nil
+}
+
+// Update updates the current IdentityProvider with the provided updated IdentityProvider.
+// It returns the updated IdentityProvider and an error if the update operation fails.
+//
+// Parameters:
+//
+//	updatedIdp - The IdentityProvider containing the updated information.
+//
+// Returns:
+//
+//	IdentityProvider - The updated IdentityProvider.
+//	error - An error if the update operation fails, otherwise nil.
+func (idp IdentityProvider) Update(updatedIdp IdentityProvider) (IdentityProvider, error) {
+	return idp.apiClient.UpdateIdentityProvider(idp.Id, updatedIdp)
+}
+
+// AddIdentityProvider adds a new identity provider to the Safeguard system.
+// It takes an IdentityProvider object as input and returns the created IdentityProvider object
+// along with any error encountered during the process.
+//
+// Parameters:
+//   - idp: IdentityProvider object containing the details of the identity provider to be added.
+//
+// Returns:
+//   - IdentityProvider: The newly created IdentityProvider object.
+//   - error: An error object if an error occurred, otherwise nil.
+func (c *SafeguardClient) AddIdentityProvider(idp IdentityProvider) (IdentityProvider, error) {
+	var identityProvider IdentityProvider
+
+	query := "IdentityProviders"
+
+	jsonData, err := json.Marshal(idp)
+	if err != nil {
+		return IdentityProvider{}, err
+	}
+
+	response, err := c.PostRequest(query, bytes.NewReader(jsonData))
+	if err != nil {
+		return IdentityProvider{}, err
+	}
+
+	if err := json.Unmarshal(response, &identityProvider); err != nil {
+		return IdentityProvider{}, err
+	}
+	return addClient(c, identityProvider), nil
+}
+
+// SynchronizeIdentityProvider synchronizes the identity provider with the given ID.
+// It sends a POST request to the "IdentityProviders/{id}/Synchronize" endpoint and
+// returns the resulting ActivityLog or an error if the request or unmarshalling fails.
+//
+// Parameters:
+//   - id: The ID of the identity provider to synchronize.
+//
+// Returns:
+//   - ActivityLog: The activity log resulting from the synchronization.
+//   - error: An error if the request or unmarshalling fails.
+func (c *SafeguardClient) SynchronizeIdentityProvider(id int) (ActivityLog, error) {
+	query := fmt.Sprintf("IdentityProviders/%d/Synchronize", id)
+
+	response, err := c.PostRequest(query, nil)
+	if err != nil {
+		return ActivityLog{}, err
+	}
+
+	var activityLog ActivityLog
+	if err := json.Unmarshal(response, &activityLog); err != nil {
+		return ActivityLog{}, err
+	}
+	return addClient(c, activityLog), nil
+}
+
+// Synchronize synchronizes the identity provider with the external system.
+// It returns an ActivityLog containing details of the synchronization process,
+// or an error if the synchronization fails.
+func (idp IdentityProvider) Synchronize() (ActivityLog, error) {
+	return idp.apiClient.SynchronizeIdentityProvider(idp.Id)
+}
+
+// DeleteIdentityProvider deletes an identity provider by its ID.
+//
+// Parameters:
+//
+//	id - The ID of the identity provider to be deleted.
+//
+// Returns:
+//
+//	error - An error object if the deletion fails, otherwise nil.
+func (c *SafeguardClient) DeleteIdentityProvider(id int) error {
+
+	query := fmt.Sprintf("IdentityProviders/%d", id)
+
+	_, err := c.DeleteRequest(query)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Delete removes the IdentityProvider from the system by calling the
+// apiClient's DeleteIdentityProvider method with the IdentityProvider's Id.
+// It returns an error if the deletion fails.
+func (idp IdentityProvider) Delete() error {
+	return idp.apiClient.DeleteIdentityProvider(idp.Id)
 }
 
 // GetDirectoryUsers retrieves users from a specific identity provider's directory.

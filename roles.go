@@ -1,6 +1,7 @@
 package safeguard
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -116,6 +117,93 @@ func (c *SafeguardClient) GetRoles(fields Filter) ([]Role, error) {
 	return addClientToSlice(c, userRoles), nil
 }
 
+// Delete removes the role identified by the Role's Id from the system.
+// It sends a DELETE request to the API endpoint corresponding to the role's Id.
+// If the request fails, it returns an error.
+func (r Role) Delete() error {
+	query := fmt.Sprintf("Roles/%d", r.Id)
+
+	_, err := r.apiClient.DeleteRequest(query)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Update updates the current Role with the provided updatedRole.
+// It sends a PUT request to the API with the updated role data in JSON format.
+// If the request is successful, it unmarshals the response into a Role object
+// and returns the updated Role with the API client added. If an error occurs
+// during marshalling, sending the request, or unmarshalling the response, it
+// returns an empty Role and the error.
+//
+// Parameters:
+//
+//	updatedRole - The Role object containing the updated role data.
+//
+// Returns:
+//
+//	Role - The updated Role object with the API client added.
+//	error - An error if any occurred during the update process.
+func (r Role) Update(updatedRole Role) (Role, error) {
+	query := fmt.Sprintf("Roles/%d", r.Id)
+
+	updatedRoleJSON, err := json.Marshal(updatedRole)
+	if err != nil {
+		return Role{}, err
+	}
+	response, err := r.apiClient.PutRequest(query, bytes.NewReader(updatedRoleJSON))
+	if err != nil {
+		return Role{}, err
+	}
+
+	var role Role
+	if err := json.Unmarshal(response, &role); err != nil {
+		return Role{}, err
+	}
+
+	return addClient(r.apiClient, role), nil
+}
+
+// ModifyMembers modifies the members of a role by performing the specified operation
+// (add or remove) on the provided identities.
+//
+// Parameters:
+//   - operation: The operation to perform (e.g., add or remove members).
+//   - identities: A slice of Identity objects representing the members to be added or removed.
+//
+// Returns:
+//   - A slice of Identity objects representing the updated members of the role.
+//   - An error if the operation fails or if there is an issue with the API request.
+//
+// Example usage:
+//
+//	updatedMembers, err := role.ModifyMembers(ApiSetOperationAdd, identities)
+//	if err != nil {
+//	    log.Fatalf("Failed to modify members: %v", err)
+//	}
+func (r Role) ModifyMembers(operation ApiSetOperation, identities []Identity) ([]Identity, error) {
+	var members []Identity
+
+	query := fmt.Sprintf("Roles/%d/Members/%s", r.Id, operation)
+	data, err := json.Marshal(identities)
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := r.apiClient.PostRequest(query, bytes.NewReader(data))
+	if err != nil {
+		return nil, err
+	}
+
+	if err := json.Unmarshal(response, &members); err != nil {
+		return nil, err
+	}
+
+	return addClientToSlice(r.apiClient, members), nil
+}
+
 // GetEntitlements is an alias for GetRoles that retrieves a list of roles from Safeguard.
 //
 // This method provides compatibility with systems that use the term "entitlements"
@@ -191,6 +279,8 @@ func (c *SafeguardClient) GetRole(id int, fields Fields) (Role, error) {
 //   - Role: The requested role with all specified related objects
 //   - error: An error if the role is not found or request fails, nil otherwise
 func (c *SafeguardClient) GetEntitlement(id int, fields Fields) (Role, error) {
+	// NOTE: This is an alias for GetRole, Personal Roles seems to Entitlements in the GUI
+
 	return c.GetRole(id, fields)
 }
 

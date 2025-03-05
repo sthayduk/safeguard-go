@@ -8,6 +8,43 @@ import (
 	"github.com/google/uuid"
 )
 
+// TaskNames defines the supported task names for account tasks
+type TaskNames string
+
+const (
+	Archive                     TaskNames = "Archive"
+	ChangeApiKey                TaskNames = "ChangeApiKey"
+	ChangeFile                  TaskNames = "ChangeFile"
+	ChangePassword              TaskNames = "ChangePassword"
+	ChangeSshKey                TaskNames = "ChangeSshKey"
+	CheckApiKey                 TaskNames = "CheckApiKey"
+	CheckFile                   TaskNames = "CheckFile"
+	CheckPassword               TaskNames = "CheckPassword"
+	CheckSshKey                 TaskNames = "CheckSshKey"
+	DemoteAccount               TaskNames = "DemoteAccount"
+	DirectoryAssetDeleteSync    TaskNames = "DirectoryAssetDeleteSync"
+	DirectoryAssetSync          TaskNames = "DirectoryAssetSync"
+	DirectoryProviderDeleteSync TaskNames = "DirectoryProviderDeleteSync"
+	DirectoryProviderSync       TaskNames = "DirectoryProviderSync"
+	DiscoverAccounts            TaskNames = "DiscoverAccounts"
+	DiscoverAssets              TaskNames = "DiscoverAssets"
+	DiscoverServices            TaskNames = "DiscoverServices"
+	DiscoverSshHostKey          TaskNames = "DiscoverSshHostKey"
+	DiscoverSshKeys             TaskNames = "DiscoverSshKeys"
+	ElevateAccount              TaskNames = "ElevateAccount"
+	InstallSshKey               TaskNames = "InstallSshKey"
+	LocalIdentityProviderSync   TaskNames = "LocalIdentityProviderSync"
+	PasswordSyncAccounts        TaskNames = "PasswordSyncAccounts"
+	RestoreAccount              TaskNames = "RestoreAccount"
+	RetrieveSshHostKey          TaskNames = "RetrieveSshHostKey"
+	RevokeSshKey                TaskNames = "RevokeSshKey"
+	SshKeySyncAccounts          TaskNames = "SshKeySyncAccounts"
+	SuspendAccount              TaskNames = "SuspendAccount"
+	TestConnection              TaskNames = "TestConnection"
+	UnknownTask                 TaskNames = "Unknown"
+	UpdateDependentAsset        TaskNames = "UpdateDependentAsset"
+)
+
 // UserLogProperties represents the user properties in a log entry including permissions,
 // IP address, and user identification information
 type UserLogProperties struct {
@@ -59,9 +96,9 @@ type CustomScriptParameter struct {
 	TaskName string `json:"TaskName"`
 }
 
-// PasswordActivityLog represents a comprehensive log entry for password-related activities
+// ActivityLog represents a comprehensive log entry for password-related activities
 // including user actions, asset details, and request status
-type PasswordActivityLog struct {
+type ActivityLog struct {
 	apiClient *SafeguardClient
 
 	Id                string                  `json:"Id"`
@@ -85,7 +122,7 @@ type PasswordActivityLog struct {
 	CustomParams      []CustomScriptParameter `json:"CustomScriptParameters"`
 }
 
-func (a PasswordActivityLog) SetClient(c *SafeguardClient) any {
+func (a ActivityLog) SetClient(c *SafeguardClient) any {
 	a.apiClient = c
 	return a
 }
@@ -211,14 +248,14 @@ type ConnectionProperties struct {
 // Returns:
 //   - bool: true if task completed successfully, false if task failed or was cancelled
 //   - error: Error if monitoring fails, times out, or context is cancelled
-func (p *PasswordActivityLog) CheckTaskState(ctx context.Context) (bool, error) {
+func (p *ActivityLog) CheckTaskState(ctx context.Context) (bool, error) {
 	task, err := p.getMatchingAccountTask(ctx)
 	if err != nil {
 		return false, err
 	}
 
 	// Return the error only on the first check, as it indicates that the taskType is missing in the function
-	isComplete, err := isTaskCompleteForType(task, p.LogTime, AccountTaskNames(p.Name))
+	isComplete, err := isTaskCompleteForType(task, p.LogTime, TaskNames(p.Name))
 	if err != nil {
 		return false, err
 	}
@@ -227,7 +264,7 @@ func (p *PasswordActivityLog) CheckTaskState(ctx context.Context) (bool, error) 
 	}
 
 	// Return the error only on the first check, as it indicates that the taskType is missing in the function
-	isFailed, err := isTaskFailedForType(task, p.LogTime, AccountTaskNames(p.Name))
+	isFailed, err := isTaskFailedForType(task, p.LogTime, TaskNames(p.Name))
 	if err != nil {
 		return false, err
 	}
@@ -248,12 +285,12 @@ func (p *PasswordActivityLog) CheckTaskState(ctx context.Context) (bool, error) 
 				return false, err
 			}
 
-			isComplete, _ := isTaskCompleteForType(newTask, p.LogTime, AccountTaskNames(p.Name))
+			isComplete, _ := isTaskCompleteForType(newTask, p.LogTime, TaskNames(p.Name))
 			if isComplete {
 				return true, nil
 			}
 
-			isFailed, _ := isTaskFailedForType(newTask, p.LogTime, AccountTaskNames(p.Name))
+			isFailed, _ := isTaskFailedForType(newTask, p.LogTime, TaskNames(p.Name))
 			if isFailed {
 				return false, nil
 			}
@@ -276,7 +313,7 @@ func (p *PasswordActivityLog) CheckTaskState(ctx context.Context) (bool, error) 
 // Returns:
 //   - bool: true if the task has completed successfully after the logTime
 //   - error: Error if the taskType is not recognized or supported
-func isTaskCompleteForType(task AccountTaskData, logTime time.Time, taskType AccountTaskNames) (bool, error) {
+func isTaskCompleteForType(task AccountTaskData, logTime time.Time, taskType TaskNames) (bool, error) {
 	var successTime time.Time
 	var successCounter int
 
@@ -327,7 +364,7 @@ func isTaskCompleteForType(task AccountTaskData, logTime time.Time, taskType Acc
 // Returns:
 //   - bool: true if the task has failed after the logTime
 //   - error: Error if the taskType is not recognized or supported
-func isTaskFailedForType(task AccountTaskData, logTime time.Time, taskType AccountTaskNames) (bool, error) {
+func isTaskFailedForType(task AccountTaskData, logTime time.Time, taskType TaskNames) (bool, error) {
 	var failureTime time.Time
 	var failureCounter int
 
@@ -377,7 +414,7 @@ func isTaskFailedForType(task AccountTaskData, logTime time.Time, taskType Accou
 // Returns:
 //   - string: Task identifier for the specified task type
 //   - error: Error if the taskType is not recognized or supported
-func getTaskIdForType(task AccountTaskData, taskType AccountTaskNames) (string, error) {
+func getTaskIdForType(task AccountTaskData, taskType TaskNames) (string, error) {
 	switch taskType {
 	case CheckPassword:
 		return task.TaskProperties.LastPasswordCheckTaskId, nil
@@ -417,7 +454,7 @@ func getTaskIdForType(task AccountTaskData, taskType AccountTaskNames) (string, 
 // Returns:
 //   - AccountTaskData: Task data matching the password activity log's ID and account
 //   - error: Error if the task cannot be found, invalid ID format, or context timeout/cancellation
-func (p PasswordActivityLog) getMatchingAccountTask(ctx context.Context) (AccountTaskData, error) {
+func (p ActivityLog) getMatchingAccountTask(ctx context.Context) (AccountTaskData, error) {
 	if p.Id == "" {
 		return AccountTaskData{}, fmt.Errorf("invalid task ID")
 	}
@@ -438,7 +475,7 @@ func (p PasswordActivityLog) getMatchingAccountTask(ctx context.Context) (Accoun
 		case <-ctx.Done():
 			return AccountTaskData{}, fmt.Errorf("timeout waiting for task to become available")
 		case <-ticker.C:
-			taskData, err := p.apiClient.GetAccountTaskSchedules(AccountTaskNames(p.Name), filter)
+			taskData, err := p.apiClient.GetAccountTaskSchedules(TaskNames(p.Name), filter)
 			if err != nil {
 				continue
 			}
@@ -447,7 +484,7 @@ func (p PasswordActivityLog) getMatchingAccountTask(ctx context.Context) (Accoun
 				continue
 			}
 
-			taskType := AccountTaskNames(p.Name)
+			taskType := TaskNames(p.Name)
 			for _, task := range taskData {
 				taskId, err := getTaskIdForType(task, taskType)
 				if err == nil && taskId == p.Id {

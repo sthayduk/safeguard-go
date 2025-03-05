@@ -5,36 +5,17 @@ import (
 	"fmt"
 )
 
-// AccountTaskNames defines the supported task names for account tasks
-type AccountTaskNames string
-
-const (
-	CheckPassword    AccountTaskNames = "CheckPassword"
-	ChangePassword   AccountTaskNames = "ChangePassword"
-	CheckSshKey      AccountTaskNames = "CheckSshKey"
-	ChangeSshKey     AccountTaskNames = "ChangeSshKey"
-	DiscoverAccounts AccountTaskNames = "DiscoverAccounts"
-	CheckApiKey      AccountTaskNames = "CheckApiKey"
-	ChangeApiKey     AccountTaskNames = "ChangeApiKey"
-	SuspendAccount   AccountTaskNames = "SuspendAccount"
-	RestoreAccount   AccountTaskNames = "RestoreAccount"  // Added
-	DiscoverSshKeys  AccountTaskNames = "DiscoverSshKeys" // Added
-	InstallSshKey    AccountTaskNames = "InstallSshKey"   // Added
-	ElevateAccount   AccountTaskNames = "ElevateAccount"  // Added
-	DemoteAccount    AccountTaskNames = "DemoteAccount"   // Added
-)
-
 // ScheduledAccountTask represents a scheduled task that runs against accounts
 type ScheduledAccountTask struct {
-	ID             string           `json:"id"`
-	Name           string           `json:"name"`
-	Description    string           `json:"description,omitempty"`
-	Schedule       string           `json:"schedule"` // Cron expression
-	Enabled        bool             `json:"enabled"`
-	TaskType       AccountTaskNames `json:"taskType"`
-	LastRun        string           `json:"lastRun,omitempty"`
-	NextRun        string           `json:"nextRun,omitempty"`
-	TaskProperties TaskProperties   `json:"taskProperties"`
+	ID             string         `json:"id"`
+	Name           string         `json:"name"`
+	Description    string         `json:"description,omitempty"`
+	Schedule       string         `json:"schedule"` // Cron expression
+	Enabled        bool           `json:"enabled"`
+	TaskType       TaskNames      `json:"taskType"`
+	LastRun        string         `json:"lastRun,omitempty"`
+	NextRun        string         `json:"nextRun,omitempty"`
+	TaskProperties TaskProperties `json:"taskProperties"`
 }
 
 // TimeOfDayInterval represents a time interval configuration
@@ -73,25 +54,25 @@ type Schedule struct {
 type AccountTaskData struct {
 	apiClient *SafeguardClient `json:"-"`
 
-	Id                       int              `json:"Id"`
-	Name                     string           `json:"Name"`
-	DistinguishedName        string           `json:"DistinguishedName"`
-	DomainName               string           `json:"DomainName"`
-	Description              string           `json:"Description"`
-	Disabled                 bool             `json:"Disabled"`
-	Asset                    Asset            `json:"Asset"`
-	Platform                 Platform         `json:"Platform"`
-	Schedule                 Schedule         `json:"Schedule"`
-	TaskProperties           TaskProperties   `json:"TaskProperties"`
-	AssetName                string           `json:"assetName,omitempty"`
-	AccountName              string           `json:"accountName,omitempty"`
-	AccountDomainName        string           `json:"accountDomainName,omitempty"`
-	AccountDistinguishedName string           `json:"accountDistinguishedName,omitempty"`
-	TaskName                 AccountTaskNames `json:"taskName"`
-	Status                   string           `json:"status,omitempty"`
-	LastExecuted             string           `json:"lastExecuted,omitempty"`
-	NextScheduled            string           `json:"nextScheduled,omitempty"`
-	ErrorMessage             string           `json:"errorMessage,omitempty"`
+	Id                       int            `json:"Id"`
+	Name                     string         `json:"Name"`
+	DistinguishedName        string         `json:"DistinguishedName"`
+	DomainName               string         `json:"DomainName"`
+	Description              string         `json:"Description"`
+	Disabled                 bool           `json:"Disabled"`
+	Asset                    Asset          `json:"Asset"`
+	Platform                 Platform       `json:"Platform"`
+	Schedule                 Schedule       `json:"Schedule"`
+	TaskProperties           TaskProperties `json:"TaskProperties"`
+	AssetName                string         `json:"assetName,omitempty"`
+	AccountName              string         `json:"accountName,omitempty"`
+	AccountDomainName        string         `json:"accountDomainName,omitempty"`
+	AccountDistinguishedName string         `json:"accountDistinguishedName,omitempty"`
+	TaskName                 TaskNames      `json:"taskName"`
+	Status                   string         `json:"status,omitempty"`
+	LastExecuted             string         `json:"lastExecuted,omitempty"`
+	NextScheduled            string         `json:"nextScheduled,omitempty"`
+	ErrorMessage             string         `json:"errorMessage,omitempty"`
 }
 
 func (a AccountTaskData) SetClient(c *SafeguardClient) any {
@@ -134,7 +115,7 @@ func (a AccountTaskData) ToJson() (string, error) {
 // Returns:
 //   - []AccountTaskData: A slice of task schedules matching the filter criteria
 //   - error: An error if the request or response parsing fails, nil otherwise
-func (c *SafeguardClient) GetAccountTaskSchedules(taskName AccountTaskNames, filter Filter) ([]AccountTaskData, error) {
+func (c *SafeguardClient) GetAccountTaskSchedules(taskName TaskNames, filter Filter) ([]AccountTaskData, error) {
 	var accountTaskSchedules []AccountTaskData
 
 	query := fmt.Sprintf("Reports/Tasks/AccountTaskSchedules/%s%s", taskName, filter.ToQueryString())

@@ -407,7 +407,7 @@ type EventData struct {
     AssetName               string
     Requester               string
     RequestId               string
-    EventName               string
+    EventName               EventName
     EventTimestamp          time.Time
     EventUserDisplayName    string
     // Many more fields available

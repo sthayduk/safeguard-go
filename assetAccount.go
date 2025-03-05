@@ -333,8 +333,8 @@ func (a AssetAccount) Delete() error {
 // Returns:
 //   - PasswordActivityLog: Log details of the password change activity
 //   - error: An error if the password change fails or cannot be initiated
-func (a AssetAccount) ChangePassword() (PasswordActivityLog, error) {
-	var log PasswordActivityLog
+func (a AssetAccount) ChangePassword() (ActivityLog, error) {
+	var log ActivityLog
 
 	query := fmt.Sprintf("AssetAccounts/%d/ChangePassword", a.Id)
 
@@ -354,8 +354,8 @@ func (a AssetAccount) ChangePassword() (PasswordActivityLog, error) {
 // Returns:
 //   - PasswordActivityLog: Log details of the password check activity
 //   - error: An error if the password check fails or cannot be initiated
-func (a AssetAccount) CheckPassword() (PasswordActivityLog, error) {
-	var log PasswordActivityLog
+func (a AssetAccount) CheckPassword() (ActivityLog, error) {
+	var log ActivityLog
 
 	query := fmt.Sprintf("AssetAccounts/%d/CheckPassword", a.Id)
 
@@ -609,17 +609,17 @@ func (c *SafeguardClient) batchCreateAssetAccounts(accessRequests []AssetAccount
 // Returns:
 //   - PasswordActivityLog: Log details of the suspend activity
 //   - error: An error if the suspend operation fails, nil otherwise
-func (c *SafeguardClient) SuspendAssetAccount(a AssetAccount) (PasswordActivityLog, error) {
+func (c *SafeguardClient) SuspendAssetAccount(a AssetAccount) (ActivityLog, error) {
 	query := fmt.Sprintf("AssetAccounts/%d/SuspendAccount", a.Id)
 
 	response, err := c.PostRequest(query, nil)
 	if err != nil {
-		return PasswordActivityLog{}, err
+		return ActivityLog{}, err
 	}
 
-	var log PasswordActivityLog
+	var log ActivityLog
 	if err := json.Unmarshal(response, &log); err != nil {
-		return PasswordActivityLog{}, err
+		return ActivityLog{}, err
 	}
 
 	return addClient(c, log), nil
@@ -630,6 +630,6 @@ func (c *SafeguardClient) SuspendAssetAccount(a AssetAccount) (PasswordActivityL
 // Returns:
 //   - PasswordActivityLog: Suspension details
 //   - error: Suspend operation errors
-func (a AssetAccount) Suspend() (PasswordActivityLog, error) {
+func (a AssetAccount) Suspend() (ActivityLog, error) {
 	return a.apiClient.SuspendAssetAccount(a)
 }

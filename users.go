@@ -579,7 +579,6 @@ func (c *SafeguardClient) updateUser(user User) (User, error) {
 // Returns:
 //   - error: An error if the deletion fails, nil otherwise
 func (c *SafeguardClient) DeleteUser(id int) error {
-
 	query := fmt.Sprintf("users/%d", id)
 
 	_, err := c.DeleteRequest(query)

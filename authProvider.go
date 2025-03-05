@@ -24,18 +24,23 @@ func (a AuthProvider) String() string {
 	return string(a)
 }
 
+// TypeReferenceName represents the type of identity provider
 type TypeReferenceName string
 
 const (
-	Unknown          TypeReferenceName = "Unknown"
-	LocalMachine     TypeReferenceName = "LocalMachine"
-	Certificate      TypeReferenceName = "Certificate"
-	DirectoryAccount TypeReferenceName = "DirectoryAccount"
-	ExternalFed      TypeReferenceName = "ExternalFederation"
-	Radius           TypeReferenceName = "Radius"
-	OneLoginMfa      TypeReferenceName = "OneLoginMfa"
-	Fido2            TypeReferenceName = "Fido2"
-	Starling         TypeReferenceName = "Starling"
+	TypeUnknown            TypeReferenceName = "Unknown"
+	TypeLocal              TypeReferenceName = "Local"
+	TypeCertificate        TypeReferenceName = "Certificate"
+	TypeActiveDirectory    TypeReferenceName = "ActiveDirectory"
+	TypeRadius             TypeReferenceName = "Radius"
+	TypeRadiusAsPrimary    TypeReferenceName = "RadiusAsPrimary"
+	TypeLdap               TypeReferenceName = "Ldap"
+	TypeExternalFederation TypeReferenceName = "ExternalFederation"
+	TypeFido2              TypeReferenceName = "Fido2"
+	TypeOtherDirectory     TypeReferenceName = "OtherDirectory"
+	TypeStarlingDirectory  TypeReferenceName = "StarlingDirectory"
+	TypeOneLoginMfa        TypeReferenceName = "OneLoginMfa"
+	TypeScim               TypeReferenceName = "Scim"
 )
 
 type AuthenticationProvider struct {

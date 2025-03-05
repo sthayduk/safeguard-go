@@ -3,6 +3,7 @@ package safeguard
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -479,4 +480,87 @@ func (c *SafeguardClient) GetAssetDirectoryServiceEntries(assetId int, filter Fi
 //   - (error): An error if the API request fails
 func (a Asset) GetDirectoryServiceEntries(filter Filter) ([]DirectoryServiceEntry, error) {
 	return a.apiClient.GetAssetDirectoryServiceEntries(a.Id, filter)
+}
+
+// Delete removes the asset identified by its ID from the system.
+// It constructs a query string using the asset's ID and sends a DELETE request
+// to the API client. If the request fails, it returns an error; otherwise, it returns nil.
+func (a Asset) Delete() error {
+	query := fmt.Sprintf("Assets/%d", a.Id)
+
+	_, err := a.apiClient.DeleteRequest(query)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UpdateAsset updates an existing asset identified by the given ID with the provided updated asset details.
+// It sends a PUT request to the "Assets/{id}" endpoint with the updated asset data in JSON format.
+// If the update is successful, it returns the updated asset and a nil error.
+// If there is an error during the process, it returns an empty asset and the error.
+//
+// Parameters:
+//   - id: The ID of the asset to be updated.
+//   - updatedAsset: The Asset struct containing the updated asset details.
+//
+// Returns:
+//   - Asset: The updated Asset struct.
+//   - error: An error if the update process fails, otherwise nil.
+func (c *SafeguardClient) UpdateAsset(id int, updatedAsset Asset) (Asset, error) {
+	query := fmt.Sprintf("Assets/%d", id)
+
+	assetJSON, err := updatedAsset.ToJson()
+	if err != nil {
+		return Asset{}, err
+	}
+
+	response, err := c.PutRequest(query, strings.NewReader(assetJSON))
+	if err != nil {
+		return Asset{}, err
+	}
+
+	var asset Asset
+	err = json.Unmarshal(response, &asset)
+	if err != nil {
+		return Asset{}, err
+	}
+
+	return addClient(c, asset), nil
+}
+
+// Update updates the current Asset with the provided updatedAsset and returns the updated Asset.
+// It uses the apiClient to perform the update operation based on the Asset's Id.
+// Returns the updated Asset and an error if the update operation fails.
+func (a Asset) Update(updatedAsset Asset) (Asset, error) {
+	return a.apiClient.UpdateAsset(a.Id, updatedAsset)
+}
+
+// GetAccounts retrieves a list of accounts associated with the asset.
+// It accepts a Filter parameter to apply filtering on the accounts.
+// The function returns a slice of AssetAccount and an error if any occurs during the process.
+//
+// Parameters:
+//   - filter: A Filter object containing fields to filter the accounts.
+//
+// Returns:
+//   - []AssetAccount: A slice of AssetAccount objects.
+//   - error: An error object if an error occurs, otherwise nil.
+func (a Asset) GetAccounts(filter Filter) ([]AssetAccount, error) {
+	var accounts []AssetAccount
+
+	query := fmt.Sprintf("Assets/%d/Accounts%s", a.Id, filter.ToQueryString())
+
+	response, err := a.apiClient.GetRequest(query)
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(response, &accounts)
+	if err != nil {
+		return nil, err
+	}
+
+	return addClientToSlice(a.apiClient, accounts), nil
 }
