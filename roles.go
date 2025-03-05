@@ -212,8 +212,8 @@ func (c *SafeguardClient) GetEntitlement(id int, fields Fields) (Role, error) {
 // Returns:
 //   - []ManagedByUser: A slice of users who are members of the role
 //   - error: An error if the request fails, nil otherwise
-func (c *SafeguardClient) GetRoleMembers(id int, filter Filter) ([]ManagedByUser, error) {
-	var members []ManagedByUser
+func (c *SafeguardClient) GetRoleMembers(id int, filter Filter) ([]Identity, error) {
+	var members []Identity
 
 	query := fmt.Sprintf("Roles/%d/Members%s", id, filter.ToQueryString())
 
@@ -244,7 +244,7 @@ func (c *SafeguardClient) GetRoleMembers(id int, filter Filter) ([]ManagedByUser
 // Returns:
 //   - []ManagedByUser: A slice of users who are members of the role
 //   - error: An error if the request fails, nil otherwise
-func (r Role) GetMembers(filter Filter) ([]ManagedByUser, error) {
+func (r Role) GetMembers(filter Filter) ([]Identity, error) {
 	return r.apiClient.GetRoleMembers(r.Id, filter)
 }
 

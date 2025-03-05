@@ -11,17 +11,17 @@ import (
 type AssetPartition struct {
 	apiClient *SafeguardClient `json:"-"`
 
-	Id                       int             `json:"Id"`
-	Name                     string          `json:"Name"`
-	Description              string          `json:"Description"`
-	CreatedDate              time.Time       `json:"CreatedDate"`
-	CreatedByUserId          int             `json:"CreatedByUserId"`
-	CreatedByUserDisplayName string          `json:"CreatedByUserDisplayName"`
-	ManagedBy                []ManagedByUser `json:"ManagedBy"`
-	DefaultProfileId         int             `json:"DefaultProfileId"`
-	DefaultProfileName       string          `json:"DefaultProfileName"`
-	DefaultSshKeyProfileId   int             `json:"DefaultSshKeyProfileId"`
-	DefaultSshKeyProfileName string          `json:"DefaultSshKeyProfileName"`
+	Id                       int        `json:"Id"`
+	Name                     string     `json:"Name"`
+	Description              string     `json:"Description"`
+	CreatedDate              time.Time  `json:"CreatedDate"`
+	CreatedByUserId          int        `json:"CreatedByUserId"`
+	CreatedByUserDisplayName string     `json:"CreatedByUserDisplayName"`
+	ManagedBy                []Identity `json:"ManagedBy"`
+	DefaultProfileId         int        `json:"DefaultProfileId"`
+	DefaultProfileName       string     `json:"DefaultProfileName"`
+	DefaultSshKeyProfileId   int        `json:"DefaultSshKeyProfileId"`
+	DefaultSshKeyProfileName string     `json:"DefaultSshKeyProfileName"`
 }
 
 func (a AssetPartition) SetClient(c *SafeguardClient) any {

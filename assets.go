@@ -27,7 +27,7 @@ type Asset struct {
 	CreatedByUserDisplayName     string                       `json:"CreatedByUserDisplayName,omitempty"`
 	Platform                     Platform                     `json:"Platform,omitempty"`
 	Tags                         []Tag                        `json:"Tags,omitempty"`
-	ManagedBy                    []ManagedByUser              `json:"ManagedBy,omitempty"`
+	ManagedBy                    []Identity                   `json:"ManagedBy,omitempty"`
 	DiscoveredGroups             []DiscoveredGroup            `json:"DiscoveredGroups,omitempty"`
 	TaskProperties               AssetTaskProperties          `json:"TaskProperties,omitempty"`
 	ConnectionProperties         AssetConnectionProperties    `json:"ConnectionProperties,omitempty"`

@@ -8,6 +8,16 @@ import (
 	"strings"
 )
 
+// ApiSetOperation represents the type of operation that can be performed on ApproverSets
+type ApiSetOperation string
+
+const (
+	// Add represents the operation to add approver sets
+	Add ApiSetOperation = "Add"
+	// Remove represents the operation to remove approver sets
+	Remove ApiSetOperation = "Remove"
+)
+
 // ClientHolder is an interface that defines a method for setting a SafeguardClient.
 // Implementers of this interface should provide the logic for associating a SafeguardClient
 // instance with the implementing type.

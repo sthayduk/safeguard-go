@@ -1,6 +1,7 @@
 package safeguard
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -52,10 +53,8 @@ const (
 
 // ApproverSet represents a set of identities required to approve an access request
 type ApproverSet struct {
-	Name        string          `json:"Name"`
-	Description string          `json:"Description,omitempty"`
-	IsDefault   bool            `json:"IsDefault"`
-	Identities  []ManagedByUser `json:"Identities"`
+	RequiredApprovers int        `json:"RequiredApprovers"`
+	Approvers         []Identity `json:"Approvers"`
 }
 
 // ReasonCode represents a predefined reason for access requests
@@ -91,7 +90,7 @@ type AccessPolicy struct {
 	SessionProperties           *SessionProperties          `json:"SessionProperties,omitempty"`
 	EmergencyAccessProperties   EmergencyAccessProperties   `json:"EmergencyAccessProperties"`
 	ApproverSets                []ApproverSet               `json:"ApproverSets"`
-	Reviewers                   []ManagedByUser             `json:"Reviewers"`
+	Reviewers                   []Identity                  `json:"Reviewers"`
 	NotificationContacts        []NotificationContact       `json:"NotificationContacts"`
 	ReasonCodes                 []ReasonCode                `json:"ReasonCodes"`
 	ScopeItems                  []PolicyScopeItem           `json:"ScopeItems"`
@@ -124,6 +123,189 @@ func (a AccessPolicy) GetReasonCodes() []ReasonCode {
 		return []ReasonCode{}
 	}
 	return a.ReasonCodes
+}
+
+// GetApproverSets retrieves the sets of identities that may approve access requests using this policy.
+//
+// Returns:
+//   - []ApproverSet: A slice of ApproverSet objects
+//   - error: An error if the request fails
+func (a AccessPolicy) GetApproverSets() ([]ApproverSet, error) {
+	var approverSets []ApproverSet
+
+	query := fmt.Sprintf("AccessPolicies/%d/ApproverSets", a.Id)
+
+	response, err := a.apiClient.GetRequest(query)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := json.Unmarshal(response, &approverSets); err != nil {
+		return nil, err
+	}
+
+	return approverSets, nil
+}
+
+// SetApproverSets sets who can approve access requests for this policy.
+//
+// Parameters:
+//   - approverSets: A slice of ApproverSet objects to set as approvers
+//
+// Returns:
+//   - []ApproverSet: The updated ApproverSet objects
+//   - error: An error if the request fails
+func (a AccessPolicy) SetApproverSets(approverSets []ApproverSet) ([]ApproverSet, error) {
+	var updatedApproverSets []ApproverSet
+
+	query := fmt.Sprintf("AccessPolicies/%d/ApproverSets", a.Id)
+	data, err := json.Marshal(approverSets)
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := a.apiClient.PutRequest(query, bytes.NewReader(data))
+	if err != nil {
+		return nil, err
+	}
+
+	if err := json.Unmarshal(response, &updatedApproverSets); err != nil {
+		return nil, err
+	}
+
+	return updatedApproverSets, nil
+}
+
+// ModifyApproverSets adds or removes approvers who can approve access requests for this policy.
+//
+// Parameters:
+//   - operation: The operation to perform (Add or Remove)
+//   - approverSets: A slice of ApproverSet objects to modify
+//
+// Returns:
+//   - []ApproverSet: The updated ApproverSet objects
+//   - error: An error if the request fails
+func (a AccessPolicy) ModifyApproverSets(operation ApiSetOperation, approverSets []ApproverSet) ([]ApproverSet, error) {
+	var updatedApproverSets []ApproverSet
+
+	query := fmt.Sprintf("AccessPolicies/%d/ApproverSets/%s", a.Id, operation)
+	data, err := json.Marshal(approverSets)
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := a.apiClient.PostRequest(query, bytes.NewReader(data))
+	if err != nil {
+		return nil, err
+	}
+
+	if err := json.Unmarshal(response, &updatedApproverSets); err != nil {
+		return nil, err
+	}
+
+	return updatedApproverSets, nil
+}
+
+// GetReviewers retrieves the list of reviewers for the access policy.
+// It sends a GET request to the API endpoint corresponding to the access policy's reviewers,
+// unmarshals the response into a slice of Identity objects, and returns the slice.
+// If any error occurs during the request or unmarshalling, it returns the error.
+//
+// Returns:
+//   - A slice of Identity objects representing the reviewers.
+//   - An error if the request or unmarshalling fails.
+func (a AccessPolicy) GetReviewers() ([]Identity, error) {
+	var reviewers []Identity
+
+	query := fmt.Sprintf("AccessPolicies/%d/Reviewers", a.Id)
+
+	response, err := a.apiClient.GetRequest(query)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := json.Unmarshal(response, &reviewers); err != nil {
+		return nil, err
+	}
+
+	return addClientToSlice(a.apiClient, reviewers), nil
+}
+
+// SetReviewers sets the reviewers for the access policy.
+// It takes a slice of Identity objects representing the reviewers and returns
+// a slice of modified Identity objects and an error if any occurred.
+//
+// Parameters:
+//
+//	reviewers - A slice of Identity objects representing the reviewers to be set.
+//
+// Returns:
+//
+//	A slice of modified Identity objects and an error if any occurred during the process.
+//
+// The function performs the following steps:
+//  1. Constructs the query URL using the access policy ID.
+//  2. Marshals the reviewers slice into JSON format.
+//  3. Sends a PUT request to the API with the marshaled data.
+//  4. Unmarshals the response into a slice of modified Identity objects.
+//  5. Adds the API client to the modified reviewers slice and returns it.
+func (a AccessPolicy) SetReviewers(reviewers []Identity) ([]Identity, error) {
+	var modifiedReviewers []Identity
+
+	query := fmt.Sprintf("AccessPolicies/%d/Reviewers", a.Id)
+	data, err := json.Marshal(reviewers)
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := a.apiClient.PutRequest(query, bytes.NewReader(data))
+	if err != nil {
+		return nil, err
+	}
+
+	if err := json.Unmarshal(response, &modifiedReviewers); err != nil {
+		return nil, err
+	}
+
+	return addClientToSlice(a.apiClient, modifiedReviewers), nil
+}
+
+// ModifyReviewers modifies the reviewers of an access policy based on the specified operation.
+// It sends a POST request to the API with the updated list of reviewers and returns the updated list.
+//
+// Parameters:
+//   - operation: The operation to perform on the reviewers (e.g., add or remove).
+//   - reviewers: A slice of Identity objects representing the reviewers to be modified.
+//
+// Returns:
+//   - A slice of Identity objects representing the updated list of reviewers.
+//   - An error if the operation fails or if there is an issue with the API request.
+//
+// Example:
+//
+//	updatedReviewers, err := accessPolicy.ModifyReviewers(ApiSetOperationAdd, reviewers)
+//	if err != nil {
+//	    log.Fatalf("Failed to modify reviewers: %v", err)
+//	}
+func (a AccessPolicy) ModifyReviewers(operation ApiSetOperation, reviewers []Identity) ([]Identity, error) {
+	var updatedReviewers []Identity
+
+	query := fmt.Sprintf("AccessPolicies/%d/Reviewers/%s", a.Id, operation)
+	data, err := json.Marshal(reviewers)
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := a.apiClient.PostRequest(query, bytes.NewReader(data))
+	if err != nil {
+		return nil, err
+	}
+
+	if err := json.Unmarshal(response, &updatedReviewers); err != nil {
+		return nil, err
+	}
+
+	return addClientToSlice(a.apiClient, updatedReviewers), nil
 }
 
 // AccessRequestProperties represents configuration governing access requests
@@ -309,4 +491,50 @@ func (c *SafeguardClient) DeleteAccessPolicy(id int) error {
 // Returns an error if the deletion fails.
 func (a AccessPolicy) Delete() error {
 	return a.apiClient.DeleteAccessPolicy(a.Id)
+}
+
+// UpdateAccessPolicy updates an existing access policy with the provided details.
+// It takes the ID of the access policy to update and an AccessPolicy object containing the updated values.
+// The method makes a PUT request to the Safeguard API, updates the access policy, and returns the updated
+// AccessPolicy object with the client reference attached.
+//
+// Parameters:
+//   - id: The unique identifier of the access policy to update
+//   - updatedAccessPolicy: AccessPolicy object containing the updated values
+//
+// Returns:
+//   - AccessPolicy: The updated access policy object
+//   - error: An error if the update operation fails
+func (c *SafeguardClient) UpdateAccessPolicy(id int, updatedAccessPolicy AccessPolicy) (AccessPolicy, error) {
+	var accessPolicy AccessPolicy
+
+	query := fmt.Sprintf("AccessPolicies/%d", id)
+	accessPolicyJSON, err := json.Marshal(updatedAccessPolicy)
+	if err != nil {
+		return accessPolicy, err
+	}
+
+	response, err := c.PutRequest(query, bytes.NewReader(accessPolicyJSON))
+	if err != nil {
+		return accessPolicy, err
+	}
+	if err := json.Unmarshal(response, &accessPolicy); err != nil {
+		return accessPolicy, err
+	}
+
+	return addClient(c, accessPolicy), nil
+}
+
+// Update updates this AccessPolicy with the provided updates.
+// It sends a request to update the AccessPolicy identified by this AccessPolicy's ID
+// with the details from updatedAccessPolicy.
+//
+// Parameters:
+//   - updatedAccessPolicy: The AccessPolicy object containing the updated fields
+//
+// Returns:
+//   - AccessPolicy: The updated AccessPolicy object
+//   - error: An error if the update operation fails, nil otherwise
+func (a AccessPolicy) Update(updatedAccessPolicy AccessPolicy) (AccessPolicy, error) {
+	return a.apiClient.UpdateAccessPolicy(a.Id, updatedAccessPolicy)
 }

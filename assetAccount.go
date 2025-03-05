@@ -7,29 +7,6 @@ import (
 	"time"
 )
 
-// ManagedByUser represents the user or identity that manages an asset account,
-// including their display name, identity provider details, and contact information.
-type ManagedByUser struct {
-	apiClient *SafeguardClient `json:"-"`
-
-	DisplayName                       string `json:"DisplayName,omitempty"`
-	Id                                int    `json:"Id,omitempty"`
-	IdentityProviderId                int    `json:"IdentityProviderId,omitempty"`
-	IdentityProviderName              string `json:"IdentityProviderName,omitempty"`
-	IdentityProviderTypeReferenceName string `json:"IdentityProviderTypeReferenceName,omitempty"`
-	IsSystemOwned                     bool   `json:"IsSystemOwned,omitempty"`
-	Name                              string `json:"Name,omitempty"`
-	PrincipalKind                     string `json:"PrincipalKind,omitempty"`
-	EmailAddress                      string `json:"EmailAddress,omitempty"`
-	DomainName                        string `json:"DomainName,omitempty"`
-	FullDisplayName                   string `json:"FullDisplayName,omitempty"`
-}
-
-func (a ManagedByUser) SetClient(c *SafeguardClient) any {
-	a.apiClient = c
-	return a
-}
-
 // Tag represents metadata that can be attached to an asset account for
 // organization and filtering purposes.
 type Tag struct {
@@ -173,7 +150,7 @@ type AssetAccount struct {
 	CreatedDate                  string               `json:"CreatedDate,omitempty"`
 	CreatedByUserId              int                  `json:"CreatedByUserId,omitempty"`
 	CreatedByUserDisplayName     string               `json:"CreatedByUserDisplayName,omitempty"`
-	ManagedBy                    []ManagedByUser      `json:"ManagedBy,omitempty"`
+	ManagedBy                    []Identity           `json:"ManagedBy,omitempty"`
 	Disabled                     bool                 `json:"Disabled,omitempty"`
 	IsServiceAccount             bool                 `json:"IsServiceAccount,omitempty"`
 	IsApplicationAccount         bool                 `json:"IsApplicationAccount,omitempty"`

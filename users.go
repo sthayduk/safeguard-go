@@ -101,10 +101,10 @@ func (u User) ToJson() (string, error) {
 // Returns:
 //   - []User: A slice of users matching the filter criteria
 //   - error: An error if the request fails, nil otherwise
-func (c *SafeguardClient) GetUsers(fields Filter) ([]User, error) {
+func (c *SafeguardClient) GetUsers(filter Filter) ([]User, error) {
 	var users []User
 
-	query := "users" + fields.ToQueryString()
+	query := "users" + filter.ToQueryString()
 
 	response, err := c.GetRequest(query)
 	if err != nil {
