@@ -133,7 +133,9 @@ func (c *SafeguardClient) GetAssetPartitions(filter Filter) ([]AssetPartition, e
 		return nil, err
 	}
 
-	json.Unmarshal(response, &AssetPartitions)
+	if json.Unmarshal(response, &AssetPartitions) != nil {
+		return nil, err
+	}
 	return addClientToSlice(c, AssetPartitions), nil
 }
 
@@ -158,7 +160,10 @@ func (c *SafeguardClient) GetAssetPartition(id int, fields Fields) (AssetPartiti
 	if err != nil {
 		return AssetPartition, err
 	}
-	json.Unmarshal(response, &AssetPartition)
+	if json.Unmarshal(response, &AssetPartition) != nil {
+		return AssetPartition, err
+	}
+
 	return addClient(c, AssetPartition), nil
 }
 

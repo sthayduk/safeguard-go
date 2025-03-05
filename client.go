@@ -257,7 +257,9 @@ func (c *SafeguardClient) refreshToken(ctx context.Context) {
 //	c - A pointer to the SafeguardClient instance whose token needs to be refreshed.
 func refreshTokenWithCertificate(c *SafeguardClient) {
 	// Refresh the token using the certificate
-	c.LoginWithCertificate(c.AccessToken.getCertificate())
+	if err := c.LoginWithCertificate(c.AccessToken.getCertificate()); err != nil {
+		logger.Error("Failed to refresh token using certificate", "error", err)
+	}
 }
 
 // refreshTokenWithPassword refreshes the authentication token for the SafeguardClient
@@ -270,7 +272,9 @@ func refreshTokenWithCertificate(c *SafeguardClient) {
 // to obtain a new access token using the current username and password.
 func refreshTokenWithPassword(c *SafeguardClient) {
 	// Refresh the token using the password
-	c.LoginWithPassword(c.AccessToken.getUserNamePassword())
+	if err := c.LoginWithPassword(c.AccessToken.getUserNamePassword()); err != nil {
+		logger.Error("Failed to refresh token using password", "error", err)
+	}
 }
 
 // GetTokenExpirationTime returns the time when the current access token will expire

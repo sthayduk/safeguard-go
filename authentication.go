@@ -209,17 +209,26 @@ func startHTTPSListener(authCodeChan chan string, errorChan chan error) *http.Se
 		if err := r.URL.Query().Get("error"); err != "" {
 			errorDesc := r.URL.Query().Get("error_description")
 			errorChan <- fmt.Errorf("%s: %s", err, errorDesc)
-			w.Write([]byte("Authentication failed. You can close this window."))
+			_, err := w.Write([]byte("Authentication failed. You can close this window."))
+			if err != nil {
+				logger.Error("Error writing response", "error", err)
+			}
 			return
 		}
 
 		authCode := r.URL.Query().Get("code")
 		if authCode != "" {
 			authCodeChan <- authCode
-			w.Write([]byte("Authentication successful! You can close this window."))
+			_, err := w.Write([]byte("Authentication successful! You can close this window."))
+			if err != nil {
+				logger.Error("Error writing response", "error", err)
+			}
 		} else {
 			errorChan <- fmt.Errorf("no authorization code received")
-			w.Write([]byte("Authentication failed. No authorization code received."))
+			_, err := w.Write([]byte("Authentication failed. No authorization code received."))
+			if err != nil {
+				logger.Error("Error writing response", "error", err)
+			}
 		}
 	})
 

@@ -85,7 +85,10 @@ func TestValidateAccessToken(t *testing.T) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(tt.mockCode)
 				if tt.mockResp != nil {
-					json.NewEncoder(w).Encode(tt.mockResp)
+					err := json.NewEncoder(w).Encode(tt.mockResp)
+					if err != nil {
+						t.Errorf("Error encoding mock response: %v", err)
+					}
 				}
 			}))
 			defer ts.Close()
@@ -150,13 +153,19 @@ func TestExchangeRSTSTokenForSafeguard(t *testing.T) {
 					StsAccessToken string `json:"StsAccessToken"`
 				}
 				err := json.Unmarshal(body, &tokenReq)
+				if err != nil {
+					t.Errorf("Error unmarshalling request body: %v", err)
+				}
 				assert.NoError(t, err)
 				assert.Equal(t, tt.inputToken, tokenReq.StsAccessToken)
 
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(tt.mockCode)
 				if tt.mockResp != nil {
-					json.NewEncoder(w).Encode(tt.mockResp)
+					err := json.NewEncoder(w).Encode(tt.mockResp)
+					if err != nil {
+						t.Errorf("Error encoding mock response: %v", err)
+					}
 				}
 			}))
 			defer ts.Close()

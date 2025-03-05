@@ -343,7 +343,10 @@ func (a AssetAccount) ChangePassword() (ActivityLog, error) {
 		return log, err
 	}
 
-	json.Unmarshal(response, &log)
+	if json.Unmarshal(response, &log) != nil {
+		return log, err
+	}
+
 	return addClient(a.apiClient, log), nil
 }
 
@@ -364,7 +367,10 @@ func (a AssetAccount) CheckPassword() (ActivityLog, error) {
 		return log, err
 	}
 
-	json.Unmarshal(response, &log)
+	if json.Unmarshal(response, &log) != nil {
+		return log, err
+	}
+
 	return addClient(a.apiClient, log), nil
 }
 

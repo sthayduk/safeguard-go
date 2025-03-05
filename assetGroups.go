@@ -85,7 +85,9 @@ func (c *SafeguardClient) GetAssetGroups(filter Filter) ([]AssetGroup, error) {
 		return nil, err
 	}
 
-	json.Unmarshal(response, &assetGroup)
+	if json.Unmarshal(response, &assetGroup) != nil {
+		return nil, err
+	}
 
 	return addClientToSlice(c, assetGroup), nil
 }
@@ -111,7 +113,9 @@ func (c *SafeguardClient) GetAssetGroup(id int, fields Fields) (AssetGroup, erro
 	if err != nil {
 		return assetGroup, err
 	}
-	json.Unmarshal(response, &assetGroup)
+	if err := json.Unmarshal(response, &assetGroup); err != nil {
+		return assetGroup, err
+	}
 
 	return addClient(c, assetGroup), nil
 }

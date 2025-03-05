@@ -205,7 +205,9 @@ func (c *SafeguardClient) GetPolicyAccounts(fields Filter) ([]PolicyAccount, err
 		return nil, err
 	}
 
-	json.Unmarshal(response, &policyAccounts)
+	if json.Unmarshal(response, &policyAccounts) != nil {
+		return nil, err
+	}
 
 	return addClientToSlice(c, policyAccounts), nil
 }
@@ -240,7 +242,9 @@ func (c *SafeguardClient) GetPolicyAccount(id int, fields Fields) (PolicyAccount
 	if err != nil {
 		return policyAccount, err
 	}
-	json.Unmarshal(response, &policyAccount)
+	if json.Unmarshal(response, &policyAccount) != nil {
+		return policyAccount, err
+	}
 
 	return addClient(c, policyAccount), nil
 }
