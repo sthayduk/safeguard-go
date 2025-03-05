@@ -7,6 +7,8 @@ import (
 
 // AssetPolicy represents a policy that an asset belongs to plus how that membership was granted
 type AssetPolicy struct {
+	apiClient *SafeguardClient `json:"-"`
+
 	PolicyId                int                     `json:"PolicyId"`
 	PolicyName              string                  `json:"PolicyName"`
 	AccessRequestType       AccessRequestType       `json:"AccessRequestType"`
@@ -19,6 +21,11 @@ type AssetPolicy struct {
 	PolicyAssetCount        int                     `json:"PolicyAssetCount"`
 	PolicyAssetGroupCount   int                     `json:"PolicyAssetGroupCount"`
 	Membership              []AssetPolicyMembership `json:"Membership"`
+}
+
+func (a AssetPolicy) SetClient(c *SafeguardClient) any {
+	a.apiClient = c
+	return a
 }
 
 // AssetPolicyMembership represents details about how an asset is assigned to a policy
@@ -79,6 +86,8 @@ func (a AssetPolicy) ToJson() (string, error) {
 // and UserFavorites. The asset must have AllowSessionRequests set to true in order to be
 // used in UserFavorites or to be able to request a session on the asset.
 type PolicyAsset struct {
+	apiClient *SafeguardClient `json:"-"`
+
 	Id                 int                     `json:"Id"`
 	Name               string                  `json:"Name"`
 	AssetType          AssetType               `json:"AssetType"`
@@ -91,6 +100,11 @@ type PolicyAsset struct {
 	Platform           PolicyAssetPlatform     `json:"Platform"`
 	SshHostKey         AssetSshHostKey         `json:"SshHostKey,omitempty"`
 	SessionAccess      SessionAccessProperties `json:"SessionAccessProperties"`
+}
+
+func (a PolicyAsset) SetClient(c *SafeguardClient) any {
+	a.apiClient = c
+	return a
 }
 
 // ToJson converts a PolicyAsset to its JSON string representation.
@@ -157,7 +171,7 @@ type SessionAccessProperties struct {
 // Returns:
 //   - []PolicyAsset: A slice of PolicyAsset objects matching the filter criteria
 //   - error: An error if the request or response parsing fails, nil otherwise
-func GetPolicyAssets(fields Filter) ([]PolicyAsset, error) {
+func (c *SafeguardClient) GetPolicyAssets(fields Filter) ([]PolicyAsset, error) {
 	var policyAssets []PolicyAsset
 
 	query := "PolicyAssets" + fields.ToQueryString()
@@ -171,7 +185,7 @@ func GetPolicyAssets(fields Filter) ([]PolicyAsset, error) {
 		return nil, err
 	}
 
-	return policyAssets, nil
+	return addClientToSlice(c, policyAssets), nil
 }
 
 // GetPolicyAsset retrieves a single policy asset by its unique identifier.
@@ -192,7 +206,7 @@ func GetPolicyAssets(fields Filter) ([]PolicyAsset, error) {
 // Returns:
 //   - PolicyAsset: The requested policy asset with all specified related objects
 //   - error: An error if the asset is not found or request fails, nil otherwise
-func GetPolicyAsset(id int, fields Fields) (PolicyAsset, error) {
+func (c *SafeguardClient) GetPolicyAsset(id int, fields Fields) (PolicyAsset, error) {
 	var policyAsset PolicyAsset
 
 	query := fmt.Sprintf("PolicyAssets/%d", id)
@@ -207,7 +221,7 @@ func GetPolicyAsset(id int, fields Fields) (PolicyAsset, error) {
 	if err := json.Unmarshal(response, &policyAsset); err != nil {
 		return policyAsset, err
 	}
-	return policyAsset, nil
+	return addClient(c, policyAsset), nil
 }
 
 // GetAssetGroups retrieves all asset groups containing this policy asset.
@@ -232,7 +246,7 @@ func (p PolicyAsset) GetAssetGroups(fields Filter) ([]AssetGroup, error) {
 
 	query := fmt.Sprintf("PolicyAssets/%d/AssetGroups", p.Id) + fields.ToQueryString()
 
-	response, err := c.GetRequest(query)
+	response, err := p.apiClient.GetRequest(query)
 	if err != nil {
 		return nil, err
 	}
@@ -240,7 +254,7 @@ func (p PolicyAsset) GetAssetGroups(fields Filter) ([]AssetGroup, error) {
 	if err := json.Unmarshal(response, &assetGroups); err != nil {
 		return nil, err
 	}
-	return assetGroups, nil
+	return addClientToSlice(p.apiClient, assetGroups), nil
 }
 
 // GetDirectoryServiceEntries retrieves directory entries for directory assets.
@@ -264,7 +278,7 @@ func (p PolicyAsset) GetDirectoryServiceEntries(fields Filter) ([]DirectoryServi
 
 	query := fmt.Sprintf("PolicyAssets/%d/DirectoryServiceEntries", p.Id) + fields.ToQueryString()
 
-	response, err := c.GetRequest(query)
+	response, err := p.apiClient.GetRequest(query)
 	if err != nil {
 		return nil, err
 	}
@@ -272,7 +286,7 @@ func (p PolicyAsset) GetDirectoryServiceEntries(fields Filter) ([]DirectoryServi
 	if err := json.Unmarshal(response, &directoryServiceEntries); err != nil {
 		return nil, err
 	}
-	return directoryServiceEntries, nil
+	return addClientToSlice(p.apiClient, directoryServiceEntries), nil
 }
 
 // GetPolicies retrieves all access policies affecting this policy asset.
@@ -296,7 +310,7 @@ func (p PolicyAsset) GetPolicies(fields Filter) ([]AssetPolicy, error) {
 
 	query := fmt.Sprintf("PolicyAssets/%d/Policies", p.Id) + fields.ToQueryString()
 
-	response, err := c.GetRequest(query)
+	response, err := p.apiClient.GetRequest(query)
 	if err != nil {
 		return nil, err
 	}
@@ -304,5 +318,5 @@ func (p PolicyAsset) GetPolicies(fields Filter) ([]AssetPolicy, error) {
 	if err := json.Unmarshal(response, &policies); err != nil {
 		return nil, err
 	}
-	return policies, nil
+	return addClientToSlice(p.apiClient, policies), nil
 }

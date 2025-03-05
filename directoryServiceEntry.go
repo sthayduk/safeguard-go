@@ -1,13 +1,22 @@
 package safeguard
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 // DirectoryServiceEntry represents a Generic Directory Service object
 // containing information about an entry in a directory service such as
 // Active Directory or LDAP.
 type DirectoryServiceEntry struct {
+	apiClient *SafeguardClient
+
 	Name                string                        `json:"Name"`
 	DirectoryProperties DirectoryServiceEntryProperty `json:"DirectoryProperties"`
+}
+
+func (a DirectoryServiceEntry) SetClient(c *SafeguardClient) any {
+	a.apiClient = c
+	return a
 }
 
 // DirectoryServiceEntryProperty represents the directory-specific properties

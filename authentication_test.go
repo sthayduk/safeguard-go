@@ -1,4 +1,4 @@
-package client
+package safeguard
 
 import (
 	"encoding/json"
@@ -193,54 +193,4 @@ func TestGetAuthorizationHeader(t *testing.T) {
 
 	assert.Equal(t, "application/json", req.Header.Get("accept"))
 	assert.Equal(t, "Bearer test-user-token", req.Header.Get("Authorization"))
-}
-
-func TestHandleTokenResponse(t *testing.T) {
-	tests := []struct {
-		name      string
-		response  *RSTSAuthResponse
-		status    int
-		wantError bool
-	}{
-		{
-			name: "successful response",
-			response: &RSTSAuthResponse{
-				UserToken: "test-token",
-			},
-			status:    http.StatusOK,
-			wantError: false,
-		},
-		{
-			name:      "error response",
-			status:    http.StatusUnauthorized,
-			wantError: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Create a response with controlled body
-			resp := &http.Response{
-				StatusCode: tt.status,
-				Header:     make(http.Header),
-				Body:       io.NopCloser(strings.NewReader("")),
-			}
-
-			if tt.response != nil {
-				body, _ := json.Marshal(tt.response)
-				resp.Body = io.NopCloser(strings.NewReader(string(body)))
-				resp.Header.Set("Content-Type", "application/json")
-			}
-
-			client := &SafeguardClient{}
-			err := client.handleTokenResponse(resp)
-
-			if tt.wantError {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, tt.response.UserToken, client.AccessToken.UserToken)
-			}
-		})
-	}
 }

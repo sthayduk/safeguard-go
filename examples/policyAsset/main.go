@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	err := common.InitClient()
+	sgc, err := common.InitClient()
 	if err != nil {
 		panic(err)
 	}
@@ -20,7 +20,7 @@ func main() {
 		Fields:  []string{"Id", "Name", "AssetType", "AssetPartitionName"},
 	}
 
-	policyAssets, err := safeguard.GetPolicyAssets(filter)
+	policyAssets, err := sgc.GetPolicyAssets(filter)
 	if err != nil {
 		log.Fatalf("Failed to get policy assets: %v", err)
 	}
@@ -33,7 +33,7 @@ func main() {
 	// Example 2: Get a specific policy asset by ID
 	if len(policyAssets) > 0 {
 		fields := safeguard.Fields{"Id", "Name", "NetworkAddress", "Platform"}
-		policyAsset, err := safeguard.GetPolicyAsset(policyAssets[3].Id, fields)
+		policyAsset, err := sgc.GetPolicyAsset(policyAssets[3].Id, fields)
 		if err != nil {
 			log.Fatalf("Failed to get policy asset: %v", err)
 		}

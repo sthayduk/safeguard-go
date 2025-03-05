@@ -5,6 +5,25 @@ import (
 	"fmt"
 )
 
+// AuthProvider represents the supported authentication provider types.
+type AuthProvider string
+
+// AuthProvider constants define the supported authentication methods.
+const (
+	// AuthProviderCertificate represents certificate-based authentication
+	AuthProviderCertificate AuthProvider = "rsts:sts:primaryproviderid:certificate"
+	// AuthProviderLocal represents local username/password authentication
+	AuthProviderLocal AuthProvider = "rsts:sts:primaryproviderid:local"
+)
+
+// String returns the string representation of the AuthProvider.
+//
+// Returns:
+//   - string: The provider identifier string used in authentication requests.
+func (a AuthProvider) String() string {
+	return string(a)
+}
+
 type TypeReferenceName string
 
 const (
@@ -20,6 +39,8 @@ const (
 )
 
 type AuthenticationProvider struct {
+	apiClient *SafeguardClient `json:"-"`
+
 	Id                 int    `json:"Id,omitempty"`
 	Name               string `json:"Name,omitempty"`
 	TypeReferenceName  string `json:"TypeReferenceName,omitempty"`
@@ -28,6 +49,11 @@ type AuthenticationProvider struct {
 	RstsProviderId     string `json:"RstsProviderId,omitempty"`
 	RstsProviderScope  string `json:"RstsProviderScope,omitempty"`
 	IsDefault          bool   `json:"ForceAsDefault,omitempty"`
+}
+
+func (a AuthenticationProvider) SetClient(c *SafeguardClient) any {
+	a.apiClient = c
+	return a
 }
 
 // ToJson converts an AuthenticationProvider instance to a JSON string.
@@ -50,7 +76,7 @@ func (a AuthenticationProvider) ToJson() (string, error) {
 // Returns:
 //   - []AuthenticationProvider: A slice containing all configured authentication providers
 //   - error: An error if the API request fails or the response cannot be parsed
-func GetAuthenticationProviders() ([]AuthenticationProvider, error) {
+func (c *SafeguardClient) GetAuthenticationProviders() ([]AuthenticationProvider, error) {
 	var authProviders []AuthenticationProvider
 
 	query := "AuthenticationProviders"
@@ -64,7 +90,7 @@ func GetAuthenticationProviders() ([]AuthenticationProvider, error) {
 		return []AuthenticationProvider{}, err
 	}
 
-	return authProviders, nil
+	return addClientToSlice(c, authProviders), nil
 }
 
 // GetAuthenticationProvider retrieves a specific authentication provider by its ID.
@@ -76,7 +102,7 @@ func GetAuthenticationProviders() ([]AuthenticationProvider, error) {
 // Returns:
 //   - AuthenticationProvider: The requested authentication provider's configuration
 //   - error: An error if the provider cannot be found or the request fails
-func GetAuthenticationProvider(id int) (AuthenticationProvider, error) {
+func (c *SafeguardClient) GetAuthenticationProvider(id int) (AuthenticationProvider, error) {
 	var authProvider AuthenticationProvider
 
 	query := fmt.Sprintf("AuthenticationProviders/%d", id)
@@ -89,7 +115,7 @@ func GetAuthenticationProvider(id int) (AuthenticationProvider, error) {
 	if err := json.Unmarshal(response, &authProvider); err != nil {
 		return AuthenticationProvider{}, err
 	}
-	return authProvider, nil
+	return addClient(c, authProvider), nil
 }
 
 // ClearDefaultAuthProvider removes the current default authentication provider setting.
@@ -97,7 +123,7 @@ func GetAuthenticationProvider(id int) (AuthenticationProvider, error) {
 //
 // Returns:
 //   - error: An error if the operation fails or the API request is unsuccessful
-func ClearDefaultAuthProvider() error {
+func (c *SafeguardClient) ClearDefaultAuthProvider() error {
 	query := "AuthenticationProviders/ClearDefault"
 
 	_, err := c.PostRequest(query, nil)
@@ -117,7 +143,7 @@ func ClearDefaultAuthProvider() error {
 // Returns:
 //   - AuthenticationProvider: The updated authentication provider configuration
 //   - error: An error if the operation fails or the provider cannot be found
-func ForceAsDefaultAuthProvider(id int) (AuthenticationProvider, error) {
+func (c *SafeguardClient) ForceAsDefaultAuthProvider(id int) (AuthenticationProvider, error) {
 	var authProvider AuthenticationProvider
 	query := fmt.Sprintf("AuthenticationProviders/%d/ForceAsDefault", id)
 
@@ -131,7 +157,7 @@ func ForceAsDefaultAuthProvider(id int) (AuthenticationProvider, error) {
 		return AuthenticationProvider{}, err
 	}
 
-	return authProvider, nil
+	return addClient(c, authProvider), nil
 }
 
 // ForceAsDefault marks this authentication provider instance as the system default.
@@ -141,5 +167,5 @@ func ForceAsDefaultAuthProvider(id int) (AuthenticationProvider, error) {
 //   - AuthenticationProvider: The updated authentication provider configuration
 //   - error: An error if the operation fails or the API request is unsuccessful
 func (a AuthenticationProvider) ForceAsDefault() (AuthenticationProvider, error) {
-	return ForceAsDefaultAuthProvider(a.Id)
+	return a.apiClient.ForceAsDefaultAuthProvider(a.Id)
 }

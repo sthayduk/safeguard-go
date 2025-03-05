@@ -8,6 +8,8 @@ import (
 
 // Role represents roles in Safeguard made up of members, security scopes, and permissions
 type Role struct {
+	apiClient *SafeguardClient
+
 	Id                          int                         `json:"Id"`
 	Name                        string                      `json:"Name"`
 	Priority                    int                         `json:"Priority"`
@@ -25,6 +27,11 @@ type Role struct {
 	PolicyCount                 int                         `json:"PolicyCount"`
 	HourlyRestrictionProperties HourlyRestrictionProperties `json:"HourlyRestrictionProperties"`
 	Members                     []RoleMember                `json:"Members"`
+}
+
+func (a Role) SetClient(c *SafeguardClient) any {
+	a.apiClient = c
+	return a
 }
 
 // ToJson converts a Role object to its JSON string representation.
@@ -92,7 +99,7 @@ type HourlyRestrictionProperties struct {
 // Returns:
 //   - []Role: A slice of roles matching the filter criteria
 //   - error: An error if the request fails, nil otherwise
-func GetRoles(fields Filter) ([]Role, error) {
+func (c *SafeguardClient) GetRoles(fields Filter) ([]Role, error) {
 	var userRoles []Role
 
 	query := "Roles" + fields.ToQueryString()
@@ -106,7 +113,7 @@ func GetRoles(fields Filter) ([]Role, error) {
 		return nil, err
 	}
 
-	return userRoles, nil
+	return addClientToSlice(c, userRoles), nil
 }
 
 // GetEntitlements is an alias for GetRoles that retrieves a list of roles from Safeguard.
@@ -125,8 +132,8 @@ func GetRoles(fields Filter) ([]Role, error) {
 // Returns:
 //   - []Role: A slice of roles matching the filter criteria
 //   - error: An error if the request fails, nil otherwise
-func GetEntitlements(fields Filter) ([]Role, error) {
-	return GetRoles(fields)
+func (c *SafeguardClient) GetEntitlements(fields Filter) ([]Role, error) {
+	return c.GetRoles(fields)
 }
 
 // GetRole retrieves details for a specific role by ID.
@@ -147,7 +154,7 @@ func GetEntitlements(fields Filter) ([]Role, error) {
 // Returns:
 //   - Role: The requested role with all specified related objects
 //   - error: An error if the role is not found or request fails, nil otherwise
-func GetRole(id int, fields Fields) (Role, error) {
+func (c *SafeguardClient) GetRole(id int, fields Fields) (Role, error) {
 	var userRole Role
 
 	query := fmt.Sprintf("Roles/%d", id)
@@ -163,7 +170,7 @@ func GetRole(id int, fields Fields) (Role, error) {
 		return userRole, err
 	}
 
-	return userRole, nil
+	return addClient(c, userRole), nil
 }
 
 // GetEntitlement is an alias for GetRole that retrieves details for a specific role.
@@ -183,8 +190,8 @@ func GetRole(id int, fields Fields) (Role, error) {
 // Returns:
 //   - Role: The requested role with all specified related objects
 //   - error: An error if the role is not found or request fails, nil otherwise
-func GetEntitlement(id int, fields Fields) (Role, error) {
-	return GetRole(id, fields)
+func (c *SafeguardClient) GetEntitlement(id int, fields Fields) (Role, error) {
+	return c.GetRole(id, fields)
 }
 
 // GetRoleMembers retrieves the list of members belonging to a specific role.
@@ -205,7 +212,7 @@ func GetEntitlement(id int, fields Fields) (Role, error) {
 // Returns:
 //   - []ManagedByUser: A slice of users who are members of the role
 //   - error: An error if the request fails, nil otherwise
-func GetRoleMembers(id int, filter Filter) ([]ManagedByUser, error) {
+func (c *SafeguardClient) GetRoleMembers(id int, filter Filter) ([]ManagedByUser, error) {
 	var members []ManagedByUser
 
 	query := fmt.Sprintf("Roles/%d/Members%s", id, filter.ToQueryString())
@@ -218,7 +225,7 @@ func GetRoleMembers(id int, filter Filter) ([]ManagedByUser, error) {
 	if err := json.Unmarshal(response, &members); err != nil {
 		return nil, err
 	}
-	return members, nil
+	return addClientToSlice(c, members), nil
 }
 
 // GetMembers retrieves the list of members for the current role instance.
@@ -238,7 +245,7 @@ func GetRoleMembers(id int, filter Filter) ([]ManagedByUser, error) {
 //   - []ManagedByUser: A slice of users who are members of the role
 //   - error: An error if the request fails, nil otherwise
 func (r Role) GetMembers(filter Filter) ([]ManagedByUser, error) {
-	return GetRoleMembers(r.Id, filter)
+	return r.apiClient.GetRoleMembers(r.Id, filter)
 }
 
 // GetRolePolicies retrieves the list of access policies associated with a specific role.
@@ -259,7 +266,7 @@ func (r Role) GetMembers(filter Filter) ([]ManagedByUser, error) {
 // Returns:
 //   - []AccessPolicy: A slice of access policies associated with the role
 //   - error: An error if the request fails, nil otherwise
-func GetRolePolicies(id int, filter Filter) ([]AccessPolicy, error) {
+func (c *SafeguardClient) GetRolePolicies(id int, filter Filter) ([]AccessPolicy, error) {
 	var policies []AccessPolicy
 
 	query := fmt.Sprintf("Roles/%d/Policies%s", id, filter.ToQueryString())
@@ -273,7 +280,7 @@ func GetRolePolicies(id int, filter Filter) ([]AccessPolicy, error) {
 		return nil, err
 	}
 
-	return policies, nil
+	return addClientToSlice(c, policies), nil
 }
 
 // GetPolicies retrieves the list of access policies for the current role instance.
@@ -293,5 +300,5 @@ func GetRolePolicies(id int, filter Filter) ([]AccessPolicy, error) {
 //   - []AccessPolicy: A slice of access policies associated with the role
 //   - error: An error if the request fails, nil otherwise
 func (r Role) GetPolicies(filter Filter) ([]AccessPolicy, error) {
-	return GetRolePolicies(r.Id, filter)
+	return r.apiClient.GetRolePolicies(r.Id, filter)
 }

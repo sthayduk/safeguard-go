@@ -25,7 +25,7 @@ func main() {
 
 	// Initialize the Safeguard client
 	logger.Println("Initializing Safeguard client...")
-	err := common.InitClient()
+	sgc, err := common.InitClient()
 	if err != nil {
 		logger.Fatalf("%s Failed to initialize client: %v", warning("ERROR:"), err)
 	}
@@ -34,7 +34,7 @@ func main() {
 	// Retrieve asset account
 	assetAccountId := 17
 	logger.Printf("Retrieving asset account with ID: %d...", assetAccountId)
-	assetAccount, err := safeguard.GetAssetAccount(assetAccountId, safeguard.Fields{})
+	assetAccount, err := sgc.GetAssetAccount(assetAccountId, safeguard.Fields{})
 	if err != nil {
 		logger.Fatalf("%s Failed to retrieve asset account: %v", warning("ERROR:"), err)
 	}

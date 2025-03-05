@@ -19,14 +19,14 @@ func main() {
 
 	// Initialize the Safeguard client
 	logger.Println("Initializing Safeguard client...")
-	err := common.InitClient()
+	sgc, err := common.InitClient()
 	if err != nil {
 		logger.Fatalf("Failed to initialize client: %v", err)
 	}
 
 	// Get the Identity Provider
 	logger.Printf("Getting Identity Provider with ID: %d", idpID)
-	idp, err := safeguard.GetIdentityProvider(idpID)
+	idp, err := sgc.GetIdentityProvider(idpID)
 	if err != nil {
 		logger.Fatalf("Failed to get Identity Provider: %v", err)
 	}
@@ -50,7 +50,7 @@ func main() {
 
 	// Create the user
 	logger.Println("Creating user in Safeguard...")
-	response, err := safeguard.CreateUser(users[0])
+	response, err := sgc.CreateUser(users[0])
 	if err != nil {
 		logger.Fatalf("Failed to create user: %v", err)
 	}
@@ -65,7 +65,7 @@ func main() {
 		response.Id, response.Name, response.DisplayName, response.EmailAddress)
 
 	// Update Authentication Provider
-	authProvider, err := safeguard.GetAuthenticationProvider(authProviderId)
+	authProvider, err := sgc.GetAuthenticationProvider(authProviderId)
 	if err != nil {
 		logger.Fatalf("Failed to get Authentication Provider: %v", err)
 	}

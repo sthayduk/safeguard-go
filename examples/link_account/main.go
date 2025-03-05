@@ -9,13 +9,13 @@ import (
 )
 
 func main() {
-	err := common.InitClient()
+	sgc, err := common.InitClient()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Get user with ID 76 ("Stefan Hayduk")
-	user, err := safeguard.GetUser(76, nil)
+	user, err := sgc.GetUser(76, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -23,7 +23,7 @@ func main() {
 	// Get both policy accounts at once (133: "da-andresen", 134: "sa-andresen")
 	accounts := make([]safeguard.PolicyAccount, 0, 2)
 	for _, id := range []int{133, 134} {
-		account, err := safeguard.GetPolicyAccount(id, nil)
+		account, err := sgc.GetPolicyAccount(id, nil)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -31,7 +31,7 @@ func main() {
 	}
 
 	// Link all accounts at once
-	linkedAccounts, err := safeguard.AddLinkedAccounts(user, accounts)
+	linkedAccounts, err := sgc.AddLinkedAccounts(user, accounts)
 	if err != nil {
 		log.Fatal(err)
 	}

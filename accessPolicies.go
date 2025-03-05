@@ -68,6 +68,8 @@ type ReasonCode struct {
 
 // AccessPolicy represents security configuration governing the access to assets and accounts
 type AccessPolicy struct {
+	apiClient *SafeguardClient `json:"-"`
+
 	Id                          int                         `json:"Id"`
 	Name                        string                      `json:"Name"`
 	Description                 string                      `json:"Description,omitempty"`
@@ -97,6 +99,11 @@ type AccessPolicy struct {
 	IsExpired                   bool                        `json:"IsExpired"`
 	InvalidConnectionPolicy     bool                        `json:"InvalidConnectionPolicy"`
 	HourlyRestrictionProperties HourlyRestrictionProperties `json:"HourlyRestrictionProperties"`
+}
+
+func (a AccessPolicy) SetClient(c *SafeguardClient) any {
+	a.apiClient = c
+	return a
 }
 
 func (a AccessPolicy) ToJson() (string, error) {
@@ -231,7 +238,7 @@ type ReviewerProperties struct {
 // Returns:
 //   - A slice of AccessPolicy objects.
 //   - An error if the request fails or the response cannot be unmarshaled.
-func GetAccessPolicies(filter Filter) ([]AccessPolicy, error) {
+func (c *SafeguardClient) GetAccessPolicies(filter Filter) ([]AccessPolicy, error) {
 	var accessPolicies []AccessPolicy
 
 	query := "AccessPolicies" + filter.ToQueryString()
@@ -245,7 +252,7 @@ func GetAccessPolicies(filter Filter) ([]AccessPolicy, error) {
 		return nil, err
 	}
 
-	return accessPolicies, nil
+	return addClientToSlice(c, accessPolicies), nil
 }
 
 // GetAccessPolicy retrieves an access policy by its ID from the Safeguard API.
@@ -258,7 +265,7 @@ func GetAccessPolicies(filter Filter) ([]AccessPolicy, error) {
 // Returns:
 //   - AccessPolicy: The retrieved access policy.
 //   - error: An error if any occurred during the request or unmarshalling process.
-func GetAccessPolicy(id int, fields Fields) (AccessPolicy, error) {
+func (c *SafeguardClient) GetAccessPolicy(id int, fields Fields) (AccessPolicy, error) {
 	var accessPolicy AccessPolicy
 
 	query := fmt.Sprintf("AccessPolicies/%d", id)
@@ -275,7 +282,7 @@ func GetAccessPolicy(id int, fields Fields) (AccessPolicy, error) {
 		return accessPolicy, err
 	}
 
-	return accessPolicy, nil
+	return addClient(c, accessPolicy), nil
 }
 
 // DeleteAccessPolicy deletes an access policy with the given ID.
@@ -286,7 +293,7 @@ func GetAccessPolicy(id int, fields Fields) (AccessPolicy, error) {
 //
 // Returns:
 //   - error: An error object if the DELETE request fails, otherwise nil.
-func DeleteAccessPolicy(id int) error {
+func (c *SafeguardClient) DeleteAccessPolicy(id int) error {
 	query := fmt.Sprintf("AccessPolicies/%d", id)
 
 	_, err := c.DeleteRequest(query)
@@ -301,5 +308,5 @@ func DeleteAccessPolicy(id int) error {
 // It calls the DeleteAccessPolicy function with the client and policy ID.
 // Returns an error if the deletion fails.
 func (a AccessPolicy) Delete() error {
-	return DeleteAccessPolicy(a.Id)
+	return a.apiClient.DeleteAccessPolicy(a.Id)
 }

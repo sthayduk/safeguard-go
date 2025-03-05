@@ -71,6 +71,8 @@ type Schedule struct {
 
 // AccountTaskData represents platform task information for an asset or directory account
 type AccountTaskData struct {
+	apiClient *SafeguardClient `json:"-"`
+
 	Id                       int              `json:"Id"`
 	Name                     string           `json:"Name"`
 	DistinguishedName        string           `json:"DistinguishedName"`
@@ -90,6 +92,11 @@ type AccountTaskData struct {
 	LastExecuted             string           `json:"lastExecuted,omitempty"`
 	NextScheduled            string           `json:"nextScheduled,omitempty"`
 	ErrorMessage             string           `json:"errorMessage,omitempty"`
+}
+
+func (a AccountTaskData) SetClient(c *SafeguardClient) any {
+	a.apiClient = c
+	return a
 }
 
 // ToJson serializes an AccountTaskData object into a JSON string.
@@ -127,7 +134,7 @@ func (a AccountTaskData) ToJson() (string, error) {
 // Returns:
 //   - []AccountTaskData: A slice of task schedules matching the filter criteria
 //   - error: An error if the request or response parsing fails, nil otherwise
-func GetAccountTaskSchedules(taskName AccountTaskNames, filter Filter) ([]AccountTaskData, error) {
+func (c *SafeguardClient) GetAccountTaskSchedules(taskName AccountTaskNames, filter Filter) ([]AccountTaskData, error) {
 	var accountTaskSchedules []AccountTaskData
 
 	query := fmt.Sprintf("Reports/Tasks/AccountTaskSchedules/%s%s", taskName, filter.ToQueryString())
@@ -137,6 +144,9 @@ func GetAccountTaskSchedules(taskName AccountTaskNames, filter Filter) ([]Accoun
 		return nil, err
 	}
 
-	json.Unmarshal(response, &accountTaskSchedules)
-	return accountTaskSchedules, nil
+	if err := json.Unmarshal(response, &accountTaskSchedules); err != nil {
+		return nil, err
+	}
+
+	return addClientToSlice(c, accountTaskSchedules), nil
 }

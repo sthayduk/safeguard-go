@@ -19,22 +19,24 @@ Currently supports the following Safeguard resources:
 
 - Authentication
   - Username/Password authentication
-  - OAuth authentication
+  - Certificate-based authentication
+  - Automatic token refresh
   - Multiple authentication provider support
   - OAuth Connect with callback server
-  - Certificate-based authentication
+- Client Management
+  - Thread-safe appliance URL handling with caching
+  - TLS client configuration
+  - Cluster leader discovery and management
+  - Token expiration tracking
 - Access Requests
   - Create single and batch access requests
   - Check out passwords with timeout support
   - Check in access requests
   - Cancel access requests
   - Close access requests based on state
-  - Handle emergency access
-  - Review and approve requests
-  - Monitor request states and sessions
+  - Monitor request states (pending, valid, invalid)
   - Support for reason codes and comments
-  - Password activity logging
-  - Session management and monitoring
+  - Session information tracking
 - Me (Current User)
   - Get current user details
   - Get accessible assets and accounts
@@ -92,53 +94,110 @@ Currently supports the following Safeguard resources:
 - Cluster Management
   - Get cluster members
   - Get cluster leader
+  - Update cluster leader URL
   - Monitor cluster health
   - Force health checks
   - Network configuration
 - Reports
   - Account task schedules
   - Task execution history
+- Event Handling
+  - Real-time event notifications via SignalR
+  - Access Request event monitoring
+  - Event data processing
+  - Automatic reconnection with backoff
+  - Context-based cancellation and shutdown
 
 ## Usage
 
-### Authentication
+### Authentication and Client Setup
 
-The client supports multiple authentication methods:
+The SafeguardClient handles authentication and API communication:
 
 ```go
 import (
-    "github.com/sthayduk/safeguard-go/client"
+    safeguard "github.com/sthayduk/safeguard-go"
 )
 
-// Create a new client
-sgc := client.New("https://your-appliance.domain.com", "v4", true)
+// Create a new client with debug logging
+client := safeguard.NewClient("https://your-appliance.domain.com", "v4", true)
 
 // Login with username/password
-err := sgc.LoginWithPassword("username", "password")
+err := client.LoginWithPassword("username", "password")
 if err != nil {
     panic(err)
 }
 
-// Or login with OAuth
-err := sgc.LoginWithOauth()
+// Login with certificate
+err := client.LoginWithCertificate("path/to/cert.pem", "certPassword")
 if err != nil {
     panic(err)
 }
+
+// Check token expiration
+if client.IsTokenExpired() {
+    // Handle expired token
+}
+
+// Get remaining token time
+remainingTime := client.RemainingTokenTime()
+```
+
+### Working with Access Requests
+
+```go
+// Get access requests with filtering
+filter := safeguard.Filter{}
+filter.AddFilter("State", "eq", "Available")
+requests, err := client.GetAccessRequests(filter)
+
+// Get a specific access request
+request, err := client.GetAccessRequest(requestId, nil)
+
+// Create new access requests in batch
+responses, err := client.NewAccessRequests(accountEntitlements)
+
+// Check out a password with context and waiting for pending approval
+ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+defer cancel()
+password, err := request.CheckOutPassword(ctx, true)
+
+// Check in a request
+updated, err := request.CheckIn()
+
+// Cancel a request
+updated, err := request.Cancel()
+
+// Close a request (automatically handles check-in or cancel based on state)
+updated, err := request.Close()
+
+// Check request state
+if request.IsPending() {
+    fmt.Println("Request is pending approval")
+}
+if request.IsValid() {
+    fmt.Println("Request is valid for checkout")
+}
+if request.IsInvalid() {
+    fmt.Println("Request is in invalid state")
+}
+
+// Refresh request state from server
+updated, err := request.RefreshState()
 ```
 
 ### Working with Users
 
 ```go
 import (
-    
-    "github.com/sthayduk/safeguard-go/client"
+    safeguard "github.com/sthayduk/safeguard-go"
 )
 
 // Get all users
-users, err := GetUsers(Filter{})
+users, err := safeguard.GetUsers(safeguard.Filter{})
 
 // Get a specific user
-user, err := GetUser(userId, Fields{"Name", "Description"})
+user, err := safeguard.GetUser(userId, safeguard.Fields{"Name", "Description"})
 
 // Get user's linked accounts
 accounts, err := user.GetLinkedAccounts()
@@ -156,27 +215,35 @@ err = user.Delete()
 ### Working with Identity Providers
 
 ```go
+import (
+    safeguard "github.com/sthayduk/safeguard-go"
+)
+
 // Get all identity providers
-providers, err := GetIdentityProviders(sgc)
+providers, err := safeguard.GetIdentityProviders(client)
 
 // Get specific provider
-provider, err := GetIdentityProvider(providerId)
+provider, err := safeguard.GetIdentityProvider(providerId)
 
 // Get directory users from provider
-users, err := provider.GetDirectoryUsers(Filter{})
+users, err := provider.GetDirectoryUsers(safeguard.Filter{})
 
 // Get directory groups from provider
-groups, err := provider.GetDirectoryGroups(Filter{})
+groups, err := provider.GetDirectoryGroups(safeguard.Filter{})
 ```
 
 ### Working with Asset Accounts
 
 ```go
+import (
+    safeguard "github.com/sthayduk/safeguard-go"
+)
+
 // Get all asset accounts
-accounts, err := GetAssetAccounts(Filter{})
+accounts, err := safeguard.GetAssetAccounts(safeguard.Filter{})
 
 // Get specific account
-account, err := GetAssetAccount(accountId, Fields{})
+account, err := safeguard.GetAssetAccount(accountId, safeguard.Fields{})
 
 // Check password
 log, err := account.CheckPassword()
@@ -188,30 +255,116 @@ log, err := account.ChangePassword()
 ### Working with Current User
 
 ```go
+import (
+    safeguard "github.com/sthayduk/safeguard-go"
+)
+
 // Get current user's actionable requests
-requests, err := GetMeActionableRequests(Filter{})
+requests, err := safeguard.GetMeActionableRequests(safeguard.Filter{})
 
 // Get requests for specific role
-requests, err := GetMeActionableRequestsByRole(ApproverRole, Filter{})
+requests, err := safeguard.GetMeActionableRequestsByRole(safeguard.ApproverRole, safeguard.Filter{})
 
 // Get detailed actionable requests with helper methods
-result, err := GetMeActionableRequestsDetailed(Filter{})
+result, err := safeguard.GetMeActionableRequestsDetailed(safeguard.Filter{})
 
 // Get pending requests
 pending := result.GetPendingRequests()
 
 // Filter requests by state
-available := result.FilterRequestsByState(StateRequestAvailable)
+available := result.FilterRequestsByState(safeguard.StateRequestAvailable)
 
 // Get account entitlements
-entitlements, err := GetMeAccountEntitlements(
-    PasswordEntitlement,
+entitlements, err := safeguard.GetMeAccountEntitlements(
+    safeguard.PasswordEntitlement,
     true,  // includeActiveRequests
     false, // filterByCredential
-    Filter{})
+    safeguard.Filter{})
 
 // Get accessible assets
-assets, err := GetMeAccessRequestAssets(Filter{})
+assets, err := safeguard.GetMeAccessRequestAssets(safeguard.Filter{})
+```
+
+### Working with Real-time Events
+
+The library provides real-time event notification capabilities using SignalR:
+
+```go
+import (
+    "context"
+    "fmt"
+    "os"
+    "os/signal"
+    "syscall"
+    
+    safeguard "github.com/sthayduk/safeguard-go"
+)
+
+// Create a new event handler
+eventHandler := client.NewSignalRClient()
+
+// Create a context with cancellation
+ctx, cancel := context.WithCancel(context.Background())
+defer cancel()
+
+// Set up signal handling for graceful shutdown
+sigChan := make(chan os.Signal, 1)
+signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+// Start the event handler in a goroutine
+go func() {
+    if err := eventHandler.Run(ctx); err != nil {
+        fmt.Printf("SignalR error: %v\n", err)
+    }
+}()
+
+// Process events as they arrive
+for {
+    select {
+    case event := <-eventHandler.EventChannel:
+        fmt.Printf("Received event: %s\n", event.Message)
+        fmt.Printf("Access Request Type: %+v\n", event.Data.AccessRequestType)
+        // Process different event types
+        switch event.Data.EventName {
+        case "AccessRequestCreated":
+            // Handle new access request
+        case "AccessRequestStatusChanged":
+            // Handle status change
+        }
+    case sig := <-sigChan:
+        fmt.Printf("Received signal: %v\n", sig)
+        cancel() // Gracefully shut down
+        return
+    case <-ctx.Done():
+        fmt.Println("Context cancelled, shutting down...")
+        return
+    }
+}
+```
+
+The `SignalREvent` structure provides detailed information about events:
+
+```go
+type SignalREvent struct {
+    ApplianceId string
+    Name        string
+    Time        time.Time
+    Message     string
+    AuditLogUri *string
+    Data        EventData // Contains detailed event information
+}
+
+type EventData struct {
+    AccessRequestType       AccessRequestType
+    AccountName             string
+    AssetName               string
+    Requester               string
+    RequestId               string
+    EventName               string
+    EventTimestamp          time.Time
+    EventUserDisplayName    string
+    // Many more fields available
+}
 ```
 
 ## Query Parameters
@@ -219,17 +372,67 @@ assets, err := GetMeAccessRequestAssets(Filter{})
 The API supports filtering and field selection:
 
 ```go
+import (
+    safeguard "github.com/sthayduk/safeguard-go"
+)
+
 // Create a filter
-filter := Filter{}
+filter := safeguard.Filter{}
 filter.AddFilter("Disabled", "eq", "true")
 filter.AddFilter("Name", "like", "admin")
 
 // Specify fields to return
-fields := Fields{"Name", "Description", "CreatedDate"}
+fields := safeguard.Fields{"Name", "Description", "CreatedDate"}
 
 // Use in API calls
-users, err := GetUsers(filter)
-user, err := GetUser(userId, fields)
+users, err := safeguard.GetUsers(filter)
+user, err := safeguard.GetUser(userId, fields)
+```
+
+## Example Access Request Workflow
+
+```go
+import (
+    safeguard "github.com/sthayduk/safeguard-go"
+)
+
+// Get user information
+me, err := client.GetMe()
+if err != nil {
+    panic(err)
+}
+fmt.Printf("Logged in as: %s\n", me.Name)
+
+// Get account entitlements
+entitlements, err := client.GetMeAccountEntitlements()
+if err != nil {
+    panic(err)
+}
+
+// Create a new access request
+responses, err := client.NewAccessRequests(entitlements)
+if err != nil {
+    panic(err)
+}
+
+// Check out password from the first successful request
+for _, response := range responses {
+    if !response.hasError() {
+        password, err := response.AccessRequest.CheckOutPassword(context.Background(), true)
+        if err != nil {
+            fmt.Println("Error checking out password:", err)
+            continue
+        }
+        fmt.Println("Password:", password)
+        
+        // Close the request when done
+        _, err = response.AccessRequest.Close()
+        if err != nil {
+            fmt.Println("Error closing request:", err)
+        }
+        break
+    }
+}
 ```
 
 ## Contributing

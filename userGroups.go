@@ -9,6 +9,8 @@ import (
 
 // UserGroup represents a group of users in Safeguard with associated properties and memberships
 type UserGroup struct {
+	apiClient *SafeguardClient `json:"-"`
+
 	Id                           int                          `json:"Id"`
 	Name                         string                       `json:"Name"`
 	Description                  string                       `json:"Description"`
@@ -23,6 +25,11 @@ type UserGroup struct {
 	DirectoryProperties          DirectoryProperties          `json:"DirectoryProperties"`
 	Members                      []UserGroupMember            `json:"Members"`
 	DirectoryGroupSyncProperties DirectoryGroupSyncProperties `json:"DirectoryGroupSyncProperties"`
+}
+
+func (a UserGroup) SetClient(c *SafeguardClient) any {
+	a.apiClient = c
+	return a
 }
 
 // GroupIdentityProvider represents authentication provider information for a user group
@@ -147,7 +154,7 @@ func (u UserGroup) ToJson() (string, error) {
 // Returns:
 //   - []UserGroup: A slice of UserGroup objects matching the filter criteria
 //   - error: An error if the request fails or response parsing fails, nil otherwise
-func GetUserGroups(fields Filter) ([]UserGroup, error) {
+func (c *SafeguardClient) GetUserGroups(fields Filter) ([]UserGroup, error) {
 	var userGroups []UserGroup
 
 	query := "UserGroups" + fields.ToQueryString()
@@ -160,7 +167,7 @@ func GetUserGroups(fields Filter) ([]UserGroup, error) {
 	if err := json.Unmarshal(response, &userGroups); err != nil {
 		return nil, err
 	}
-	return userGroups, nil
+	return addClientToSlice(c, userGroups), nil
 }
 
 // GetUserGroup retrieves a single user group by its unique identifier.
@@ -181,7 +188,7 @@ func GetUserGroups(fields Filter) ([]UserGroup, error) {
 // Returns:
 //   - UserGroup: The requested user group with all specified related objects
 //   - error: An error if the group is not found or request fails, nil otherwise
-func GetUserGroup(id int, fields Fields) (UserGroup, error) {
+func (c *SafeguardClient) GetUserGroup(id int, fields Fields) (UserGroup, error) {
 	var userGroup UserGroup
 
 	query := fmt.Sprintf("UserGroups/%d", id)
@@ -196,5 +203,6 @@ func GetUserGroup(id int, fields Fields) (UserGroup, error) {
 	if err := json.Unmarshal(response, &userGroup); err != nil {
 		return userGroup, err
 	}
-	return userGroup, nil
+
+	return addClient(c, userGroup), nil
 }

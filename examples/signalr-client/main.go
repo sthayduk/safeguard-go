@@ -16,7 +16,7 @@ func main() {
 	pfxPassword := os.Getenv("SAFEGUARD_PFX_PASSWORD")
 	pfxPath := os.Getenv("SAFEGUARD_PFX_PATH")
 
-	sgc := safeguard.SetupClient(applianceUrl, apiVersion, false)
+	sgc := safeguard.NewClient(applianceUrl, apiVersion, false)
 	err := sgc.LoginWithCertificate(pfxPath, pfxPassword)
 	if err != nil {
 		fmt.Println(err)
@@ -29,7 +29,7 @@ func main() {
 		panic(err)
 	}
 
-	eventHandler := safeguard.SetupSignalRClient(sgc)
+	eventHandler := sgc.NewSignalRClient()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

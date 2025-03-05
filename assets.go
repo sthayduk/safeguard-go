@@ -8,6 +8,8 @@ import (
 
 // Asset represents a Safeguard asset
 type Asset struct {
+	apiClient *SafeguardClient
+
 	Id                           int                          `json:"Id,omitempty"`
 	Name                         string                       `json:"Name,omitempty"`
 	NetworkAddress               string                       `json:"NetworkAddress,omitempty"`
@@ -45,6 +47,11 @@ type Asset struct {
 	PasswordProfile              Profile                      `json:"PasswordProfile,omitempty"`
 	SshKeyProfile                Profile                      `json:"SshKeyProfile,omitempty"`
 	RegisteredConnector          RegisteredConnector          `json:"RegisteredConnector,omitempty"`
+}
+
+func (a Asset) SetClient(c *SafeguardClient) any {
+	a.apiClient = c
+	return a
 }
 
 // StarlingAssetProperties represents properties specific to Starling assets
@@ -303,7 +310,7 @@ func (a Asset) ToJson() (string, error) {
 // Returns:
 //   - ([]Asset): Slice of matching assets
 //   - (error): An error if the API request fails
-func GetAssets(fields Filter) ([]Asset, error) {
+func (c *SafeguardClient) GetAssets(fields Filter) ([]Asset, error) {
 	var assets []Asset
 
 	query := "Assets" + fields.ToQueryString()
@@ -318,7 +325,7 @@ func GetAssets(fields Filter) ([]Asset, error) {
 		return nil, err
 	}
 
-	return assets, nil
+	return addClientToSlice(c, assets), nil
 }
 
 // GetAsset retrieves a single asset by its ID.
@@ -330,7 +337,7 @@ func GetAssets(fields Filter) ([]Asset, error) {
 // Returns:
 //   - (Asset): The requested asset
 //   - (error): An error if the API request fails
-func GetAsset(id int, fields Fields) (Asset, error) {
+func (c *SafeguardClient) GetAsset(id int, fields Fields) (Asset, error) {
 	var asset Asset
 
 	query := fmt.Sprintf("Assets/%d", id)
@@ -348,7 +355,7 @@ func GetAsset(id int, fields Fields) (Asset, error) {
 		return asset, err
 	}
 
-	return asset, nil
+	return addClient(c, asset), nil
 }
 
 // GetAssetDirectoryAccounts retrieves all directory accounts associated with the specified asset.
@@ -360,7 +367,7 @@ func GetAsset(id int, fields Fields) (Asset, error) {
 // Returns:
 //   - ([]AssetAccount): Slice of matching directory accounts
 //   - (error): An error if the API request fails
-func GetAssetDirectoryAccounts(assetId int, filter Filter) ([]AssetAccount, error) {
+func (c *SafeguardClient) GetAssetDirectoryAccounts(assetId int, filter Filter) ([]AssetAccount, error) {
 	var accounts []AssetAccount
 
 	query := fmt.Sprintf("Assets/%d/DirectoryAccounts%s", assetId, filter.ToQueryString())
@@ -375,7 +382,7 @@ func GetAssetDirectoryAccounts(assetId int, filter Filter) ([]AssetAccount, erro
 		return nil, err
 	}
 
-	return accounts, nil
+	return addClientToSlice(c, accounts), nil
 }
 
 // GetDirectoryAccounts retrieves all directory accounts associated with this asset.
@@ -387,7 +394,7 @@ func GetAssetDirectoryAccounts(assetId int, filter Filter) ([]AssetAccount, erro
 //   - ([]AssetAccount): Slice of matching directory accounts
 //   - (error): An error if the API request fails
 func (a Asset) GetDirectoryAccounts(filter Filter) ([]AssetAccount, error) {
-	return GetAssetDirectoryAccounts(a.Id, filter)
+	return a.apiClient.GetAssetDirectoryAccounts(a.Id, filter)
 }
 
 // GetAssetDirectoryAssets retrieves all directory assets associated with the specified asset.
@@ -399,7 +406,7 @@ func (a Asset) GetDirectoryAccounts(filter Filter) ([]AssetAccount, error) {
 // Returns:
 //   - ([]Asset): Slice of matching directory assets
 //   - (error): An error if the API request fails
-func GetAssetDirectoryAssets(assetId int, filter Filter) ([]Asset, error) {
+func (c *SafeguardClient) GetAssetDirectoryAssets(assetId int, filter Filter) ([]Asset, error) {
 	var assets []Asset
 
 	query := fmt.Sprintf("Assets/%d/DirectoryAssets", assetId)
@@ -417,7 +424,7 @@ func GetAssetDirectoryAssets(assetId int, filter Filter) ([]Asset, error) {
 		return nil, err
 	}
 
-	return assets, nil
+	return addClientToSlice(c, assets), nil
 }
 
 // GetDirectoryAssets retrieves all directory assets associated with this asset.
@@ -429,7 +436,7 @@ func GetAssetDirectoryAssets(assetId int, filter Filter) ([]Asset, error) {
 //   - ([]Asset): Slice of matching directory assets
 //   - (error): An error if the API request fails
 func (a Asset) GetDirectoryAssets(filter Filter) ([]Asset, error) {
-	return GetAssetDirectoryAssets(a.Id, filter)
+	return a.apiClient.GetAssetDirectoryAssets(a.Id, filter)
 }
 
 // GetAssetDirectoryServiceEntries retrieves all directory service entries associated with the specified asset.
@@ -441,7 +448,7 @@ func (a Asset) GetDirectoryAssets(filter Filter) ([]Asset, error) {
 // Returns:
 //   - ([]DirectoryServiceEntry): Slice of matching directory service entries
 //   - (error): An error if the API request fails
-func GetAssetDirectoryServiceEntries(assetId int, filter Filter) ([]DirectoryServiceEntry, error) {
+func (c *SafeguardClient) GetAssetDirectoryServiceEntries(assetId int, filter Filter) ([]DirectoryServiceEntry, error) {
 	var entries []DirectoryServiceEntry
 
 	query := fmt.Sprintf("Assets/%d/DirectoryServiceEntries", assetId)
@@ -459,7 +466,7 @@ func GetAssetDirectoryServiceEntries(assetId int, filter Filter) ([]DirectorySer
 		return nil, err
 	}
 
-	return entries, nil
+	return addClientToSlice(c, entries), nil
 }
 
 // GetDirectoryServiceEntries retrieves all directory service entries associated with this asset.
@@ -471,5 +478,5 @@ func GetAssetDirectoryServiceEntries(assetId int, filter Filter) ([]DirectorySer
 //   - ([]DirectoryServiceEntry): Slice of matching directory service entries
 //   - (error): An error if the API request fails
 func (a Asset) GetDirectoryServiceEntries(filter Filter) ([]DirectoryServiceEntry, error) {
-	return GetAssetDirectoryServiceEntries(a.Id, filter)
+	return a.apiClient.GetAssetDirectoryServiceEntries(a.Id, filter)
 }

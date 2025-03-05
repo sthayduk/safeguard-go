@@ -8,12 +8,12 @@ import (
 )
 
 func main() {
-	err := common.InitClient()
+	sgc, err := common.InitClient()
 	if err != nil {
 		panic(err)
 	}
 
-	partitions, err := safeguard.GetAssetPartitions(safeguard.Filter{})
+	partitions, err := sgc.GetAssetPartitions(safeguard.Filter{})
 	if err != nil {
 		panic(err)
 	}

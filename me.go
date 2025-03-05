@@ -8,10 +8,17 @@ import (
 
 // AccountEntitlement represents the full account entitlement structure
 type AccountEntitlement struct {
+	apiClient *SafeguardClient `json:"-"`
+
 	Account        AccountInfo         `json:"Account,omitempty"`
 	Asset          AssetInfo           `json:"Asset,omitempty"`
 	Policies       []PolicyInfo        `json:"Policies,omitempty"`
 	ActiveRequests []ActiveRequestInfo `json:"ActiveRequests,omitempty"`
+}
+
+func (a AccountEntitlement) SetClient(c *SafeguardClient) any {
+	a.apiClient = c
+	return a
 }
 
 // GetAccountId returns the ID of the account associated with this entitlement
@@ -163,7 +170,7 @@ const (
 // Returns:
 //   - User: The user information for the authenticated user
 //   - error: An error if the request fails or the response cannot be parsed
-func GetMe(filter Filter) (User, error) {
+func (c *SafeguardClient) GetMe(filter Filter) (User, error) {
 	query := "me" + filter.ToQueryString()
 
 	response, err := c.GetRequest(query)
@@ -176,7 +183,7 @@ func GetMe(filter Filter) (User, error) {
 		return User{}, err
 	}
 
-	return me, nil
+	return addClient(c, me), nil
 }
 
 // GetMeAccessRequestAssets retrieves all assets that the current user can request access to.
@@ -187,7 +194,7 @@ func GetMe(filter Filter) (User, error) {
 // Returns:
 //   - []PolicyAsset: A slice of assets the user can request access to
 //   - error: An error if the request fails or the response cannot be parsed
-func GetMeAccessRequestAssets(filter Filter) ([]PolicyAsset, error) {
+func (c *SafeguardClient) GetMeAccessRequestAssets(filter Filter) ([]PolicyAsset, error) {
 	var assets []PolicyAsset
 
 	query := "me/AccessRequestAssets" + filter.ToQueryString()
@@ -201,7 +208,7 @@ func GetMeAccessRequestAssets(filter Filter) ([]PolicyAsset, error) {
 		return []PolicyAsset{}, err
 	}
 
-	return assets, nil
+	return addClientToSlice(c, assets), nil
 }
 
 // GetMeAccessRequestAsset retrieves a specific asset that the current user can request access to.
@@ -212,7 +219,7 @@ func GetMeAccessRequestAssets(filter Filter) ([]PolicyAsset, error) {
 // Returns:
 //   - PolicyAsset: The requested asset's information
 //   - error: An error if the asset cannot be found or the request fails
-func GetMeAccessRequestAsset(assetId string) (PolicyAsset, error) {
+func (c *SafeguardClient) GetMeAccessRequestAsset(assetId string) (PolicyAsset, error) {
 	query := "me/AccessRequestAssets/" + assetId
 
 	response, err := c.GetRequest(query)
@@ -225,7 +232,7 @@ func GetMeAccessRequestAsset(assetId string) (PolicyAsset, error) {
 		return PolicyAsset{}, err
 	}
 
-	return asset, nil
+	return addClient(c, asset), nil
 }
 
 // GetMeActionableRequests retrieves access requests that require action from the current user.
@@ -236,7 +243,7 @@ func GetMeAccessRequestAsset(assetId string) (PolicyAsset, error) {
 // Returns:
 //   - map[AccessRequestRole][]AccessRequest: Access requests grouped by role
 //   - error: An error if the request fails or the response cannot be parsed
-func GetMeActionableRequests(filter Filter) (map[AccessRequestRole][]AccessRequest, error) {
+func (c *SafeguardClient) GetMeActionableRequests(filter Filter) (map[AccessRequestRole][]AccessRequest, error) {
 	query := "me/ActionableRequests" + filter.ToQueryString()
 
 	response, err := c.GetRequest(query)
@@ -247,6 +254,10 @@ func GetMeActionableRequests(filter Filter) (map[AccessRequestRole][]AccessReque
 	var requests map[AccessRequestRole][]AccessRequest
 	if err := json.Unmarshal(response, &requests); err != nil {
 		return nil, err
+	}
+
+	for role, roleRequests := range requests {
+		requests[role] = addClientToSlice(c, roleRequests)
 	}
 
 	return requests, nil
@@ -261,7 +272,7 @@ func GetMeActionableRequests(filter Filter) (map[AccessRequestRole][]AccessReque
 // Returns:
 //   - []AccessRequest: Access requests for the specified role
 //   - error: An error if the request fails or the response cannot be parsed
-func GetMeActionableRequestsByRole(role AccessRequestRole, filter Filter) ([]AccessRequest, error) {
+func (c *SafeguardClient) GetMeActionableRequestsByRole(role AccessRequestRole, filter Filter) ([]AccessRequest, error) {
 	query := "me/ActionableRequests/" + string(role) + filter.ToQueryString()
 
 	response, err := c.GetRequest(query)
@@ -274,16 +285,23 @@ func GetMeActionableRequestsByRole(role AccessRequestRole, filter Filter) ([]Acc
 		return nil, err
 	}
 
-	return requests, nil
+	return addClientToSlice(c, requests), nil
 }
 
 // ActionableRequestsResult represents the processed result of GetMeActionableRequests
 type ActionableRequestsResult struct {
+	apiClient *SafeguardClient
+
 	AllRequests    []AccessRequest
 	RequestsByRole map[AccessRequestRole][]AccessRequest
 	TotalCount     int
 	CountByRole    map[AccessRequestRole]int
 	AvailableRoles []AccessRequestRole
+}
+
+func (a ActionableRequestsResult) SetClient(c *SafeguardClient) any {
+	a.apiClient = c
+	return a
 }
 
 // GetMeActionableRequestsDetailed provides a detailed analysis of actionable access requests.
@@ -296,8 +314,8 @@ type ActionableRequestsResult struct {
 // Returns:
 //   - ActionableRequestsResult: Processed access requests with additional metadata
 //   - error: An error if the request fails or the response cannot be parsed
-func GetMeActionableRequestsDetailed(filter Filter) (ActionableRequestsResult, error) {
-	requests, err := GetMeActionableRequests(filter)
+func (c *SafeguardClient) GetMeActionableRequestsDetailed(filter Filter) (ActionableRequestsResult, error) {
+	requests, err := c.GetMeActionableRequests(filter)
 	if err != nil {
 		return ActionableRequestsResult{}, err
 	}
@@ -315,7 +333,7 @@ func GetMeActionableRequestsDetailed(filter Filter) (ActionableRequestsResult, e
 		result.TotalCount += len(roleRequests)
 	}
 
-	return result, nil
+	return addClient(c, result), nil
 }
 
 // FilterRequestsByState returns all requests matching the specified state.
@@ -332,7 +350,7 @@ func (r *ActionableRequestsResult) FilterRequestsByState(state AccessRequestStat
 			filtered = append(filtered, req)
 		}
 	}
-	return filtered
+	return addClientToSlice(r.apiClient, filtered)
 }
 
 // GetPendingRequests returns all requests that require action.
@@ -353,7 +371,7 @@ func (r *ActionableRequestsResult) GetPendingRequests() []AccessRequest {
 			pending = append(pending, req)
 		}
 	}
-	return pending
+	return addClientToSlice(r.apiClient, pending)
 }
 
 // HasRole checks if there are any requests for the specified role.
@@ -376,7 +394,7 @@ func (r *ActionableRequestsResult) HasRole(role AccessRequestRole) bool {
 // Returns:
 //   - []AccessRequest: A slice of access requests for the specified role
 func (r *ActionableRequestsResult) GetRequestsForRole(role AccessRequestRole) []AccessRequest {
-	return r.RequestsByRole[role]
+	return addClientToSlice(r.apiClient, r.RequestsByRole[role])
 }
 
 // GetMeAccountEntitlements retrieves the account entitlements for the current user.
@@ -390,7 +408,7 @@ func (r *ActionableRequestsResult) GetRequestsForRole(role AccessRequestRole) []
 // Returns:
 //   - []AccountEntitlement: A slice of account entitlements for the user
 //   - error: An error if the request fails or the response cannot be parsed
-func GetMeAccountEntitlements(accessRequestType AccessRequestType, includeActiveRequests bool, filterByCredential bool, filter Filter) ([]AccountEntitlement, error) {
+func (c *SafeguardClient) GetMeAccountEntitlements(accessRequestType AccessRequestType, includeActiveRequests bool, filterByCredential bool, filter Filter) ([]AccountEntitlement, error) {
 	var entitlements []AccountEntitlement
 
 	query := "me/AccountEntitlements" + filter.ToQueryString() +
@@ -410,5 +428,5 @@ func GetMeAccountEntitlements(accessRequestType AccessRequestType, includeActive
 		return []AccountEntitlement{}, err
 	}
 
-	return entitlements, nil
+	return addClientToSlice(c, entitlements), nil
 }

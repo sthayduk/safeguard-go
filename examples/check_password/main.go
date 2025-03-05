@@ -10,12 +10,12 @@ import (
 )
 
 func main() {
-	err := common.InitClient()
+	sgc, err := common.InitClient()
 	if err != nil {
 		panic(err)
 	}
 
-	assetAccount, err := safeguard.GetAssetAccount(18, safeguard.Fields{})
+	assetAccount, err := sgc.GetAssetAccount(18, safeguard.Fields{})
 	if err != nil {
 		panic(err)
 	}

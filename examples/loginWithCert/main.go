@@ -7,7 +7,6 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/sthayduk/safeguard-go"
-	"github.com/sthayduk/safeguard-go/client"
 )
 
 func main() {
@@ -22,17 +21,17 @@ func main() {
 	pfxPassword := os.Getenv("SAFEGUARD_PFX_PASSWORD")
 	pfxPath := os.Getenv("SAFEGUARD_PFX_PATH")
 
-	var sgc *client.SafeguardClient
+	var sgc *safeguard.SafeguardClient
 
 	if accessToken == "" {
-		sgc = safeguard.SetupClient(applianceUrl, apiVersion, true)
+		sgc = safeguard.NewClient(applianceUrl, apiVersion, true)
 		err := sgc.LoginWithCertificate(pfxPath, pfxPassword)
 		if err != nil {
 			panic(err)
 		}
 	} else {
-		sgc = safeguard.SetupClient(applianceUrl, apiVersion, true)
-		sgc.AccessToken = &client.RSTSAuthResponse{
+		sgc = safeguard.NewClient(applianceUrl, apiVersion, true)
+		sgc.AccessToken = &safeguard.RSTSAuthResponse{
 			AccessToken: accessToken,
 		}
 	}

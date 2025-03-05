@@ -10,6 +10,8 @@ import (
 // AssetGroup represents a group of assets on the appliance for use in session policy.
 // Only assets that support session access are allowed.
 type AssetGroup struct {
+	apiClient *SafeguardClient `json:"-"`
+
 	Id                       int               `json:"Id"`
 	Name                     string            `json:"Name"`
 	Description              string            `json:"Description"`
@@ -19,6 +21,11 @@ type AssetGroup struct {
 	CreatedDate              time.Time         `json:"CreatedDate"`
 	CreatedByUserId          int               `json:"CreatedByUserId"`
 	CreatedByUserDisplayName string            `json:"CreatedByUserDisplayName"`
+}
+
+func (a AssetGroup) SetClient(c *SafeguardClient) any {
+	a.apiClient = c
+	return a
 }
 
 // AssetGroupingRule represents rules for automatically grouping assets
@@ -68,7 +75,7 @@ func (a AssetGroup) ToJson() (string, error) {
 // Returns:
 //   - ([]AssetGroup): Slice of matching asset groups
 //   - (error): An error if the API request fails
-func GetAssetGroups(filter Filter) ([]AssetGroup, error) {
+func (c *SafeguardClient) GetAssetGroups(filter Filter) ([]AssetGroup, error) {
 	var assetGroup []AssetGroup
 
 	query := "AssetGroups" + filter.ToQueryString()
@@ -80,7 +87,7 @@ func GetAssetGroups(filter Filter) ([]AssetGroup, error) {
 
 	json.Unmarshal(response, &assetGroup)
 
-	return assetGroup, nil
+	return addClientToSlice(c, assetGroup), nil
 }
 
 // GetAssetGroup retrieves a single asset group by its ID.
@@ -92,7 +99,7 @@ func GetAssetGroups(filter Filter) ([]AssetGroup, error) {
 // Returns:
 //   - (AssetGroup): The requested asset group
 //   - (error): An error if the API request fails
-func GetAssetGroup(id int, fields Fields) (AssetGroup, error) {
+func (c *SafeguardClient) GetAssetGroup(id int, fields Fields) (AssetGroup, error) {
 	var assetGroup AssetGroup
 
 	query := fmt.Sprintf("AssetGroups/%d", id)
@@ -106,7 +113,7 @@ func GetAssetGroup(id int, fields Fields) (AssetGroup, error) {
 	}
 	json.Unmarshal(response, &assetGroup)
 
-	return assetGroup, nil
+	return addClient(c, assetGroup), nil
 }
 
 // UpdateAssetGroup modifies an existing asset group.
@@ -118,7 +125,7 @@ func GetAssetGroup(id int, fields Fields) (AssetGroup, error) {
 // Returns:
 //   - (AssetGroup): The updated asset group
 //   - (error): An error if the update fails
-func UpdateAssetGroup(id int, assetGroup AssetGroup) (AssetGroup, error) {
+func (c *SafeguardClient) UpdateAssetGroup(id int, assetGroup AssetGroup) (AssetGroup, error) {
 	query := fmt.Sprintf("AssetGroups/%d", id)
 
 	assetGroupJSON, err := assetGroup.ToJson()
@@ -136,7 +143,7 @@ func UpdateAssetGroup(id int, assetGroup AssetGroup) (AssetGroup, error) {
 		return AssetGroup{}, err
 	}
 
-	return assetGroup, nil
+	return addClient(c, assetGroup), nil
 }
 
 // Update persists any changes made to this AssetGroup instance.
@@ -145,7 +152,7 @@ func UpdateAssetGroup(id int, assetGroup AssetGroup) (AssetGroup, error) {
 //   - (AssetGroup): The updated asset group
 //   - (error): An error if the update fails
 func (a AssetGroup) Update() (AssetGroup, error) {
-	return UpdateAssetGroup(a.Id, a)
+	return a.apiClient.UpdateAssetGroup(a.Id, a)
 }
 
 // DeleteAssetGroup removes an asset group from the system.
@@ -155,7 +162,7 @@ func (a AssetGroup) Update() (AssetGroup, error) {
 //
 // Returns:
 //   - (error): An error if the deletion fails
-func DeleteAssetGroup(id int) error {
+func (c *SafeguardClient) DeleteAssetGroup(id int) error {
 	query := fmt.Sprintf("AssetGroups/%d", id)
 
 	_, err := c.DeleteRequest(query)
@@ -171,5 +178,5 @@ func DeleteAssetGroup(id int) error {
 // Returns:
 //   - (error): An error if the deletion fails
 func (a AssetGroup) Delete() error {
-	return DeleteAssetGroup(a.Id)
+	return a.apiClient.DeleteAssetGroup(a.Id)
 }

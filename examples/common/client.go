@@ -4,36 +4,35 @@ import (
 	"os"
 
 	"github.com/sthayduk/safeguard-go"
-	"github.com/sthayduk/safeguard-go/client"
 )
 
 // InitClient creates and initializes a SafeguardClient using environment variables
-func InitClient() error {
+func InitClient() (*safeguard.SafeguardClient, error) {
 	userToken := os.Getenv("SAFEGUARD_USER_TOKEN")
 	applianceUrl := os.Getenv("SAFEGUARD_HOST_URL")
 	apiVersion := os.Getenv("SAFEGUARD_API_VERSION")
 	pfxPassword := os.Getenv("SAFEGUARD_PFX_PASSWORD")
 	pfxPath := os.Getenv("SAFEGUARD_PFX_PATH")
 
-	var sgc *client.SafeguardClient
+	var sgc *safeguard.SafeguardClient
 
 	if userToken == "" {
-		sgc = safeguard.SetupClient(applianceUrl, apiVersion, true)
+		sgc = safeguard.NewClient(applianceUrl, apiVersion, false)
 		err := sgc.LoginWithCertificate(pfxPath, pfxPassword)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	} else {
-		sgc = safeguard.SetupClient(applianceUrl, apiVersion, true)
-		sgc.AccessToken = &client.RSTSAuthResponse{
+		sgc = safeguard.NewClient(applianceUrl, apiVersion, false)
+		sgc.AccessToken = &safeguard.RSTSAuthResponse{
 			UserToken: userToken,
 		}
 	}
 
 	err := sgc.ValidateAccessToken()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return sgc, nil
 }

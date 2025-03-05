@@ -8,14 +8,14 @@ import (
 )
 
 func main() {
-	err := common.InitClient()
+	sgc, err := common.InitClient()
 	if err != nil {
 		panic(err)
 	}
 
 	// Example: GetClusterMembers
 	filter := safeguard.Filter{}
-	clusterMembers, err := safeguard.GetClusterMembers(filter)
+	clusterMembers, err := sgc.GetClusterMembers(filter)
 	if err != nil {
 		fmt.Printf("Error getting cluster members: %v\n", err)
 	} else {
@@ -24,7 +24,7 @@ func main() {
 
 	// Example: GetClusterMember
 	memberID := "46995a16b0b7482899cc6c60f4a0d86d" // Replace with actual member ID
-	clusterMember, err := safeguard.GetClusterMember(memberID)
+	clusterMember, err := sgc.GetClusterMember(memberID)
 	if err != nil {
 		fmt.Printf("Error getting cluster member: %v\n", err)
 	} else {
@@ -32,7 +32,7 @@ func main() {
 	}
 
 	// Example: GetClusterLeader
-	clusterLeader, err := safeguard.GetClusterLeader()
+	clusterLeader, err := sgc.GetClusterLeader()
 	if err != nil {
 		fmt.Printf("Error getting cluster leader: %v\n", err)
 	} else {
@@ -40,7 +40,7 @@ func main() {
 	}
 
 	// Example: ForceClusterHealthCheck
-	clusterHealth, err := safeguard.ForceClusterHealthCheck()
+	clusterHealth, err := sgc.ForceClusterHealthCheck()
 	if err != nil {
 		fmt.Printf("Error forcing cluster health check: %v\n", err)
 	} else {

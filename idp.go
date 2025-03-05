@@ -8,6 +8,8 @@ import (
 
 // IdentityProvider represents the structure for the given JSON array
 type IdentityProvider struct {
+	apiClient *SafeguardClient `json:"-"`
+
 	Id                       int                   `json:"Id,omitempty"`
 	TypeReferenceName        string                `json:"TypeReferenceName,omitempty"`
 	Name                     string                `json:"Name,omitempty"`
@@ -27,6 +29,11 @@ type IdentityProvider struct {
 	CreatedDate              time.Time             `json:"CreatedDate,omitempty"`
 	CreatedByUserId          int                   `json:"CreatedByUserId,omitempty"`
 	CreatedByUserDisplayName string                `json:"CreatedByUserDisplayName,omitempty"`
+}
+
+func (a IdentityProvider) SetClient(c *SafeguardClient) any {
+	a.apiClient = c
+	return a
 }
 
 type StarlingProperties struct {
@@ -159,7 +166,7 @@ type GroupProperties struct {
 // Returns:
 //   - []IdentityProvider: A slice of all configured identity providers
 //   - error: An error if the API request fails or response cannot be parsed
-func GetIdentityProviders() ([]IdentityProvider, error) {
+func (c *SafeguardClient) GetIdentityProviders() ([]IdentityProvider, error) {
 	var identityProviders []IdentityProvider
 
 	query := "IdentityProviders"
@@ -173,7 +180,7 @@ func GetIdentityProviders() ([]IdentityProvider, error) {
 		return []IdentityProvider{}, err
 	}
 
-	return identityProviders, nil
+	return addClientToSlice(c, identityProviders), nil
 }
 
 // GetIdentityProvider retrieves a specific identity provider by its ID.
@@ -187,7 +194,7 @@ func GetIdentityProviders() ([]IdentityProvider, error) {
 // Returns:
 //   - IdentityProvider: The requested identity provider's complete configuration
 //   - error: An error if the provider cannot be found or the request fails
-func GetIdentityProvider(id int) (IdentityProvider, error) {
+func (c *SafeguardClient) GetIdentityProvider(id int) (IdentityProvider, error) {
 	var identityProvider IdentityProvider
 
 	query := fmt.Sprintf("IdentityProviders/%d", id)
@@ -200,7 +207,7 @@ func GetIdentityProvider(id int) (IdentityProvider, error) {
 	if err := json.Unmarshal(response, &identityProvider); err != nil {
 		return IdentityProvider{}, err
 	}
-	return identityProvider, nil
+	return addClient(c, identityProvider), nil
 }
 
 // GetDirectoryUsers retrieves users from a specific identity provider's directory.
@@ -215,7 +222,7 @@ func GetIdentityProvider(id int) (IdentityProvider, error) {
 // Returns:
 //   - []User: A slice of directory users matching the filter criteria
 //   - error: An error if the directory cannot be queried or the request fails
-func GetDirectoryUsers(identityProviderId int, filter Filter) ([]User, error) {
+func (c *SafeguardClient) GetDirectoryUsers(identityProviderId int, filter Filter) ([]User, error) {
 	var directoryUsers []User
 
 	query := fmt.Sprintf("IdentityProviders/%d/DirectoryUsers%s", identityProviderId, filter.ToQueryString())
@@ -229,11 +236,7 @@ func GetDirectoryUsers(identityProviderId int, filter Filter) ([]User, error) {
 		return []User{}, err
 	}
 
-	for i := range directoryUsers {
-		directoryUsers[i].client = c
-	}
-
-	return directoryUsers, nil
+	return addClientToSlice(c, directoryUsers), nil
 }
 
 // GetDirectoryUsers retrieves users from this identity provider's directory.
@@ -248,7 +251,7 @@ func GetDirectoryUsers(identityProviderId int, filter Filter) ([]User, error) {
 //   - []User: A slice of directory users matching the filter criteria
 //   - error: An error if the directory cannot be queried or the request fails
 func (idp IdentityProvider) GetDirectoryUsers(filter Filter) ([]User, error) {
-	return GetDirectoryUsers(idp.Id, filter)
+	return idp.apiClient.GetDirectoryUsers(idp.Id, filter)
 }
 
 // GetDirectoryGroups retrieves groups from a specific identity provider's directory.
@@ -263,7 +266,7 @@ func (idp IdentityProvider) GetDirectoryUsers(filter Filter) ([]User, error) {
 // Returns:
 //   - []UserGroup: A slice of directory groups matching the filter criteria
 //   - error: An error if the directory cannot be queried or the request fails
-func GetDirectoryGroups(id int, filter Filter) ([]UserGroup, error) {
+func (c *SafeguardClient) GetDirectoryGroups(id int, filter Filter) ([]UserGroup, error) {
 	var directoryGroups []UserGroup
 
 	query := fmt.Sprintf("IdentityProviders/%d/DirectoryGroups%s", id, filter.ToQueryString())
@@ -277,7 +280,7 @@ func GetDirectoryGroups(id int, filter Filter) ([]UserGroup, error) {
 		return []UserGroup{}, err
 	}
 
-	return directoryGroups, nil
+	return addClientToSlice(c, directoryGroups), nil
 }
 
 // GetDirectoryGroups retrieves groups from this identity provider's directory.
@@ -292,5 +295,5 @@ func GetDirectoryGroups(id int, filter Filter) ([]UserGroup, error) {
 //   - []UserGroup: A slice of directory groups matching the filter criteria
 //   - error: An error if the directory cannot be queried or the request fails
 func (idp IdentityProvider) GetDirectoryGroups(filter Filter) ([]UserGroup, error) {
-	return GetDirectoryGroups(idp.Id, filter)
+	return idp.apiClient.GetDirectoryGroups(idp.Id, filter)
 }

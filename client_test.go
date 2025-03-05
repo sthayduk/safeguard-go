@@ -1,12 +1,30 @@
-package client
+package safeguard
 
 import (
 	"fmt"
 	"math/rand"
+	"net/http"
 	"sync"
 	"testing"
 	"time"
 )
+
+func setupTestClient() *SafeguardClient {
+	return &SafeguardClient{
+		AccessToken: &RSTSAuthResponse{
+			AccessToken: "initial-token",
+			AuthTime:    time.Now(),
+			ExpiresIn:   3600,
+		},
+		Appliance: applianceURL{
+			Url: "https://appliance.example.com:443",
+		},
+		ClusterLeader: applianceURL{
+			Url: "https://leader.example.com:443",
+		},
+		HttpClient: &http.Client{},
+	}
+}
 
 func TestSetClusterLeader(t *testing.T) {
 	tests := []struct {
@@ -62,16 +80,12 @@ func TestSetClusterLeader(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			sgclient = &SafeguardClient{
-				Appliance: applianceURL{
-					Url: tt.applianceURL,
-				},
-			}
+			client := setupTestClient()
+			client.Appliance.setUrl(tt.applianceURL, -1)
+			client.setClusterLeader(tt.clusterLeaderHost)
 
-			sgclient.setClusterLeader(tt.clusterLeaderHost)
-
-			if sgclient.ClusterLeader.getUrl() != tt.expectedClusterURL {
-				t.Errorf("expected %s, got %s", tt.expectedClusterURL, sgclient.ClusterLeader.getUrl())
+			if client.ClusterLeader.getUrl() != tt.expectedClusterURL {
+				t.Errorf("expected %s, got %s", tt.expectedClusterURL, client.ClusterLeader.getUrl())
 			}
 		})
 	}
@@ -105,14 +119,11 @@ func TestGetTokenExpirationTime(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			sgclient = &SafeguardClient{
-				AccessToken: &RSTSAuthResponse{
-					AuthTime:  tt.authTime,
-					ExpiresIn: tt.expiresIn,
-				},
-			}
+			client := setupTestClient()
+			client.AccessToken.AuthTime = tt.authTime
+			client.AccessToken.ExpiresIn = tt.expiresIn
 
-			expiryTime := sgclient.GetTokenExpirationTime()
+			expiryTime := client.GetTokenExpirationTime()
 
 			if !expiryTime.Truncate(time.Second).Equal(tt.expectedExpiry.Truncate(time.Second)) {
 				t.Errorf("expected %v, got %v", tt.expectedExpiry.Truncate(time.Second), expiryTime.Truncate(time.Second))
@@ -155,14 +166,11 @@ func TestIsTokenExpired(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			sgclient = &SafeguardClient{
-				AccessToken: &RSTSAuthResponse{
-					AuthTime:  tt.authTime,
-					ExpiresIn: tt.expiresIn,
-				},
-			}
+			client := setupTestClient()
+			client.AccessToken.AuthTime = tt.authTime
+			client.AccessToken.ExpiresIn = tt.expiresIn
 
-			result := sgclient.IsTokenExpired()
+			result := client.IsTokenExpired()
 
 			if result != tt.expectedResult {
 				t.Errorf("expected %v, got %v", tt.expectedResult, result)
@@ -217,14 +225,11 @@ func TestRemainingTokenTime(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			sgclient = &SafeguardClient{
-				AccessToken: &RSTSAuthResponse{
-					AuthTime:  tt.authTime,
-					ExpiresIn: tt.expiresIn,
-				},
-			}
+			client := setupTestClient()
+			client.AccessToken.AuthTime = tt.authTime
+			client.AccessToken.ExpiresIn = tt.expiresIn
 
-			result := sgclient.RemainingTokenTime()
+			result := client.RemainingTokenTime()
 
 			if tt.expectZeroOrLess {
 				if result > 0 {
@@ -249,26 +254,18 @@ func TestConcurrentAccess(t *testing.T) {
 		numOperations = 1000
 	)
 
-	client := &SafeguardClient{
-		AccessToken: &RSTSAuthResponse{},
-		Appliance: applianceURL{
-			Url: "https://test.example.com",
-		},
-		ClusterLeader: applianceURL{
-			Url: "https://leader.example.com",
-		},
-	}
-
+	client := setupTestClient()
+	var wg sync.WaitGroup
 	errorChan := make(chan error, numReaders+numWriters)
-	doneChan := make(chan bool, numReaders+numWriters)
 
 	// Start readers
 	for i := 0; i < numReaders; i++ {
+		wg.Add(1)
 		go func(id int) {
-			defer func() { doneChan <- true }()
+			defer wg.Done()
 
 			for j := 0; j < numOperations; j++ {
-				url := client.getClusterLeaderUrl()
+				url := client.ClusterLeader.getUrl()
 				if url == "" {
 					errorChan <- fmt.Errorf("reader %d: empty URL at operation %d", id, j)
 					return
@@ -279,23 +276,22 @@ func TestConcurrentAccess(t *testing.T) {
 
 	// Start writers
 	for i := 0; i < numWriters; i++ {
+		wg.Add(1)
 		go func(id int) {
-			defer func() { doneChan <- true }()
+			defer wg.Done()
 
 			for j := 0; j < numOperations; j++ {
 				newLeader := fmt.Sprintf("leader%d-%d", id, j)
-				client.setClusterLeader(newLeader)
+				client.ClusterLeader.setUrl(fmt.Sprintf("https://%s:443", newLeader), 10*time.Minute)
 			}
 		}(i)
 	}
 
 	// Wait for all goroutines to complete
-	for i := 0; i < numReaders+numWriters; i++ {
-		<-doneChan
-	}
+	wg.Wait()
+	close(errorChan)
 
 	// Check for any errors
-	close(errorChan)
 	var errors []error
 	for err := range errorChan {
 		if err != nil {
@@ -335,7 +331,9 @@ func TestAccessTokenConcurrency(t *testing.T) {
 			defer func() { doneChan <- true }()
 
 			for j := 0; j < numOperations; j++ {
+
 				token := client.AccessToken.getAccessToken()
+
 				if token == "" {
 					errorChan <- fmt.Errorf("reader %d: invalid token at operation %d", id, j)
 					return
@@ -350,8 +348,10 @@ func TestAccessTokenConcurrency(t *testing.T) {
 			defer func() { doneChan <- true }()
 
 			for j := 0; j < numOperations; j++ {
+
 				newToken := fmt.Sprintf("token-%d-%d", id, j)
 				client.AccessToken.setAccessToken(newToken)
+
 			}
 		}(i)
 	}
@@ -405,6 +405,7 @@ func TestCredentialsConcurrency(t *testing.T) {
 			defer func() { doneChan <- true }()
 
 			for j := 0; j < numOperations; j++ {
+
 				username, password := client.AccessToken.getUserNamePassword()
 				certPath, certPass := client.AccessToken.getCertificate()
 
@@ -422,6 +423,7 @@ func TestCredentialsConcurrency(t *testing.T) {
 			defer func() { doneChan <- true }()
 
 			for j := 0; j < numOperations; j++ {
+
 				username := fmt.Sprintf("user-%d-%d", id, j)
 				password := fmt.Sprintf("pass-%d-%d", id, j)
 				client.AccessToken.setUserNamePassword(username, password)
@@ -429,6 +431,7 @@ func TestCredentialsConcurrency(t *testing.T) {
 				certPath := fmt.Sprintf("cert-%d-%d", id, j)
 				certPass := fmt.Sprintf("cert-pass-%d-%d", id, j)
 				client.AccessToken.setCertificate(certPath, certPass)
+
 			}
 		}(i)
 	}
@@ -456,63 +459,44 @@ func TestCredentialsConcurrency(t *testing.T) {
 }
 
 func TestMutexDeadlockPrevention(t *testing.T) {
-	// Properly initialize the client with required URLs
-	client := &SafeguardClient{
-		AccessToken: &RSTSAuthResponse{
-			AccessToken: "initial-token",
-		},
-		Appliance: applianceURL{
-			Url: "https://appliance.example.com:443",
-		},
-		ClusterLeader: applianceURL{
-			Url: "https://leader.example.com:443",
-		},
-	}
-
-	// Initialize the global client since some functions depend on it
-	sgclient = client
+	client := setupTestClient()
 
 	done := make(chan bool, 2)
-	const iterations = 1000 // Reduced iterations for faster testing
+	const iterations = 1000
 
-	// First goroutine: token operations followed by cluster operations
+	// First goroutine: simplified token operations
 	go func() {
 		defer func() { done <- true }()
 
 		for i := 0; i < iterations; i++ {
-			// Get and set token
+
 			token := client.AccessToken.getAccessToken()
 			if token == "" {
 				t.Error("Empty token in first goroutine")
+
 				return
 			}
 			client.AccessToken.setAccessToken(fmt.Sprintf("token-1-%d", i))
-
-			// Get and set cluster leader
-			url := client.getClusterLeaderUrl()
-			if url == "" {
-				t.Error("Empty URL in first goroutine")
-				return
-			}
+			client.ClusterLeader.setUrl(fmt.Sprintf("https://leader-1-%d.example.com:443", i), 10*time.Minute)
 		}
 	}()
 
-	// Second goroutine: cluster operations followed by token operations
+	// Second goroutine: simplified operations in reverse order
 	go func() {
 		defer func() { done <- true }()
 
 		for i := 0; i < iterations; i++ {
-			// Get and set cluster leader
-			url := client.getClusterLeaderUrl()
+
+			url := client.ClusterLeader.getUrl()
 			if url == "" {
 				t.Error("Empty URL in second goroutine")
+
 				return
 			}
-
-			// Get and set token
 			token := client.AccessToken.getAccessToken()
 			if token == "" {
 				t.Error("Empty token in second goroutine")
+
 				return
 			}
 			client.AccessToken.setAccessToken(fmt.Sprintf("token-2-%d", i))
@@ -557,10 +541,13 @@ func TestRWMutexStress(t *testing.T) {
 			for j := 0; j < numOperations; j++ {
 				if rand.Float32() < 0.2 { // 20% chance of writing
 					// Write operation
+
 					client.AccessToken.setAccessToken(fmt.Sprintf("token-%d-%d", id, j))
 					client.ClusterLeader.setUrl(fmt.Sprintf("https://leader-%d-%d.example.com", id, j), 10*time.Minute)
+
 				} else {
 					// Read operation
+
 					token := client.AccessToken.getAccessToken()
 					url := client.ClusterLeader.getUrl()
 

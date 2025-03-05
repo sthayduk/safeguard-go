@@ -8,6 +8,8 @@ import (
 
 // ClusterMember represents a node in the Safeguard cluster
 type ClusterMember struct {
+	apiClient *SafeguardClient `json:"-"`
+
 	Id                 string                 `json:"Id"`
 	Name               string                 `json:"Name"`
 	NetworkAddress     string                 `json:"NetworkAddress"`
@@ -20,6 +22,11 @@ type ClusterMember struct {
 	IsEnrolled         bool                   `json:"IsEnrolled"`
 	Health             NodeHealth             `json:"Health"`
 	NetworkInformation NodeNetworkInformation `json:"NetworkInformation"`
+}
+
+func (a ClusterMember) SetClient(c *SafeguardClient) any {
+	a.apiClient = c
+	return a
 }
 
 // NodeHealth represents the health status of a cluster node
@@ -108,7 +115,7 @@ const (
 // Returns:
 //   - []ClusterMember: A slice of cluster members matching the filter criteria
 //   - error: An error if the API request fails or the response cannot be parsed
-func GetClusterMembers(filter Filter) ([]ClusterMember, error) {
+func (c *SafeguardClient) GetClusterMembers(filter Filter) ([]ClusterMember, error) {
 	var clusterMembers []ClusterMember
 
 	query := "Cluster/Members" + filter.ToQueryString()
@@ -122,7 +129,7 @@ func GetClusterMembers(filter Filter) ([]ClusterMember, error) {
 		return nil, err
 	}
 
-	return clusterMembers, nil
+	return addClientToSlice(c, clusterMembers), nil
 }
 
 // GetClusterMember retrieves detailed information about a specific cluster member.
@@ -133,7 +140,7 @@ func GetClusterMembers(filter Filter) ([]ClusterMember, error) {
 // Returns:
 //   - ClusterMember: The requested cluster member's configuration and status, or nil if not found
 //   - error: An error if the member cannot be found or the request fails
-func GetClusterMember(id string) (ClusterMember, error) {
+func (c *SafeguardClient) GetClusterMember(id string) (ClusterMember, error) {
 	var clusterMember ClusterMember
 
 	query := fmt.Sprintf("Cluster/Members/%s", id)
@@ -147,7 +154,7 @@ func GetClusterMember(id string) (ClusterMember, error) {
 		return ClusterMember{}, err
 	}
 
-	return clusterMember, nil
+	return addClient(c, clusterMember), nil
 }
 
 // GetClusterLeader identifies and retrieves the current leader of the Safeguard cluster.
@@ -158,11 +165,11 @@ func GetClusterMember(id string) (ClusterMember, error) {
 // Returns:
 //   - ClusterMember: The cluster member that is currently the leader, or nil if no leader is found
 //   - error: An error if no leader is found, multiple leaders are detected, or the request fails
-func GetClusterLeader() (ClusterMember, error) {
+func (c *SafeguardClient) GetClusterLeader() (ClusterMember, error) {
 	filter := Filter{}
 	filter.AddFilter("IsLeader", "eq", "true")
 
-	clusterMembers, err := GetClusterMembers(filter)
+	clusterMembers, err := c.GetClusterMembers(filter)
 	if err != nil {
 		fmt.Println(err)
 		return ClusterMember{}, err
@@ -176,7 +183,7 @@ func GetClusterLeader() (ClusterMember, error) {
 		return ClusterMember{}, fmt.Errorf("invalid number of cluster leaders found")
 	}
 
-	return clusterMembers[0], nil
+	return addClient(c, clusterMembers[0]), nil
 }
 
 // ForceClusterHealthCheck triggers an immediate health check of the cluster.
@@ -187,7 +194,7 @@ func GetClusterLeader() (ClusterMember, error) {
 // Returns:
 //   - ClusterMember: The cluster member representing the current node with updated health status
 //   - error: An error if the health check fails to complete or the response cannot be parsed
-func ForceClusterHealthCheck() (ClusterMember, error) {
+func (c *SafeguardClient) ForceClusterHealthCheck() (ClusterMember, error) {
 	var clusterMembers ClusterMember
 	query := "Cluster/Members/Self"
 
@@ -200,7 +207,7 @@ func ForceClusterHealthCheck() (ClusterMember, error) {
 		return ClusterMember{}, err
 	}
 
-	return clusterMembers, nil
+	return addClient(c, clusterMembers), nil
 }
 
 // IsClusterLeader checks whether this cluster member is currently the cluster leader.

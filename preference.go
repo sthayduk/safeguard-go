@@ -12,6 +12,13 @@ package safeguard
 //	    Value: "grid"
 //	}
 type Preference struct {
+	apiClient *SafeguardClient `json:"-"`
+
 	Name  string `json:"Name,omitempty"`  // The unique identifier/key of the preference
 	Value string `json:"Value,omitempty"` // The value/setting of the preference
+}
+
+func (a Preference) SetClient(c *SafeguardClient) any {
+	a.apiClient = c
+	return a
 }

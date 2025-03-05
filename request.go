@@ -1,4 +1,4 @@
-package client
+package safeguard
 
 import (
 	"fmt"
@@ -246,4 +246,20 @@ func (c *SafeguardClient) setHeaders(req *http.Request) {
 		"method", req.Method,
 		"url", req.URL,
 	)
+}
+
+// getAuthorizationHeader prepares authorization headers for API requests.
+// It formats the access token according to the required Bearer scheme.
+//
+// Parameters:
+//   - req: The HTTP request to modify with authorization headers.
+//
+// Returns:
+//   - *http.Request: The modified request with authorization headers.
+func (c *SafeguardClient) getAuthorizationHeader() http.Header {
+	headers := http.Header{}
+	headers.Set("accept", "application/json")
+	headers.Set("Authorization", "Bearer "+c.AccessToken.getUserToken())
+
+	return headers
 }

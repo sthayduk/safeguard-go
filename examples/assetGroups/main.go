@@ -8,13 +8,13 @@ import (
 )
 
 func main() {
-	err := common.InitClient()
+	sgc, err := common.InitClient()
 	if err != nil {
 		panic(err)
 	}
 
 	// Get all asset groups
-	assetGroups, err := safeguard.GetAssetGroups(safeguard.Filter{})
+	assetGroups, err := sgc.GetAssetGroups(safeguard.Filter{})
 	if err != nil {
 		panic(err)
 	}
@@ -28,7 +28,7 @@ func main() {
 	// Get a specific asset group with additional fields
 	if len(assetGroups) > 0 {
 		fields := safeguard.Fields{"Name", "Description", "CreatedDate"}
-		assetGroup, err := safeguard.GetAssetGroup(assetGroups[0].Id, fields)
+		assetGroup, err := sgc.GetAssetGroup(assetGroups[0].Id, fields)
 		if err != nil {
 			panic(err)
 		}

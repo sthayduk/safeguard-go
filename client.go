@@ -1,4 +1,4 @@
-package client
+package safeguard
 
 import (
 	"context"
@@ -10,11 +10,11 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"sync"
 	"time"
 )
 
 var logger *slog.Logger // Declare global logger variable
-var sgclient *SafeguardClient
 
 func init() {
 	logger = slog.New(slog.NewTextHandler(os.Stdout, nil))
@@ -25,8 +25,70 @@ const (
 	redirectURI  = "https://localhost:8400/callback"
 )
 
+// SafeguardClient represents the main client for interacting with the Safeguard API.
+// It handles authentication, request routing, and session management.
+type SafeguardClient struct {
+	AccessToken    *RSTSAuthResponse
+	Appliance      applianceURL
+	ClusterLeader  applianceURL
+	ApiVersion     string
+	HttpClient     *http.Client
+	tokenEndpoint  string
+	redirectPort   int
+	redirectURI    string
+	DefaultHeaders http.Header
+	authDone       chan string
+	Logger         *slog.Logger
+	SignalRClient  *EventHandler
+}
+
+// applianceURL represents a Safeguard appliance URL with thread-safe access
+// and caching capabilities. It maintains the components of the URL and handles
+// cache expiration for URL refreshing.
+type applianceURL struct {
+	sync.RWMutex
+
+	Protocol   string
+	Hostname   string
+	DomainName string
+	Port       string
+	Url        string
+
+	lastUpdate time.Time
+	cacheTime  time.Duration
+}
+
+// getUrl returns the current appliance URL in a thread-safe manner.
+func (a *applianceURL) getUrl() string {
+	a.RWMutex.RLock()
+	defer a.RWMutex.RUnlock()
+	return a.Url
+}
+
+// setUrl updates the appliance URL and its components with thread safety.
+// It parses the URL into its components and updates the cache timestamp.
+//
+// Parameters:
+//   - url: The complete URL string to set
+//   - cacheTime: Duration for which the URL should be cached. Use -1 for infinite cache.
+func (a *applianceURL) setUrl(url string, cacheTime time.Duration) {
+	a.RWMutex.Lock()
+	defer a.RWMutex.Unlock()
+
+	var err error
+	a.Protocol, a.Hostname, a.DomainName, a.Port, err = splitApplianceURL(url)
+	if err != nil {
+		logger.Error("Failed to split appliance URL", "error", err)
+		return
+	}
+
+	a.Url = url
+	a.lastUpdate = time.Now()
+	a.cacheTime = cacheTime
+}
+
 // Returns a pointer to a SafeguardClient instance.
-// New creates a new instance of SafeguardClient. It initializes the logger with the specified
+// NewClient creates a new instance of SafeguardClient. It initializes the logger with the specified
 // debug level and sets it as the default logger. If an existing client instance (sgclient)
 // already exists, it returns that instance. Otherwise, it creates a new SafeguardClient with
 // the provided appliance URL, API version, and other necessary configurations. It also starts
@@ -40,7 +102,7 @@ const (
 // Returns:
 //
 //	A pointer to the newly created or existing SafeguardClient instance.
-func New(applianceUrl string, apiVersion string, debug bool) *SafeguardClient {
+func NewClient(applianceUrl string, apiVersion string, debug bool) *SafeguardClient {
 	var opts slog.HandlerOptions
 	if debug {
 		opts.Level = slog.LevelDebug
@@ -51,11 +113,7 @@ func New(applianceUrl string, apiVersion string, debug bool) *SafeguardClient {
 	logger = slog.New(slog.NewTextHandler(os.Stdout, &opts))
 	slog.SetDefault(logger)
 
-	if sgclient != nil {
-		return sgclient
-	}
-
-	sgclient = &SafeguardClient{
+	sgclient := &SafeguardClient{
 		AccessToken:   &RSTSAuthResponse{},
 		ApiVersion:    apiVersion,
 		HttpClient:    createTLSClient(),
@@ -69,11 +127,17 @@ func New(applianceUrl string, apiVersion string, debug bool) *SafeguardClient {
 		authDone: make(chan string),
 	}
 
-	sgclient.Appliance.setUrl(applianceUrl, -1)
+	sgclient.Appliance.setUrl(applianceUrl, 3600)
 
 	ctx := context.Background()
 	go sgclient.refreshToken(ctx)
 	return sgclient
+}
+
+func (c *SafeguardClient) NewSignalRClient() *EventHandler {
+	eventHandler := NewEventHandler(c)
+	c.SignalRClient = eventHandler
+	return c.SignalRClient
 }
 
 // getClusterLeaderUrl returns the URL of the cluster leader.
@@ -85,6 +149,24 @@ func (c *SafeguardClient) getClusterLeaderUrl() string {
 	}
 
 	return c.ClusterLeader.getUrl()
+}
+
+// isExpired checks if the cached URL has exceeded its cache duration.
+// Returns true if the cache has expired or if cacheTime is 0.
+// Returns false if cacheTime is -1 (infinite cache).
+func (a *applianceURL) isExpired() bool {
+	a.RWMutex.RLock()
+	defer a.RWMutex.RUnlock()
+
+	if a.cacheTime == 0 {
+		return true
+	}
+
+	if a.cacheTime == -1 {
+		return false
+	}
+
+	return time.Since(a.lastUpdate) > a.cacheTime
 }
 
 // createTLSClient creates and returns a new HTTP client with TLS configuration.
@@ -253,8 +335,6 @@ func (c *SafeguardClient) updateClusterLeaderUrl() {
 //     and when updating the cluster leader URL.
 //   - Error: If there is an error generating the cluster leader URL.
 func (c *SafeguardClient) setClusterLeader(clusterLeaderHostName string) {
-	clusterLeaderTimeout := time.Duration(10 * time.Second)
-
 	logger.Debug("Setting cluster leader", "hostname", clusterLeaderHostName)
 	clusterLeaderUrl, err := c.generateClusterLeaderURL(clusterLeaderHostName)
 	if err != nil {
@@ -262,18 +342,19 @@ func (c *SafeguardClient) setClusterLeader(clusterLeaderHostName string) {
 		return
 	}
 
-	if sgclient.ClusterLeader.getUrl() == clusterLeaderUrl {
+	if c.ClusterLeader.getUrl() == clusterLeaderUrl {
 		logger.Debug("Cluster leader unchanged", "url", clusterLeaderUrl)
 	}
 
-	if sgclient.Appliance.getUrl() == clusterLeaderUrl {
+	if c.Appliance.getUrl() == clusterLeaderUrl {
 		logger.Debug("Cluster leader is same as appliance URL", "url", clusterLeaderUrl)
 	}
 
 	logger.Debug("Updating cluster leader URL",
-		"old", sgclient.ClusterLeader.getUrl(),
+		"old", c.ClusterLeader.getUrl(),
 		"new", clusterLeaderUrl)
-	sgclient.ClusterLeader.setUrl(clusterLeaderUrl, clusterLeaderTimeout)
+	c.ClusterLeader.setUrl(clusterLeaderUrl, 3600)
+	fmt.Println("✅ Cluster leader URL updated:", clusterLeaderUrl)
 }
 
 // generateClusterLeaderURL generates the URL for the cluster leader based on the provided
@@ -290,7 +371,7 @@ func (c *SafeguardClient) setClusterLeader(clusterLeaderHostName string) {
 //   - error: An error if there was an issue generating the URL.
 func (c *SafeguardClient) generateClusterLeaderURL(clusterLeaderHostName string) (string, error) {
 	logger.Debug("Generating cluster leader URL", "hostname", clusterLeaderHostName)
-	protocol, _, domainName, port, err := splitApplianceURL(sgclient.Appliance.getUrl())
+	protocol, _, domainName, port, err := splitApplianceURL(c.Appliance.getUrl())
 	if err != nil {
 		logger.Error("Error splitting appliance URL", "error", err)
 		return "", err

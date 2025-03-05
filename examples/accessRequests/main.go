@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	err := common.InitClient()
+	sgc, err := common.InitClient()
 	if err != nil {
 		panic(err)
 	}
@@ -18,7 +18,7 @@ func main() {
 	// Example 1: Get information about the current user
 	fmt.Println("Example 1: Getting current user information")
 
-	me, err := safeguard.GetMe(safeguard.Filter{})
+	me, err := sgc.GetMe(safeguard.Filter{})
 	if err != nil {
 		fmt.Printf("Error getting current user: %s\n", err)
 	}
@@ -28,7 +28,7 @@ func main() {
 
 	// Example 2: Get all Entitlements
 	fmt.Println("Example 2: Getting all entitlements")
-	entitlements, err := safeguard.GetMeAccountEntitlements(safeguard.AccessRequestTypePassword, false, false, safeguard.Filter{})
+	entitlements, err := sgc.GetMeAccountEntitlements(safeguard.AccessRequestTypePassword, false, false, safeguard.Filter{})
 	if err != nil {
 		fmt.Printf("Error getting entitlements: %s\n", err)
 		panic(err)
@@ -41,7 +41,7 @@ func main() {
 		fmt.Printf("(%d) AccountName: %s (AccountDomain: %s)\n", entitlement.Account.Id, entitlement.Account.Name, entitlement.Account.DomainName)
 		fmt.Println("Get Access Request for Account")
 
-		accessRequest, err := safeguard.GetAccessRequests(entitlement.GetFilter())
+		accessRequest, err := sgc.GetAccessRequests(entitlement.GetFilter())
 		if err != nil {
 			fmt.Printf("Error getting access request: %s\n", err)
 			panic(err)
@@ -60,7 +60,7 @@ func main() {
 
 	// Example 3: New Access Request
 	fmt.Println("Example 3: Creating a new access request")
-	accessRequest, err := safeguard.NewAccessRequests(entitlements)
+	accessRequest, err := sgc.NewAccessRequests(entitlements, 1200*time.Second)
 	if err != nil {
 		fmt.Printf("Error creating access request: %s\n", err)
 		//panic(err)
@@ -74,7 +74,7 @@ func main() {
 		fmt.Printf("(%d) AccountName: %s (AccountDomain: %s)\n", entitlement.Account.Id, entitlement.Account.Name, entitlement.Account.DomainName)
 		fmt.Println("Get Access Request for Account")
 
-		accessRequest, err := safeguard.GetAccessRequests(entitlement.GetFilter())
+		accessRequest, err := sgc.GetAccessRequests(entitlement.GetFilter())
 		if err != nil {
 			fmt.Printf("Error getting access request: %s\n", err)
 			panic(err)
@@ -88,6 +88,10 @@ func main() {
 			fmt.Println("  Asset ID:     ", request.AccountAssetId)
 			fmt.Println("  Asset Name:   ", request.AccountAssetName)
 			fmt.Println("  State:        ", request.State)
+
+			if request.State == safeguard.StateCompleted {
+				continue
+			}
 
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
@@ -107,7 +111,7 @@ func main() {
 		fmt.Printf("(%d) AccountName: %s (AccountDomain: %s)\n", entitlement.Account.Id, entitlement.Account.Name, entitlement.Account.DomainName)
 		fmt.Println("Get Access Request for Account")
 
-		accessRequest, err := safeguard.GetAccessRequests(entitlement.GetFilter())
+		accessRequest, err := sgc.GetAccessRequests(entitlement.GetFilter())
 		if err != nil {
 			fmt.Printf("Error getting access request: %s\n", err)
 			panic(err)

@@ -1,4 +1,4 @@
-package client
+package safeguard
 
 import (
 	"fmt"
@@ -7,6 +7,28 @@ import (
 	"runtime"
 	"strings"
 )
+
+// ClientHolder is an interface that defines a method for setting a SafeguardClient.
+// Implementers of this interface should provide the logic for associating a SafeguardClient
+// instance with the implementing type.
+//
+// SetClient takes a pointer to a SafeguardClient and returns an interface{} which can be
+// used to return any value or type as needed by the implementation.
+type ClientHolder interface {
+	SetClient(c *SafeguardClient) any
+}
+
+func addClient[T ClientHolder](client *SafeguardClient, v T) T {
+	ret := v.SetClient(client)
+	return ret.(T)
+}
+
+func addClientToSlice[T ClientHolder](client *SafeguardClient, v []T) []T {
+	for i := range v {
+		v[i] = v[i].SetClient(client).(T)
+	}
+	return v
+}
 
 // openBrowser opens the specified URL in the default web browser.
 // openBrowser opens the specified URL in the default web browser of the user's operating system.

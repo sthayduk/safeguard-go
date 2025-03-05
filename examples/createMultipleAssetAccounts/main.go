@@ -29,14 +29,14 @@ func main() {
 
 	// Initialize the Safeguard client
 	logger.Println("Initializing Safeguard client...")
-	err := common.InitClient()
+	sgc, err := common.InitClient()
 	if err != nil {
 		logger.Fatalf("%s Failed to initialize client: %v", warning("ERROR:"), err)
 	}
 
 	// Get the Active Directory
 	logger.Printf("Getting Active Directory with ID: %d", adId)
-	ad, err := safeguard.GetAsset(adId, safeguard.Fields{"Id", "Name"})
+	ad, err := sgc.GetAsset(adId, safeguard.Fields{"Id", "Name"})
 	if err != nil {
 		logger.Fatalf("Failed to get Active Directory: %v", err)
 	}
@@ -54,7 +54,7 @@ func main() {
 		logger.Printf("Found user: %s", user.Name)
 	}
 
-	createdUsers, err := safeguard.CreateAssetAccounts(users)
+	createdUsers, err := sgc.CreateAssetAccounts(users)
 	if err != nil {
 		logger.Fatalf("Failed to create asset accounts: %s", err)
 	}
@@ -90,7 +90,7 @@ func main() {
 		}()
 		// Update and check password in a goroutine
 		wg.Add(1)
-		go updateAndCheckPassword(ctx, &wg, logger, createdUser)
+		go updateAndCheckPassword(sgc, ctx, &wg, logger, createdUser)
 	}
 
 	// Wait for all goroutines to complete
@@ -103,20 +103,20 @@ func main() {
 
 }
 
-func updateAndCheckPassword(ctx context.Context, wg *sync.WaitGroup, logger *log.Logger, createdUser safeguard.AssetAccount) {
+func updateAndCheckPassword(sgc *safeguard.SafeguardClient, ctx context.Context, wg *sync.WaitGroup, logger *log.Logger, createdUser safeguard.AssetAccount) {
 	// Initialize colored output
 	info := color.New(color.FgCyan).SprintFunc()
 
 	// Update Password Profile
 	logger.Println("Updating password profile...")
-	assetPartition, err := safeguard.GetAssetPartition(1, safeguard.Fields{"Id", "Name"})
+	assetPartition, err := sgc.GetAssetPartition(1, safeguard.Fields{"Id", "Name"})
 	if err != nil {
 		logger.Fatalf("Failed to get asset partition: %v", err)
 	}
 
 	filter := safeguard.Filter{}
 	filter.AddFilter("Name", "eq", "ITdesign Profile Suspend")
-	passwordProfile, err := safeguard.GetPasswordRules(assetPartition, filter)
+	passwordProfile, err := sgc.GetPasswordRules(assetPartition, filter)
 	if err != nil {
 		logger.Fatalf("Failed to get password profile: %v", err)
 	}

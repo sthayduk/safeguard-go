@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	err := common.InitClient()
+	sgc, err := common.InitClient()
 	if err != nil {
 		panic(err)
 	}
@@ -20,7 +20,7 @@ func main() {
 	filter.AddField("EmailAddress")
 	filter.AddField("AdminRoles")
 
-	me, err := safeguard.GetMe(filter)
+	me, err := sgc.GetMe(filter)
 	if err != nil {
 		fmt.Printf("Error getting current user: %s\n", err)
 	} else {
@@ -38,7 +38,7 @@ func main() {
 	assetFilter.AddField("Platform.DisplayName")
 	assetFilter.AddOrderBy("Name")
 
-	assets, err := safeguard.GetMeAccessRequestAssets(assetFilter)
+	assets, err := sgc.GetMeAccessRequestAssets(assetFilter)
 	if err != nil {
 		fmt.Printf("Error getting accessible assets: %s\n", err)
 	} else {
@@ -55,7 +55,7 @@ func main() {
 		if len(assets) > 0 {
 			fmt.Println("\nExample 3: Getting a specific asset by ID")
 			assetId := fmt.Sprintf("%d", assets[0].Id)
-			asset, err := safeguard.GetMeAccessRequestAsset(assetId)
+			asset, err := sgc.GetMeAccessRequestAsset(assetId)
 			if err != nil {
 				fmt.Printf("Error getting asset by ID: %s\n", err)
 			} else {
@@ -72,7 +72,7 @@ func main() {
 	// Example 4: Get actionable requests with detailed information
 	fmt.Println("Example 4: Getting actionable requests with details")
 	requestFilter := safeguard.Filter{}
-	actionableRequests, err := safeguard.GetMeActionableRequestsDetailed(requestFilter)
+	actionableRequests, err := sgc.GetMeActionableRequestsDetailed(requestFilter)
 	if err != nil {
 		fmt.Printf("Error getting actionable requests: %s\n", err)
 	} else {
@@ -120,7 +120,7 @@ func main() {
 
 	// Example 5: Get actionable requests by role
 	fmt.Println("Example 5: Getting actionable requests by role (Admin)")
-	approverRequests, err := safeguard.GetMeActionableRequestsByRole(safeguard.AdminRole, requestFilter)
+	approverRequests, err := sgc.GetMeActionableRequestsByRole(safeguard.AdminRole, requestFilter)
 	if err != nil {
 		fmt.Printf("Error getting approver requests: %s\n", err)
 	} else {

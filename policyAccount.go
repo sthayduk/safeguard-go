@@ -7,6 +7,8 @@ import (
 
 // PolicyAccount represents a Safeguard account with its associated policies and properties
 type PolicyAccount struct {
+	apiClient *SafeguardClient `json:"-"`
+
 	Id                          int               `json:"Id"`
 	Name                        string            `json:"Name"`
 	Description                 string            `json:"Description"`
@@ -31,6 +33,11 @@ type PolicyAccount struct {
 	RequestProperties           RequestProperties `json:"RequestProperties"`
 	Platform                    Platform          `json:"Platform"`
 	Asset                       Asset             `json:"Asset"`
+}
+
+func (a PolicyAccount) SetClient(c *SafeguardClient) any {
+	a.apiClient = c
+	return a
 }
 
 // RequestProperties represents the available request types for an account
@@ -121,7 +128,7 @@ func (p PolicyAccount) ToJson() (string, error) {
 // Returns:
 //   - []PolicyAccount: A slice of PolicyAccount objects matching the filter criteria
 //   - error: An error if the request fails or response parsing fails, nil otherwise
-func GetPolicyAccounts(fields Filter) ([]PolicyAccount, error) {
+func (c *SafeguardClient) GetPolicyAccounts(fields Filter) ([]PolicyAccount, error) {
 	var policyAccounts []PolicyAccount
 
 	query := "PolicyAccounts" + fields.ToQueryString()
@@ -133,7 +140,7 @@ func GetPolicyAccounts(fields Filter) ([]PolicyAccount, error) {
 
 	json.Unmarshal(response, &policyAccounts)
 
-	return policyAccounts, nil
+	return addClientToSlice(c, policyAccounts), nil
 }
 
 // GetPolicyAccount retrieves a single policy account by its unique identifier.
@@ -154,7 +161,7 @@ func GetPolicyAccounts(fields Filter) ([]PolicyAccount, error) {
 // Returns:
 //   - PolicyAccount: The requested policy account with all specified related objects
 //   - error: An error if the account is not found or request fails, nil otherwise
-func GetPolicyAccount(id int, fields Fields) (PolicyAccount, error) {
+func (c *SafeguardClient) GetPolicyAccount(id int, fields Fields) (PolicyAccount, error) {
 	var policyAccount PolicyAccount
 
 	query := fmt.Sprintf("PolicyAccounts/%d", id)
@@ -167,7 +174,8 @@ func GetPolicyAccount(id int, fields Fields) (PolicyAccount, error) {
 		return policyAccount, err
 	}
 	json.Unmarshal(response, &policyAccount)
-	return policyAccount, nil
+
+	return addClient(c, policyAccount), nil
 }
 
 // LinkToUser creates a relationship between a policy account and a user.
@@ -187,7 +195,7 @@ func GetPolicyAccount(id int, fields Fields) (PolicyAccount, error) {
 //   - []PolicyAccount: A slice containing the updated account after linking
 //   - error: An error if the link operation fails, nil otherwise
 func (p PolicyAccount) LinkToUser(user User) ([]PolicyAccount, error) {
-	return AddLinkedAccounts(user, []PolicyAccount{p})
+	return p.apiClient.AddLinkedAccounts(user, []PolicyAccount{p})
 }
 
 // UnlinkFromUser removes the relationship between a policy account and a user.
@@ -207,5 +215,5 @@ func (p PolicyAccount) LinkToUser(user User) ([]PolicyAccount, error) {
 //   - []PolicyAccount: A slice containing the updated account after unlinking
 //   - error: An error if the unlink operation fails, nil otherwise
 func (p PolicyAccount) UnlinkFromUser(user User) ([]PolicyAccount, error) {
-	return RemoveLinkedAccounts(user, []PolicyAccount{p})
+	return p.apiClient.RemoveLinkedAccounts(user, []PolicyAccount{p})
 }
