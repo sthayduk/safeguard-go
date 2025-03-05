@@ -53,10 +53,42 @@ Currently supports the following Safeguard resources:
   - Delete users
   - Link and Unlink PolicyAccounts
 - Identity Providers
-  - Get providers and details
-  - Get directory users
-  - Get directory groups
-  - Support for multiple provider types (LDAP, RADIUS, etc.)
+  - Core Operations
+    - Get providers and details (GetIdentityProviders, GetIdentityProvider)
+    - Create new providers (AddIdentityProvider)
+    - Update existing providers (UpdateIdentityProvider)
+    - Delete providers (DeleteIdentityProvider)
+    - Synchronize directory providers (SynchronizeIdentityProvider)
+  - Directory Operations
+    - Get directory users (GetDirectoryUsers)
+    - Get directory groups (GetDirectoryGroups)
+  - Strong type system for provider types (TypeReferenceName):
+    - Unknown
+    - Local
+    - Certificate
+    - Active Directory
+    - RADIUS/RADIUS Primary
+    - LDAP
+    - External Federation
+    - FIDO2
+    - Other Directory
+    - Starling Directory
+    - OneLogin MFA
+    - SCIM
+  - Type-specific Properties:
+    - RadiusProperties (server config, authentication settings)
+    - ExternalFederation (realm, metadata, authentication context)
+    - Fido2Properties (domain configuration)
+    - OneLoginMfaProperties (DNS, client credentials)
+    - ScimProperties (provisioning settings)
+    - DirectoryProperties (sync settings, domain controllers)
+    - StarlingProperties (API integration)
+  - Method Chaining Support:
+    - Update() method on IdentityProvider instances
+    - Synchronize() method on IdentityProvider instances
+    - Delete() method on IdentityProvider instances
+    - GetDirectoryUsers() method on IdentityProvider instances
+    - GetDirectoryGroups() method on IdentityProvider instances
 - User Groups
   - Get groups and details
   - Directory properties support
@@ -272,10 +304,39 @@ providers, err := safeguard.GetIdentityProviders(client)
 // Get specific provider
 provider, err := safeguard.GetIdentityProvider(providerId)
 
+// Create a new identity provider with specific type
+newProvider := safeguard.IdentityProvider{
+    Name:              "LDAP Provider",
+    TypeReferenceName: safeguard.TypeLdap,
+    NetworkAddress:    "ldap.example.com",
+    IsDirectory:       true,
+}
+provider, err := client.AddIdentityProvider(newProvider)
+
+// Check provider type
+if provider.TypeReferenceName == safeguard.TypeActiveDirectory {
+    // Handle Active Directory provider
+}
+
+// Available TypeReferenceNames:
+// - TypeUnknown
+// - TypeLocal
+// - TypeCertificate  
+// - TypeActiveDirectory
+// - TypeRadius
+// - TypeRadiusAsPrimary
+// - TypeLdap
+// - TypeExternalFederation
+// - TypeFido2
+// - TypeOtherDirectory
+// - TypeStarlingDirectory
+// - TypeOneLoginMfa
+// - TypeScim
+
 // Get directory users from provider
 users, err := provider.GetDirectoryUsers(safeguard.Filter{})
 
-// Get directory groups from provider
+// Get directory groups from provider 
 groups, err := provider.GetDirectoryGroups(safeguard.Filter{})
 ```
 
