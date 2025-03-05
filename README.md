@@ -367,27 +367,62 @@ type EventData struct {
 }
 ```
 
-## Query Parameters
+# Safeguard Filter Examples
 
-The API supports filtering and field selection:
+## Overview
 
-```go
-import (
-    safeguard "github.com/sthayduk/safeguard-go"
-)
+The Safeguard API uses a query string-based filtering system to refine API requests. 
+The `safeguard.Filter` type provides a convenient way to construct these filters.
 
-// Create a filter
-filter := safeguard.Filter{}
-filter.AddFilter("Disabled", "eq", "true")
-filter.AddFilter("Name", "like", "admin")
+## Examples
 
-// Specify fields to return
-fields := safeguard.Fields{"Name", "Description", "CreatedDate"}
+The `main.go` file demonstrates:
 
-// Use in API calls
-users, err := safeguard.GetUsers(filter)
-user, err := safeguard.GetUser(userId, fields)
+1. **Basic Filters**: Creating filters with fields, ordering, and count options
+2. **Filter Conditions**: Adding equality, comparison, and text search conditions
+3. **Complex Search**: Creating complex search filters across multiple fields
+4. **API Integration**: Using filters with the Safeguard API
+5. **Asset Filtering**: Searching for assets by name patterns
+
+## Key Filter Features
+
+- Field selection (`filter.AddField()`)
+- Sorting (`filter.AddOrderBy()`)
+- Simple conditions (`filter.AddFilter()`)
+- Complex searches (`filter.AddComplexSearchFilter()`)
+- Standard search patterns (`filter.AddSearchFilter()`)
+
+## Running the Examples
+
+Ensure you have set up your client configuration in the common package, then run:
+
+```bash
+go run main.go
 ```
+
+## Filter Operators
+
+The library provides constants for all supported filter operators:
+
+- `OpEqual`, `OpNotEqual` - Equality operators (eq, ne)
+- `OpGreaterThan`, `OpGreaterThanOrEqual`, `OpLessThan`, `OpLessThanOrEqual` - Comparison operators (gt, ge, lt, le)
+- `OpContains`, `OpIContains` - Text search operators (contains, icontains)
+- `OpStartsWith`, `OpIStartsWith`, `OpEndsWith`, `OpIEndsWith` - Pattern matching (sw, isw, ew, iew)
+- `OpAnd`, `OpOr`, `OpNot` - Logical operators (and, or, not)
+- `OpIn` - Collection operator (in)
+
+## Sample Query Output
+
+A basic filter might produce a query string like:
+```
+?fields=Name,Description&filter=Name eq 'Administrator'&count=true&orderby=-CreatedDate
+```
+
+A complex search filter might produce:
+```
+?filter=(Name contains 'server' or NetworkAddress contains 'server' or Description contains 'server')
+```
+
 
 ## Example Access Request Workflow
 
