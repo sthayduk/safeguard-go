@@ -1,5 +1,5 @@
 # Safeguard Go
-A Go library for interacting with the OneIdentity Safeguard for Privileged Passwords REST API.
+A Go module for interacting with the OneIdentity Safeguard for Privileged Passwords REST API.
 
 ## Installation
 
@@ -9,9 +9,13 @@ go get github.com/sthayduk/safeguard-go
 
 ## Prerequisites
 
-The library requires SSL certificates for OAuth authentication:
-- `server.crt` and `server.key` - for the local HTTPS callback server
-- `pam.cer` - the Safeguard appliance certificate
+The module requires the following SSL certificates for OAuth authentication:
+
+- `server.crt` and `server.key`: For the local HTTPS callback server (required only for OAuth-based authentication).
+- `pam.cer`: The Root Certificate Chain that signs the host certificate of the PAM Appliance.
+  - On macOS, the host certificate of the PAM appliance must be valid for no more than 398 days due to Apple's security requirements. This limitation applies specifically to the SignalR connection. For more details, see [Apple's TLS certificate requirements](https://support.apple.com/en-au/102028).
+
+
 
 ## Features
 
