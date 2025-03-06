@@ -465,7 +465,7 @@ func (p ActivityLog) getMatchingAccountTask(ctx context.Context) (AccountTaskDat
 	}
 
 	filter := Filter{}
-	filter.AddFilter("Id", "eq", fmt.Sprintf("%d", p.AccountId))
+	filter.AddFilter("Id", OpEqual, fmt.Sprintf("%d", p.AccountId))
 
 	ticker := time.NewTicker(500 * time.Millisecond)
 	defer ticker.Stop()

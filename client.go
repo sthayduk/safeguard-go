@@ -55,7 +55,7 @@ type applianceURL struct {
 	Url        string
 
 	lastUpdate time.Time
-	cacheTime  time.Duration
+	cacheTime  time.Duration // Expiry time in seconds
 }
 
 // getUrl returns the current appliance URL in a thread-safe manner.
@@ -166,7 +166,17 @@ func (a *applianceURL) isExpired() bool {
 		return false
 	}
 
-	return time.Since(a.lastUpdate) > a.cacheTime
+	return time.Now().After(a.getExpiryTime())
+}
+
+// getExpiryTime returns the expiry time of the cached data.
+// It calculates the expiry time by adding the cache duration (in seconds)
+// to the last update time. The method acquires a read lock to ensure
+// thread-safe access to the last update time and cache duration.
+func (a *applianceURL) getExpiryTime() time.Time {
+	a.RWMutex.RLock()
+	defer a.RWMutex.RUnlock()
+	return a.lastUpdate.Add(a.cacheTime * time.Second)
 }
 
 // createTLSClient creates and returns a new HTTP client with TLS configuration.
