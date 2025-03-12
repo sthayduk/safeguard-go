@@ -9,9 +9,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -128,7 +130,7 @@ type Credentials struct {
 }
 
 // LoginWithOauth initiates the OAuth2.0 authorization code flow to obtain an access token.
-// It generates a code challenge and starts an HTTPS listener to receive the authorization code.
+// It generates a code challenge and starts a TCP listener to receive the authorization code.
 // The user is prompted to log in using their browser, and upon successful login, the authorization code
 // is exchanged for an access token.
 // Returns an error if the authentication or token exchange process fails.
@@ -141,11 +143,12 @@ func (c *SafeguardClient) LoginWithOauth() error {
 
 	authCodeChan := make(chan string)
 	errorChan := make(chan error)
-	server := startHTTPSListener(authCodeChan, errorChan)
-	defer server.Close()
+	listener := startTCPListener(authCodeChan, errorChan)
+	defer listener.Close()
 
+	redirectURI := "urn:InstalledApplicationTcpListener"
 	authURL := fmt.Sprintf("%s/RSTS/Login?response_type=code&code_challenge_method=S256&code_challenge=%s&redirect_uri=%s&port=%d",
-		c.Appliance.getUrl(), codeChallenge, url.QueryEscape(c.redirectURI), c.redirectPort)
+		c.Appliance.getUrl(), codeChallenge, url.QueryEscape(redirectURI), c.redirectPort)
 
 	openBrowser(authURL)
 	fmt.Println("Please log in using your browser...")
@@ -158,12 +161,29 @@ func (c *SafeguardClient) LoginWithOauth() error {
 		return fmt.Errorf("authentication failed: %v", err)
 	}
 
-	err := c.getRSTSTokenWithOauth(c.AccessToken.AuthorizationCode, codeVerifier)
+	data := url.Values{}
+	data.Set("grant_type", "authorization_code")
+	data.Set("code", c.AccessToken.AuthorizationCode)
+	data.Set("redirect_uri", redirectURI)
+	data.Set("code_verifier", codeVerifier)
+
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/RSTS/oauth2/token", c.Appliance.getUrl()), strings.NewReader(data.Encode()))
+	if err != nil {
+		return fmt.Errorf("error creating request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := c.HttpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("RSTS token request failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	err = c.handleTokenResponse(resp)
 	if err != nil {
 		return fmt.Errorf("error retrieving token: %v", err)
 	}
 
-	// Exchange for Safeguard token
 	err = c.exchangeRSTSTokenForSafeguard(c.HttpClient)
 	if err != nil {
 		return fmt.Errorf("acquire Safeguard token failed: %v", err)
@@ -190,94 +210,68 @@ func generateCodeChallenge() (string, string) {
 	return codeVerifier, codeChallenge
 }
 
-func startHTTPSListener(authCodeChan chan string, errorChan chan error) *http.Server {
-	cert, err := tls.LoadX509KeyPair("server.crt", "server.key")
+func startTCPListener(authCodeChan chan string, errorChan chan error) net.Listener {
+	listener, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", redirectPort))
 	if err != nil {
-		logger.Error("Error loading certificate", "error", err)
-		panic(fmt.Sprintf("Error loading certificate: %v", err))
+		logger.Error("Error starting TCP listener", "error", err)
+		errorChan <- err
+		return nil
 	}
 
-	server := &http.Server{
-		Addr: fmt.Sprintf(":%d", redirectPort),
-		TLSConfig: &tls.Config{
-			Certificates: []tls.Certificate{cert},
-		},
-	}
+	go func() {
+		conn, err := listener.Accept()
+		if err != nil {
+			errorChan <- err
+			return
+		}
+		defer conn.Close()
 
-	http.HandleFunc("/callback", func(w http.ResponseWriter, r *http.Request) {
-		logger.Info("Received callback request")
-		if err := r.URL.Query().Get("error"); err != "" {
-			errorDesc := r.URL.Query().Get("error_description")
-			errorChan <- fmt.Errorf("%s: %s", err, errorDesc)
-			_, err := w.Write([]byte("Authentication failed. You can close this window."))
-			if err != nil {
-				logger.Error("Error writing response", "error", err)
-			}
+		buffer := make([]byte, 4096)
+		n, err := conn.Read(buffer)
+		if err != nil {
+			errorChan <- err
 			return
 		}
 
-		authCode := r.URL.Query().Get("code")
-		if authCode != "" {
-			authCodeChan <- authCode
-			_, err := w.Write([]byte("Authentication successful! You can close this window."))
-			if err != nil {
-				logger.Error("Error writing response", "error", err)
-			}
-		} else {
-			errorChan <- fmt.Errorf("no authorization code received")
-			_, err := w.Write([]byte("Authentication failed. No authorization code received."))
-			if err != nil {
-				logger.Error("Error writing response", "error", err)
-			}
-		}
-	})
+		request := string(buffer[:n])
+		logger.Debug("Received request", "request", request)
 
-	go func() {
-		logger.Info("Starting HTTPS server", "port", redirectPort)
-		if err := server.ListenAndServeTLS("", ""); err != nil && err != http.ErrServerClosed {
-			errorChan <- fmt.Errorf("HTTPS server error: %v", err)
+		authCode := extractAuthCode(request)
+		if authCode != "" {
+			// Simple HTTP success response
+			response := "HTTP/1.1 200 OK\r\nConnection: close\r\n\r\nAuthentication successful"
+			conn.Write([]byte(response))
+			authCodeChan <- authCode
+		} else {
+			errorChan <- fmt.Errorf("no authorization code received in request: %s", request)
 		}
 	}()
 
-	return server
+	return listener
 }
 
-// getRSTSTokenWithOauth exchanges an authorization code for an RSTS token using OAuth2.
-// It sends a POST request to the RSTS token endpoint with the necessary parameters.
-//
-// Parameters:
-//
-//	authCode - The authorization code received from the OAuth2 authorization server.
-//	codeVerifier - The code verifier used in the PKCE (Proof Key for Code Exchange) flow.
-//
-// Returns:
-//
-//	error - An error if the token request fails or if there is an issue handling the token response.
-func (c *SafeguardClient) getRSTSTokenWithOauth(authCode, codeVerifier string) error {
-	data := url.Values{}
-	data.Set("grant_type", "authorization_code")
-	data.Set("code", authCode)
-	data.Set("redirect_uri", c.redirectURI)
-	data.Set("code_verifier", codeVerifier)
-
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/RSTS/oauth2/token", c.Appliance.getUrl()), strings.NewReader(data.Encode()))
-	if err != nil {
-		return err
-	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-	resp, err := c.HttpClient.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	err = c.handleTokenResponse(resp)
-	if err != nil {
-		return fmt.Errorf("RSTS token request failed: %v", err)
+func extractAuthCode(request string) string {
+	re := regexp.MustCompile(`GET /\?(.+) HTTP`)
+	match := re.FindStringSubmatch(request)
+	if len(match) < 2 {
+		logger.Error("No URL parameters found in request")
+		return ""
 	}
 
-	return nil
+	params, err := url.ParseQuery(match[1])
+	if err != nil {
+		logger.Error("Failed to parse query parameters", "error", err)
+		return ""
+	}
+
+	// Look specifically for the 'oauth' parameter
+	if code := params.Get("oauth"); code != "" {
+		logger.Debug("Found oauth code", "code", code[:30]+"...") // Log first 30 chars
+		return code
+	}
+
+	logger.Error("No oauth parameter found in query", "params", params)
+	return ""
 }
 
 // LoginWithPassword authenticates a user using their username and password.
