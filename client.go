@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"sync"
 	"time"
 )
@@ -188,36 +189,76 @@ func (a *applianceURL) getExpiryTime() time.Time {
 //
 //	*http.Client: A pointer to the configured HTTP client.
 func createTLSClient() *http.Client {
-	caCert, err := os.ReadFile("server.crt")
-	if err != nil {
-		logger.Error("Error loading CA certificate", "error", err)
-		os.Exit(1)
-	}
-	rootCert, err := os.ReadFile("pam.cer")
-	if err != nil {
-		logger.Error("Error loading root certificate", "error", err)
-		os.Exit(1)
-	}
-
-	caCertPool := x509.NewCertPool()
-	if !caCertPool.AppendCertsFromPEM(caCert) {
-		logger.Error("Error adding CA certificate to pool")
-		os.Exit(1)
-	}
-	if !caCertPool.AppendCertsFromPEM(rootCert) {
-		logger.Error("Error adding root certificate to pool")
-		os.Exit(1)
-	}
-
 	return &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
-				RootCAs:    caCertPool,
+				RootCAs:    loadCertificates(),
 				MinVersion: tls.VersionTLS12,
 				MaxVersion: tls.VersionTLS13,
 			},
 		},
 	}
+}
+
+// loadCertificates attempts to load all .crt and .cer files from the current directory
+// and adds them to a new certificate pool.
+func loadCertificates() *x509.CertPool {
+	caCertPool := x509.NewCertPool()
+
+	certFiles, err := os.ReadDir(".")
+	if err != nil {
+		logger.Debug("Could not read current directory", "error", err)
+		return caCertPool
+	}
+
+	for _, file := range certFiles {
+		if file.IsDir() || !isCertFile(file.Name()) {
+			continue
+		}
+
+		if err := addCertToPool(caCertPool, file.Name()); err != nil {
+			logger.Debug("Error processing certificate", "file", file.Name(), "error", err)
+		}
+	}
+
+	return caCertPool
+}
+
+// addCertToPool reads a certificate file and adds it to the provided cert pool
+func addCertToPool(pool *x509.CertPool, filename string) error {
+	cert, err := os.ReadFile(filename)
+	if err != nil {
+		return fmt.Errorf("error reading certificate: %w", err)
+	}
+
+	if !pool.AppendCertsFromPEM(cert) {
+		return fmt.Errorf("failed to add certificate to pool")
+	}
+
+	logger.Debug("Added certificate to pool", "file", filename)
+	return nil
+}
+
+// Helper function to check if a filename has a certificate extension
+func isCertFile(name string) bool {
+	certExtensions := map[string]bool{
+		".crt":  true, // X.509 certificate
+		".cer":  true, // Alternative X.509 certificate
+		".pem":  true, // Privacy Enhanced Mail format
+		".der":  true, // Distinguished Encoding Rules format
+		".p7b":  true, // PKCS#7 certificate
+		".p7c":  true, // PKCS#7 certificate chain
+		".pfx":  true, // PKCS#12 format
+		".p12":  true, // Alternative PKCS#12 format
+		".cert": true, // Alternative certificate format
+	}
+
+	ext := ""
+	if lastDot := strings.LastIndex(name, "."); lastDot > -1 {
+		ext = strings.ToLower(name[lastDot:])
+	}
+
+	return certExtensions[ext]
 }
 
 // refreshToken refreshes the access token for the SafeguardClient.
