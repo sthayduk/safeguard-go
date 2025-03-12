@@ -1,4 +1,5 @@
 # Safeguard Go
+
 A Go module for interacting with the OneIdentity Safeguard for Privileged Passwords REST API.
 
 ## Installation
@@ -14,8 +15,6 @@ The module requires the following SSL certificates for OAuth authentication:
 - `server.crt` and `server.key`: For the local HTTPS callback server (required only for OAuth-based authentication).
 - `pam.cer`: The Root Certificate Chain that signs the host certificate of the PAM Appliance.
   - On macOS, the host certificate of the PAM appliance must be valid for no more than 398 days due to Apple's security requirements. This limitation applies specifically to the SignalR connection. For more details, see [Apple's TLS certificate requirements](https://support.apple.com/en-au/102028).
-
-
 
 ## Features
 
@@ -248,7 +247,6 @@ groups, err := user.GetGroups()
 err = user.Delete()
 ```
 
-
 ## Example Access Request Workflow
 
 ```go
@@ -479,11 +477,11 @@ type EventData struct {
 }
 ```
 
-# Safeguard Filter Examples
+## Safeguard Filter Examples
 
 ## Overview
 
-The Safeguard API uses a query string-based filtering system to refine API requests. 
+The Safeguard API uses a query string-based filtering system to refine API requests.
 The `safeguard.Filter` type provides a convenient way to construct these filters.
 
 ## Examples
@@ -526,11 +524,13 @@ The library provides constants for all supported filter operators:
 ## Sample Query Output
 
 A basic filter might produce a query string like:
+
 ```
 ?fields=Name,Description&filter=Name eq 'Administrator'&count=true&orderby=-CreatedDate
 ```
 
 A complex search filter might produce:
+
 ```
 ?filter=(Name contains 'server' or NetworkAddress contains 'server' or Description contains 'server')
 ```

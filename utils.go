@@ -57,18 +57,20 @@ func openBrowser(url string) {
 
 	switch runtime.GOOS {
 	case "windows":
-		cmd = "cmd"
-		args = []string{"/c", "start"}
+		cmd = "rundll32"
+		args = []string{"url.dll,FileProtocolHandler", url}
 	case "darwin":
 		cmd = "open"
+		args = []string{url}
 	case "linux":
 		cmd = "xdg-open"
+		args = []string{url}
 	default:
 		logger.Warn("Unsupported platform", "platform", runtime.GOOS)
 		return
 	}
 
-	args = append(args, url)
+	logger.Debug(fmt.Sprintf("Opening URL in browser: %s %v", cmd, args))
 	if err := exec.Command(cmd, args...).Start(); err != nil {
 		logger.Error("Error opening browser", "error", err)
 	}
