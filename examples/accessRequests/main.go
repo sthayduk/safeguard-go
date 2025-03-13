@@ -74,7 +74,11 @@ func main() {
 		fmt.Printf("(%d) AccountName: %s (AccountDomain: %s)\n", entitlement.Account.Id, entitlement.Account.Name, entitlement.Account.DomainName)
 		fmt.Println("Get Access Request for Account")
 
-		accessRequest, err := sgc.GetAccessRequests(entitlement.GetFilter())
+		filter := entitlement.GetFilter()
+		filter.AddFilter("State", safeguard.OpNotEqual, string(safeguard.StateCompleted))
+		filter.AddFilter("State", safeguard.OpNotEqual, string(safeguard.StatePendingReview))
+		filter.AddFilter("State", safeguard.OpNotEqual, string(safeguard.StatePendingAcknowledgment))
+		accessRequest, err := sgc.GetAccessRequests(filter) // Updated from entitlement.GetFilter() to filter
 		if err != nil {
 			fmt.Printf("Error getting access request: %s\n", err)
 			panic(err)
@@ -129,7 +133,7 @@ func main() {
 			_, err := request.Close()
 			if err != nil {
 				fmt.Printf("Error checkin access request: %s\n", err)
-				panic(err)
+				//panic(err)
 			}
 		}
 	}
