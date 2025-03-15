@@ -177,7 +177,7 @@ func (a *applianceURL) isExpired() bool {
 func (a *applianceURL) getExpiryTime() time.Time {
 	a.RWMutex.RLock()
 	defer a.RWMutex.RUnlock()
-	return a.lastUpdate.Add(a.cacheTime * time.Second)
+	return a.lastUpdate.Add(a.cacheTime) // Remove the * time.Second since cacheTime is already a Duration
 }
 
 // createTLSClient creates and returns a new HTTP client with TLS configuration.
