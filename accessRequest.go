@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 )
 
@@ -692,7 +693,16 @@ func (c *SafeguardClient) getPasswordforAccessRequest(accessRequest AccessReques
 		return "", err
 	}
 
-	return string(response), err
+	// unescapedPassword attempts to unquote the string representation of the response.
+	// strconv.Unquote is used to interpret the string as a quoted string literal and
+	// remove the surrounding quotes. If the response is not properly quoted, an error
+	// will be returned.
+	unescapedPassword, err := strconv.Unquote(string(response))
+	if err != nil {
+		return "", err
+	}
+
+	return string(unescapedPassword), err
 }
 
 // RefreshState updates the request with its current state from the server.

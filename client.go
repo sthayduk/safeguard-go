@@ -128,7 +128,7 @@ func NewClient(applianceUrl string, apiVersion string, debug bool) *SafeguardCli
 		authDone: make(chan string),
 	}
 
-	sgclient.Appliance.setUrl(applianceUrl, 3600)
+	sgclient.Appliance.setUrl(applianceUrl, 3600*time.Second)
 
 	ctx := context.Background()
 	go sgclient.refreshToken(ctx)
@@ -408,7 +408,7 @@ func (c *SafeguardClient) setClusterLeader(clusterLeaderHostName string) {
 	logger.Debug("Updating cluster leader URL",
 		"old", c.ClusterLeader.getUrl(),
 		"new", clusterLeaderUrl)
-	c.ClusterLeader.setUrl(clusterLeaderUrl, 3600)
+	c.ClusterLeader.setUrl(clusterLeaderUrl, 3600*time.Second)
 	fmt.Println("✅ Cluster leader URL updated:", clusterLeaderUrl)
 }
 
