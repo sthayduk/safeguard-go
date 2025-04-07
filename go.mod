@@ -7,7 +7,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/philippseith/signalr v0.6.3
 	github.com/stretchr/testify v1.10.0
-	golang.org/x/crypto v0.36.0
+	golang.org/x/crypto v0.37.0
 )
 
 require (
