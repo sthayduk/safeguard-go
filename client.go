@@ -409,7 +409,7 @@ func (c *SafeguardClient) setClusterLeader(clusterLeaderHostName string) {
 		"old", c.ClusterLeader.getUrl(),
 		"new", clusterLeaderUrl)
 	c.ClusterLeader.setUrl(clusterLeaderUrl, 3600*time.Second)
-	fmt.Println("✅ Cluster leader URL updated:", clusterLeaderUrl)
+	logger.Info("Cluster leader URL updated", "url", clusterLeaderUrl)
 }
 
 // generateClusterLeaderURL generates the URL for the cluster leader based on the provided

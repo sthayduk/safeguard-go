@@ -122,10 +122,12 @@ func (c *SafeguardClient) GetClusterMembers(filter Filter) ([]ClusterMember, err
 
 	response, err := c.GetRequest(query)
 	if err != nil {
+		logger.Error("Error occurred", "error", err)
 		return []ClusterMember{}, err
 	}
 
 	if err := json.Unmarshal(response, &clusterMembers); err != nil {
+		logger.Error("Error occurred", "error", err)
 		return nil, err
 	}
 
@@ -147,10 +149,12 @@ func (c *SafeguardClient) GetClusterMember(id string) (ClusterMember, error) {
 
 	response, err := c.GetRequest(query)
 	if err != nil {
+		logger.Error("Error occurred", "error", err)
 		return ClusterMember{}, err
 	}
 
 	if err := json.Unmarshal(response, &clusterMember); err != nil {
+		logger.Error("Error occurred", "error", err)
 		return ClusterMember{}, err
 	}
 
@@ -171,7 +175,7 @@ func (c *SafeguardClient) GetClusterLeader() (ClusterMember, error) {
 
 	clusterMembers, err := c.GetClusterMembers(filter)
 	if err != nil {
-		fmt.Println(err)
+		logger.Error("Error occurred", "error", err)
 		return ClusterMember{}, err
 	}
 
@@ -200,10 +204,12 @@ func (c *SafeguardClient) ForceClusterHealthCheck() (ClusterMember, error) {
 
 	response, err := c.GetRequest(query)
 	if err != nil {
+		logger.Error("Error occurred", "error", err)
 		return ClusterMember{}, err
 	}
 
 	if err := json.Unmarshal(response, &clusterMembers); err != nil {
+		logger.Error("Error occurred", "error", err)
 		return ClusterMember{}, err
 	}
 

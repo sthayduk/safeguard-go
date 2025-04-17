@@ -151,12 +151,12 @@ func (c *SafeguardClient) LoginWithOauth() error {
 		c.Appliance.getUrl(), codeChallenge, url.QueryEscape(redirectURI), c.redirectPort)
 
 	openBrowser(authURL)
-	fmt.Println("Please log in using your browser...")
+	logger.Info("Please log in using your browser...")
 
 	select {
 	case authCode := <-authCodeChan:
 		c.AccessToken.AuthorizationCode = authCode
-		fmt.Println("\n✅ Authorization Code received")
+		logger.Info("Authorization Code received")
 	case err := <-errorChan:
 		return fmt.Errorf("authentication failed: %v", err)
 	}
@@ -189,7 +189,7 @@ func (c *SafeguardClient) LoginWithOauth() error {
 		return fmt.Errorf("acquire Safeguard token failed: %v", err)
 	}
 
-	fmt.Println("✅ Access Token received")
+	logger.Info("Access Token received")
 	c.authDone <- "Done"
 
 	return nil
@@ -328,7 +328,7 @@ func (c *SafeguardClient) LoginWithPassword(username, password string) error {
 	}
 
 	c.AccessToken.setUserNamePassword(username, password)
-	fmt.Println("✅ Login successful")
+	logger.Info("Login successful")
 	c.authDone <- "Done"
 	return nil
 }
@@ -386,7 +386,7 @@ func (c *SafeguardClient) LoginWithCertificate(certPath, certPassword string) er
 	}
 
 	c.AccessToken.setCertificate(certPath, certPassword)
-	fmt.Println("✅ Certificate authentication successful")
+	logger.Info("Certificate authentication successful")
 	c.authDone <- "Done"
 	return nil
 }
@@ -529,7 +529,7 @@ func (c *SafeguardClient) SaveAccessTokenToEnv() error {
 		return err
 	}
 
-	fmt.Printf("Access token saved to environment variable: %s\n", envVar)
+	logger.Info("Access token saved to environment variable", "envVar", envVar)
 	return nil
 }
 
