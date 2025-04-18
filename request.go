@@ -66,7 +66,14 @@ func (c *SafeguardClient) GetRequest(path string) ([]byte, error) {
 //   - []byte: The response body from the API call.
 //   - error: An error if the request fails or returns a non-successful status code.
 func (c *SafeguardClient) PostRequest(path string, body io.Reader) ([]byte, error) {
-	url := fmt.Sprintf("%s/%s", c.getReadWriteRootUrl(), path)
+
+	// Use the read-only root URL for POST requests
+	// Some Customers hide the cluster leader behind the firewall and only
+	// allow access to the appliance through an load balancer that is only
+	// accessible thru the appliance URL
+	// This is a workaround to allow POST requests to work in this scenario
+
+	url := fmt.Sprintf("%s/%s", c.getReadOnlyRootUrl(), path)
 	logger.Debug("Preparing POST request",
 		"url", url,
 		"path", path,
@@ -81,7 +88,46 @@ func (c *SafeguardClient) PostRequest(path string, body io.Reader) ([]byte, erro
 		return nil, err
 	}
 
-	return c.sendHttpRequest(req)
+	result, err := c.sendHttpRequest(req)
+	if err == nil {
+		logger.Debug("POST request successful",
+			"method", req.Method,
+			"url", url,
+			"responseBody", string(result),
+		)
+		return result, nil
+	}
+
+	logger.Debug("POST request failed on read-only URL, retrying on read-write URL",
+		"url", url,
+		"path", path,
+	)
+
+	url = fmt.Sprintf("%s/%s", c.getReadWriteRootUrl(), path)
+	req, err = http.NewRequest(http.MethodPost, url, body)
+	if err != nil {
+		logger.Error("Failed to create POST request on read-write URL",
+			"error", err,
+			"url", url,
+		)
+		return nil, fmt.Errorf("POST request failed on read-write URL: %v", err)
+	}
+
+	result, err = c.sendHttpRequest(req)
+	if err == nil {
+		logger.Debug("POST request successful on read-write URL",
+			"method", req.Method,
+			"url", url,
+			"responseBody", string(result),
+		)
+		return result, nil
+	}
+
+	logger.Error("POST request failed on read-write URL",
+		"url", url,
+		"path", path,
+	)
+	return nil, fmt.Errorf("POST request failed on read-write URL: %v", err)
 }
 
 // PutRequest sends an HTTP PUT request to update resources on the Safeguard API.

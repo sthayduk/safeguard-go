@@ -22,8 +22,7 @@ func init() {
 }
 
 const (
-	redirectPort = 8400
-	redirectURI  = "https://localhost:8400/callback"
+	redirectPort = 8400 // Default redirect port for Authentication Callback
 )
 
 // SafeguardClient represents the main client for interacting with the Safeguard API.
@@ -36,7 +35,6 @@ type SafeguardClient struct {
 	HttpClient     *http.Client
 	tokenEndpoint  string
 	redirectPort   int
-	redirectURI    string
 	DefaultHeaders http.Header
 	authDone       chan string
 	Logger         *slog.Logger
@@ -119,7 +117,6 @@ func NewClient(applianceUrl string, apiVersion string, debug bool) *SafeguardCli
 		ApiVersion:    apiVersion,
 		HttpClient:    createTLSClient(),
 		redirectPort:  redirectPort,
-		redirectURI:   redirectURI,
 		tokenEndpoint: applianceUrl + "/service/core/v4/Token/LoginResponse",
 
 		Logger: logger,
