@@ -3,8 +3,53 @@ package safeguard
 import (
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
+	"strings"
 )
+
+// SafeHeaders is a wrapper around http.Header that implements slog.LogValuer
+// to safely log headers with sensitive information masked.
+type SafeHeaders struct {
+	headers http.Header
+}
+
+// LogValue implements slog.LogValuer to provide safe logging of HTTP headers.
+// It masks sensitive authorization headers while preserving other header information.
+func (sh SafeHeaders) LogValue() slog.Value {
+	attrs := make([]slog.Attr, 0, len(sh.headers))
+
+	for key, values := range sh.headers {
+		if strings.ToLower(key) == "authorization" {
+			// Mask authorization header to prevent token leakage
+			maskedValues := make([]string, len(values))
+			for i, value := range values {
+				if strings.HasPrefix(strings.ToLower(value), "bearer ") && len(value) > 7 {
+					// Show only "Bearer " + first 6 and last 4 characters with asterisks in between
+					tokenPart := value[7:] // Remove "Bearer " prefix
+					if len(tokenPart) > 10 {
+						maskedValues[i] = fmt.Sprintf("Bearer %s***%s", tokenPart[:6], tokenPart[len(tokenPart)-4:])
+					} else {
+						maskedValues[i] = "Bearer ***"
+					}
+				} else {
+					maskedValues[i] = "***"
+				}
+			}
+			attrs = append(attrs, slog.Any(key, maskedValues))
+		} else {
+			// Include other headers as-is
+			attrs = append(attrs, slog.Any(key, values))
+		}
+	}
+
+	return slog.GroupValue(attrs...)
+}
+
+// NewSafeHeaders creates a SafeHeaders wrapper for the given http.Header.
+func NewSafeHeaders(headers http.Header) SafeHeaders {
+	return SafeHeaders{headers: headers}
+}
 
 // getReadOnlyRootUrl constructs and returns the root URL for read-only operations.
 // It uses the appliance URL for operations that don't require cluster leader coordination.
@@ -207,7 +252,7 @@ func (c *SafeguardClient) sendHttpRequest(req *http.Request) ([]byte, error) {
 	logger.Debug("Sending request",
 		"method", req.Method,
 		"url", req.URL.String(),
-		"headers", req.Header,
+		"headers", NewSafeHeaders(req.Header),
 	)
 
 	resp, err := c.HttpClient.Do(req)
@@ -237,7 +282,7 @@ func (c *SafeguardClient) sendHttpRequest(req *http.Request) ([]byte, error) {
 		"status", resp.Status,
 		"statusCode", resp.StatusCode,
 		"contentLength", resp.ContentLength,
-		"headers", resp.Header,
+		"headers", NewSafeHeaders(resp.Header),
 	)
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusAccepted && resp.StatusCode != http.StatusCreated {
@@ -246,7 +291,7 @@ func (c *SafeguardClient) sendHttpRequest(req *http.Request) ([]byte, error) {
 			"url", req.URL,
 			"status", resp.Status,
 			"statusCode", resp.StatusCode,
-			"responseHeaders", resp.Header,
+			"responseHeaders", NewSafeHeaders(resp.Header),
 			"responseBody", string(body),
 		)
 		return nil, fmt.Errorf("error during %s request to %s: HTTP %d - %s", req.Method, req.URL, resp.StatusCode, string(body))
@@ -274,7 +319,7 @@ func (c *SafeguardClient) sendHttpRequest(req *http.Request) ([]byte, error) {
 // The function modifies the request headers in place and ensures all necessary
 // headers are present for successful API communication.
 func (c *SafeguardClient) setHeaders(req *http.Request) {
-	logger.Debug("Setting request headers", "existingHeaders", req.Header)
+	logger.Debug("Setting request headers", "existingHeaders", NewSafeHeaders(req.Header))
 
 	req.Header = c.getAuthorizationHeader()
 
@@ -288,7 +333,7 @@ func (c *SafeguardClient) setHeaders(req *http.Request) {
 	}
 
 	logger.Debug("Headers set successfully",
-		"finalHeaders", req.Header,
+		"finalHeaders", NewSafeHeaders(req.Header),
 		"method", req.Method,
 		"url", req.URL,
 	)

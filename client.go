@@ -21,6 +21,40 @@ func init() {
 	logger = slog.New(slog.NewTextHandler(os.Stdout, nil))
 }
 
+// SetLogger configures the global logger for the safeguard package.
+// This allows other packages to set up logging consistently by providing
+// a fully configured logger instance.
+//
+// Parameters:
+//   - l: The slog.Logger instance to use. If nil, creates a default logger with Info level.
+//
+// Example usage from another package:
+//
+//	// Use a simple logger
+//	safeguard.SetLogger(slog.Default())
+//
+//	// Use a custom configured logger
+//	logger := slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}))
+//	safeguard.SetLogger(logger)
+//
+//	// Use a logger with context
+//	logger := slog.With("service", "my-app", "version", "1.0.0")
+//	safeguard.SetLogger(logger)
+func SetLogger(l *slog.Logger) {
+	if l == nil {
+		logger = slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	} else {
+		logger = l
+	}
+	slog.SetDefault(logger) // Set as default logger for the entire application
+}
+
+// GetLogger returns the current logger instance.
+// This allows other packages to access the configured logger.
+func GetLogger() *slog.Logger {
+	return logger
+}
+
 const (
 	redirectPort = 8400 // Default redirect port for Authentication Callback
 )
@@ -102,15 +136,17 @@ func (a *applianceURL) setUrl(url string, cacheTime time.Duration) {
 //
 //	A pointer to the newly created or existing SafeguardClient instance.
 func NewClient(applianceUrl string, apiVersion string, debug bool) *SafeguardClient {
-	var opts slog.HandlerOptions
-	if debug {
-		opts.Level = slog.LevelDebug
-	} else {
-		opts.Level = slog.LevelInfo
+	// Configure the logger if not already set up by SetLogger
+	if logger == nil || logger == slog.Default() {
+		var opts slog.HandlerOptions
+		if debug {
+			opts.Level = slog.LevelDebug
+		} else {
+			opts.Level = slog.LevelInfo
+		}
+		defaultLogger := slog.New(slog.NewTextHandler(os.Stdout, &opts))
+		SetLogger(defaultLogger)
 	}
-
-	logger = slog.New(slog.NewTextHandler(os.Stdout, &opts))
-	slog.SetDefault(logger)
 
 	sgclient := &SafeguardClient{
 		AccessToken:   &RSTSAuthResponse{},
