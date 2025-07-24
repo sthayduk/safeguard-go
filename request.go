@@ -51,6 +51,71 @@ func NewSafeHeaders(headers http.Header) SafeHeaders {
 	return SafeHeaders{headers: headers}
 }
 
+// SafeResponseBody is a wrapper around response body that implements slog.LogValuer
+// to safely log response bodies with sensitive information masked.
+type SafeResponseBody struct {
+	body []byte
+	path string
+}
+
+// LogValue implements slog.LogValuer to provide safe logging of HTTP response bodies.
+// It masks password responses while preserving other response information.
+func (srb SafeResponseBody) LogValue() slog.Value {
+	if srb.isPasswordResponse() {
+		return slog.StringValue(srb.maskPasswordResponse())
+	}
+	return slog.StringValue(string(srb.body))
+}
+
+// isPasswordResponse checks if the response contains a password that should be masked
+func (srb SafeResponseBody) isPasswordResponse() bool {
+	// Check if this is a password checkout endpoint
+	if strings.Contains(strings.ToLower(srb.path), "checkoutpassword") {
+		return true
+	}
+
+	// Additional check: if response looks like a quoted password string
+	bodyStr := strings.TrimSpace(string(srb.body))
+	if len(bodyStr) > 2 && bodyStr[0] == '"' && bodyStr[len(bodyStr)-1] == '"' {
+		// Remove quotes and check if it looks like a password (no spaces, reasonable length)
+		content := bodyStr[1 : len(bodyStr)-1]
+		if len(content) >= 8 && len(content) <= 128 && !strings.Contains(content, " ") {
+			return true
+		}
+	}
+
+	return false
+}
+
+// maskPasswordResponse safely masks password content in response bodies
+func (srb SafeResponseBody) maskPasswordResponse() string {
+	if len(srb.body) == 0 {
+		return ""
+	}
+
+	bodyStr := strings.TrimSpace(string(srb.body))
+	if len(bodyStr) <= 2 {
+		return "\"***\""
+	}
+
+	// If it's a quoted string, show partial content
+	if bodyStr[0] == '"' && bodyStr[len(bodyStr)-1] == '"' {
+		content := bodyStr[1 : len(bodyStr)-1]
+		if len(content) <= 6 {
+			return "\"***\""
+		}
+		// Show first 2 and last 2 characters with asterisks in between
+		return fmt.Sprintf("\"%s***%s\"", content[:2], content[len(content)-2:])
+	}
+
+	return "***"
+}
+
+// NewSafeResponseBody creates a SafeResponseBody wrapper for the given response body and path.
+func NewSafeResponseBody(body []byte, path string) SafeResponseBody {
+	return SafeResponseBody{body: body, path: path}
+}
+
 // getReadOnlyRootUrl constructs and returns the root URL for read-only operations.
 // It uses the appliance URL for operations that don't require cluster leader coordination.
 //
@@ -138,7 +203,7 @@ func (c *SafeguardClient) PostRequest(path string, body io.Reader) ([]byte, erro
 		logger.Debug("POST request successful",
 			"method", req.Method,
 			"url", url,
-			"responseBody", string(result),
+			"responseBody", NewSafeResponseBody(result, path),
 		)
 		return result, nil
 	}
@@ -163,7 +228,7 @@ func (c *SafeguardClient) PostRequest(path string, body io.Reader) ([]byte, erro
 		logger.Debug("POST request successful on read-write URL",
 			"method", req.Method,
 			"url", url,
-			"responseBody", string(result),
+			"responseBody", NewSafeResponseBody(result, path),
 		)
 		return result, nil
 	}
@@ -292,7 +357,7 @@ func (c *SafeguardClient) sendHttpRequest(req *http.Request) ([]byte, error) {
 			"status", resp.Status,
 			"statusCode", resp.StatusCode,
 			"responseHeaders", NewSafeHeaders(resp.Header),
-			"responseBody", string(body),
+			"responseBody", NewSafeResponseBody(body, req.URL.Path),
 		)
 		return nil, fmt.Errorf("error during %s request to %s: HTTP %d - %s", req.Method, req.URL, resp.StatusCode, string(body))
 	}
