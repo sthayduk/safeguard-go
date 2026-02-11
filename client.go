@@ -233,10 +233,17 @@ func createTLSClient() *http.Client {
 	}
 }
 
-// loadCertificates attempts to load all .crt and .cer files from the current directory
-// and adds them to a new certificate pool.
+// loadCertificates loads the system certificate pool and appends any additional
+// certificate files found in the current directory. The system pool provides
+// certificates from the OS certificate store (macOS Keychain, Windows Certificate
+// Store, or Linux system certificates). Local certificate files allow adding
+// custom or self-signed certificates on top of the system trust store.
 func loadCertificates() *x509.CertPool {
-	caCertPool := x509.NewCertPool()
+	caCertPool, err := x509.SystemCertPool()
+	if err != nil {
+		logger.Debug("Could not load system certificate pool, using empty pool", "error", err)
+		caCertPool = x509.NewCertPool()
+	}
 
 	certFiles, err := os.ReadDir(".")
 	if err != nil {
